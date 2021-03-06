@@ -1,0 +1,3 @@
+[submodule "KMC"]
+	path = KMC
+	url = git@github.com:refresh-bio/KMC.git
