@@ -25,24 +25,8 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  CKmerAPI kmer(kmer_size);
-  CKmerAPI prev_kmer(kmer_size);
-
   std::cout << "test" << std::endl;
 
-  int alphabet_size = 4;
-  std::vector<std::vector<size_t>> counters{};
-
-  uint64 counter;
-  std::string str;
-
-  while (kmer_database.ReadNextKmer(kmer, counter)) {
-    process_kmer(kmer, prev_kmer);
-
-    kmer.to_string(str);
-    ofs << str << "\t" << counter << std::endl;
-    prev_kmer = kmer;
-  }
 
   ofs.close();
   kmer_database.Close();
