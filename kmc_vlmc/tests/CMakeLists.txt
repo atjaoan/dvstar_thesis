@@ -59,6 +59,7 @@ macro(test_case unit_test)
     target_link_libraries(${target} gtest_main)
     target_link_libraries(${target} Threads::Threads)
     target_link_libraries(${target} kmc_file kmer_api mmer)
+    target_link_libraries(${target} ${STXXL_LIBRARIES})
 
     add_test(NAME ${target} COMMAND ${target})
 
@@ -73,6 +74,7 @@ macro(benchmark_case case)
     target_link_libraries(${target} benchmark)
     target_link_libraries(${target} kmc_file kmer_api mmer)
     target_link_libraries(${target} Threads::Threads)
+    target_link_libraries(${target} ${STXXL_LIBRARIES})
 
     unset (case)
     unset (target)

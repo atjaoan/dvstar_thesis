@@ -1,3 +1,6 @@
 [submodule "KMC"]
 	path = KMC
 	url = git@github.com:refresh-bio/KMC.git
+[submodule "stxxl"]
+	path = stxxl
+	url = http://github.com/stxxl/stxxl.git
