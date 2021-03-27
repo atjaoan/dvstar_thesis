@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
   {
     VLMCKmer kmer = *sorter;
     std::cout << kmer.to_string() << " " << kmer.count << " ";
-    for (auto &c : kmer.child_counts) {
+    for (auto &c : kmer.next_symbol_counts) {
       std::cout << c << " ";
     }
     std::cout << std::endl;

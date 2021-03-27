@@ -17,9 +17,11 @@ void output_node(VLMCKmer &prev_kmer, int diff_pos,
 
     auto prefix_kmer = VLMCKmer::create_prefix_kmer(
         prev_kmer, diff_pos + 1, counters[diff_pos][0],
-        std::vector<size_t>(next_character_counts.begin() + 1,
-                            next_character_counts.end()));
+        std::array<size_t, 4>{
+            next_character_counts[1], next_character_counts[2],
+            next_character_counts[3], next_character_counts[4]});
 
+    std::cout << prefix_kmer.to_string() << std::endl;
     sorter.push(prefix_kmer);
   }
 }
@@ -41,10 +43,6 @@ void process_kmer(VLMCKmer &current_kmer, VLMCKmer &prev_kmer,
 
   auto diff_pos =
       VLMCKmer::get_first_differing_position(current_kmer, prev_kmer);
-
-//  std::cout << current_kmer.to_string() << " ";
-//  std::cout << diff_pos;
-//  std::cout << std::endl;
 
   if (diff_pos == -1) {
     return;
@@ -81,8 +79,9 @@ void process_kmer(VLMCKmer &current_kmer, VLMCKmer &prev_kmer,
 
 template <int kmer_size>
 void support_pruning(CKMCFile &kmer_database, kmer_sorter<kmer_size> &sorter) {
-  VLMCKmer kmer(kmer_size);
-  VLMCKmer prev_kmer(kmer_size);
+  VLMCTranslator kmer_api(kmer_size);
+  VLMCKmer kmer(kmer_size, 0, {});
+  VLMCKmer prev_kmer(kmer_size, 0, {});
 
   int alphabet_size = 4;
   std::vector<std::vector<size_t>> counters(
@@ -90,13 +89,12 @@ void support_pruning(CKMCFile &kmer_database, kmer_sorter<kmer_size> &sorter) {
   std::vector<size_t> root_counts{};
 
   uint64 counter;
-  std::string str;
 
-  while (kmer_database.ReadNextKmer(kmer, counter)) {
+  while (kmer_database.ReadNextKmer(kmer_api, counter)) {
+    kmer = kmer_api.construct_vlmc_kmer();
     kmer.count = counter;
     process_kmer(kmer, prev_kmer, counters, root_counts, sorter);
 
-    kmer.to_string(str);
     prev_kmer = kmer;
   }
 }
