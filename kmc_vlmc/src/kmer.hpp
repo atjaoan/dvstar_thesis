@@ -148,6 +148,14 @@ public:
     return out_string;
   }
 
+  void output(std::ostream &stream) {
+    stream << this->to_string() << " " << this->count << " ";
+    for (auto &c : this->next_symbol_counts) {
+      stream << c << " ";
+    }
+    stream << std::endl;
+  }
+
 protected:
 };
 

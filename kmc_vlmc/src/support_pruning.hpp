@@ -9,26 +9,36 @@
 #include "kmer.hpp"
 
 template <int kmer_size>
+void output_root(std::vector<size_t> &root_counts,
+                 kmer_sorter<kmer_size> &sorter) {
+  size_t count = std::accumulate(root_counts.begin(), root_counts.end(), 0.0);
+  VLMCKmer root{0, count,
+                std::array<size_t, 4>{root_counts[0], root_counts[1],
+                                      root_counts[2], root_counts[3]}};
+
+  root.output(std::cout);
+  sorter.push(root);
+}
+
+template <int kmer_size>
 void output_node(VLMCKmer &prev_kmer, int diff_pos,
                  std::vector<std::vector<size_t>> &counters,
                  kmer_sorter<kmer_size> &sorter) {
-  for (int i = diff_pos; i < kmer_size; i++) {
-    auto &next_character_counts = counters[diff_pos + 1];
+  auto &next_character_counts = counters[diff_pos + 1];
 
-    auto prefix_kmer = VLMCKmer::create_prefix_kmer(
-        prev_kmer, diff_pos + 1, counters[diff_pos][0],
-        std::array<size_t, 4>{
-            next_character_counts[1], next_character_counts[2],
-            next_character_counts[3], next_character_counts[4]});
+  auto prefix_kmer = VLMCKmer::create_prefix_kmer(
+      prev_kmer, diff_pos + 1, counters[diff_pos][0],
+      std::array<size_t, 4>{next_character_counts[1], next_character_counts[2],
+                            next_character_counts[3],
+                            next_character_counts[4]});
 
-    std::cout << prefix_kmer.to_string() << std::endl;
-    sorter.push(prefix_kmer);
-  }
+  //  prefix_kmer.output(std::cout);
+  sorter.push(prefix_kmer);
 }
 
 bool include_kmer(int length, size_t count) {
-  int min_count = 10;
-  int max_depth = 15;
+  int min_count = 1;
+  int max_depth = 14;
 
   return length < max_depth && count >= min_count;
 }
@@ -40,9 +50,13 @@ void process_kmer(VLMCKmer &current_kmer, VLMCKmer &prev_kmer,
                   kmer_sorter<kmer_size> &sorter) {
   // This should check what differs, and output the kmers that
   // don't match this level, with appropriate counters.
+  //  std::cout << "current kmer:\t" << current_kmer.to_string() << std::endl;
+  //  std::cout << "prev kmer:\t" << prev_kmer.to_string() << std::endl;
 
   auto diff_pos =
       VLMCKmer::get_first_differing_position(current_kmer, prev_kmer);
+
+  //  std::cout << "diff pos: " << diff_pos << std::endl;
 
   if (diff_pos == -1) {
     return;
@@ -97,4 +111,10 @@ void support_pruning(CKMCFile &kmer_database, kmer_sorter<kmer_size> &sorter) {
 
     prev_kmer = kmer;
   }
+  VLMCTranslator api_epsilon(kmer_size);
+  api_epsilon.from_string("N");
+  VLMCKmer epsilon = api_epsilon.construct_vlmc_kmer();
+  process_kmer(epsilon, prev_kmer, counters, root_counts, sorter);
+
+  output_root(root_counts, sorter);
 }

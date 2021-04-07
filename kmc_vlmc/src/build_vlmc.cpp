@@ -24,8 +24,6 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  std::cout << "test" << std::endl;
-
   // second parameter is RAM to use, should be parameter.
   kmer_sorter<kmer_size> sorter{KMerComparator<kmer_size>(), 64 * 1024 * 1024};
   support_pruning(kmer_database, sorter);
@@ -38,11 +36,7 @@ int main(int argc, char *argv[]) {
   while (!sorter.empty())
   {
     VLMCKmer kmer = *sorter;
-    std::cout << kmer.to_string() << " " << kmer.count << " ";
-    for (auto &c : kmer.next_symbol_counts) {
-      std::cout << c << " ";
-    }
-    std::cout << std::endl;
+    kmer.output(ofs);
 
     ++sorter;
   }
