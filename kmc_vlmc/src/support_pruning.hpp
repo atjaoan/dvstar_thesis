@@ -9,12 +9,10 @@
 #include "kmer.hpp"
 
 template <int kmer_size>
-void output_root(std::vector<size_t> &root_counts,
+void output_root(std::array<size_t, 4> &root_counts,
                  kmer_sorter<kmer_size> &sorter) {
   size_t count = std::accumulate(root_counts.begin(), root_counts.end(), 0.0);
-  VLMCKmer root{0, count,
-                std::array<size_t, 4>{root_counts[0], root_counts[1],
-                                      root_counts[2], root_counts[3]}};
+  VLMCKmer root{0, count, root_counts};
 
   root.output(std::cout);
   sorter.push(root);
@@ -38,20 +36,27 @@ void output_node(VLMCKmer &prev_kmer, int diff_pos,
 
 bool include_kmer(int length, size_t count) {
   int min_count = 1;
-  int max_depth = 14;
+  int max_depth = 9;
 
   return length < max_depth && count >= min_count;
 }
 
 template <int kmer_size>
+void increase_counts(std::vector<std::vector<size_t>> &counters, size_t count) {
+  for (int i = 0; i <= kmer_size; i++) {
+    counters[i][0] += count;
+  }
+}
+
+template <int kmer_size>
 void process_kmer(VLMCKmer &current_kmer, VLMCKmer &prev_kmer,
                   std::vector<std::vector<size_t>> &counters,
-                  std::vector<size_t> &root_counts,
+                  std::array<size_t, 4> &root_counts,
                   kmer_sorter<kmer_size> &sorter) {
   // This should check what differs, and output the kmers that
   // don't match this level, with appropriate counters.
-  //  std::cout << "current kmer:\t" << current_kmer.to_string() << std::endl;
-  //  std::cout << "prev kmer:\t" << prev_kmer.to_string() << std::endl;
+//  std::cout << "current kmer:\t" << current_kmer.to_string() << std::endl;
+//  std::cout << "prev kmer:\t" << prev_kmer.to_string() << std::endl;
 
   auto diff_pos =
       VLMCKmer::get_first_differing_position(current_kmer, prev_kmer);
@@ -76,7 +81,8 @@ void process_kmer(VLMCKmer &current_kmer, VLMCKmer &prev_kmer,
     }
     // Save root child counts
     if (i == 0) {
-      root_counts.push_back(counters[i][0]);
+      auto char_idx = prev_kmer.char_pos(0);
+      root_counts[char_idx] = counters[i][0];
     }
 
     // Reset counters for outputted kmer
@@ -86,23 +92,25 @@ void process_kmer(VLMCKmer &current_kmer, VLMCKmer &prev_kmer,
 
   // The counts should be increased by this kmers counts for characters shorter
   // than the differing position.
-  for (int i = 0; i <= kmer_size; i++) {
-    counters[i][0] += current_kmer.count;
-  }
+  increase_counts<kmer_size>(counters, current_kmer.count);
 }
 
 template <int kmer_size>
 void support_pruning(CKMCFile &kmer_database, kmer_sorter<kmer_size> &sorter) {
   VLMCTranslator kmer_api(kmer_size);
   VLMCKmer kmer(kmer_size, 0, {});
-  VLMCKmer prev_kmer(kmer_size, 0, {});
 
   int alphabet_size = 4;
   std::vector<std::vector<size_t>> counters(
       kmer_size + 2, std::vector<size_t>(alphabet_size + 1));
-  std::vector<size_t> root_counts{};
+  std::array<size_t, 4> root_counts{};
 
   uint64 counter;
+
+  kmer_database.ReadNextKmer(kmer_api, counter);
+  kmer = kmer_api.construct_vlmc_kmer();
+  increase_counts<kmer_size>(counters, counter);
+  VLMCKmer prev_kmer = kmer;
 
   while (kmer_database.ReadNextKmer(kmer_api, counter)) {
     kmer = kmer_api.construct_vlmc_kmer();

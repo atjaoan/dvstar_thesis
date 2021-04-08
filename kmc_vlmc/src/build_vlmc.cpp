@@ -12,7 +12,7 @@
 int main(int argc, char *argv[]) {
   uint32 min_count_to_set = 0;
   uint32 max_count_to_set = 0;
-  const int kmer_size = 15;
+  const int kmer_size = 10;
   std::string input_file_name{"res"};
 
 

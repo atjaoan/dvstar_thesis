@@ -156,6 +156,7 @@ public:
     stream << std::endl;
   }
 
+
 protected:
 };
 
@@ -206,7 +207,7 @@ template <int MAX_K> struct ReverseKMerComparator {
     return a < b;
   }
   VLMCKmer min_value() const {
-    std::vector<size_t> vec{};
+    std::array<size_t, 4> vec{};
     return VLMCKmer(0, 0, vec);
   }
   VLMCKmer max_value() const {

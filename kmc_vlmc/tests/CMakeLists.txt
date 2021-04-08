@@ -81,3 +81,4 @@ macro(benchmark_case case)
 endmacro(benchmark_case)
 
 test_case(support_pruning_tests.cpp)
+test_case(count_correctness_test.cpp)
