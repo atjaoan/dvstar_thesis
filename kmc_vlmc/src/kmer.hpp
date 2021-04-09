@@ -81,7 +81,13 @@ public:
   }
 
   inline uchar extract2bits(uint32 pos) const {
-    return (kmer_data[pos >> 5] >> (62 - ((pos & 31) * 2))) & 3;
+    // pos >> 5 = pos // 31
+    // pos & 31 = remainder(pos, 31)
+
+    int row = pos >> 5;
+    int pos_in_row = pos & 31;
+    int n_shift_pos_to_end = (62 - pos_in_row * 2);
+    return (kmer_data[row] >> n_shift_pos_to_end) & 3;
   }
 
   inline int char_pos(int pos) const {
@@ -90,17 +96,38 @@ public:
     return bits;
   }
 
+  inline bool reverse_less_than(const VLMCKmer &kmer) const {
+    // 00 = A
+    // 01 = C
+    // 10 = G
+    // 11 = T
+
+    int this_pos = this->length;
+    int kmer_pos = kmer.length;
+
+    while (this_pos >= 0 && kmer_pos >= 0) {
+      auto this_2_bits = this->extract2bits(this_pos--);
+      auto kmer_2_bits = kmer.extract2bits(kmer_pos--);
+
+      if (this_2_bits != kmer_2_bits) {
+        return this_2_bits > kmer_2_bits;
+      }
+    }
+
+    return kmer.length < this->length;
+  }
+
   inline bool operator<(const VLMCKmer &kmer) const {
     int min_length = std::min(kmer.length, length);
 
     for (int i = 0; i < min_length; i++) {
-      auto local_2_bits = this->extract2bits(i);
+      auto this_2_bits = this->extract2bits(i);
       auto kmer_2_bits = kmer.extract2bits(i);
-      if (local_2_bits != kmer_2_bits) {
-        return local_2_bits < kmer_2_bits;
+      if (this_2_bits != kmer_2_bits) {
+        return this_2_bits < kmer_2_bits;
       }
     }
-    return kmer.length > length;
+    return kmer.length > this->length;
   };
 
   inline std::string to_string() {
@@ -156,7 +183,6 @@ public:
     stream << std::endl;
   }
 
-
 protected:
 };
 
@@ -179,14 +205,20 @@ public:
         uchar val = this->extract2bits(pos);
         new_kmer.kmer_data[row] += (uint64)val << (62 - ((pos & 31) * 2));
       }
-    } else if (this->kmer_length > 0){
+    } else if (this->kmer_length > 0) {
       new_kmer.kmer_data[0] = this->kmer_data[0] << (this->byte_alignment) * 2;
     }
     return new_kmer;
   }
 };
 
-template <int MAX_K> struct KMerComparator {
+template<int MAX_K> struct Comparator {
+  virtual bool operator()(const VLMCKmer &a, const VLMCKmer &b) const;
+  virtual VLMCKmer min_value() const;
+  virtual VLMCKmer max_value() const;
+};
+
+template <int MAX_K> struct KMerComparator : public Comparator<MAX_K> {
   bool operator()(const VLMCKmer &a, const VLMCKmer &b) const { return a < b; }
   VLMCKmer min_value() const {
     std::array<size_t, 4> vec{};
@@ -201,24 +233,23 @@ template <int MAX_K> struct KMerComparator {
   }
 };
 
-template <int MAX_K> struct ReverseKMerComparator {
+template <int MAX_K> struct ReverseKMerComparator : public Comparator<MAX_K> {
   bool operator()(const VLMCKmer &a, const VLMCKmer &b) const {
-    // TODO this needs to compare the kmers backwards.
-    return a < b;
+    return a.reverse_less_than(b);
   }
   VLMCKmer min_value() const {
-    std::array<size_t, 4> vec{};
-    return VLMCKmer(0, 0, vec);
-  }
-  VLMCKmer max_value() const {
     VLMCKmer max_kmer(MAX_K, 0, {});
     for (int row = 0; row < max_kmer.n_rows; row++) {
       max_kmer.kmer_data[row] = 0xFFFFFFFFFFFFFFFF;
     }
     return max_kmer;
   }
+  VLMCKmer max_value() const {
+    std::array<size_t, 4> vec{};
+    return VLMCKmer(0, 0, vec);
+  }
 };
 
 template <int MAX_K>
 using kmer_sorter =
-    stxxl::sorter<VLMCKmer, KMerComparator<MAX_K>, 1 * 1024 * 1024>;
+    stxxl::sorter<VLMCKmer, ReverseKMerComparator<MAX_K>, 1 * 1024 * 1024>;

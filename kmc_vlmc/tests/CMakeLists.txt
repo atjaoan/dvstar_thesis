@@ -80,5 +80,5 @@ macro(benchmark_case case)
     unset (target)
 endmacro(benchmark_case)
 
-test_case(support_pruning_tests.cpp)
-test_case(count_correctness_test.cpp)
+test_case(kmer_tests.cpp)
+test_case(count_correctness_tests.cpp)

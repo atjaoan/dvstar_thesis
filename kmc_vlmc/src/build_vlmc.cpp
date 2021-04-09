@@ -10,8 +10,6 @@
 #include "support_pruning.hpp"
 
 int main(int argc, char *argv[]) {
-  uint32 min_count_to_set = 0;
-  uint32 max_count_to_set = 0;
   const int kmer_size = 10;
   std::string input_file_name{"res"};
 
@@ -25,7 +23,7 @@ int main(int argc, char *argv[]) {
   }
 
   // second parameter is RAM to use, should be parameter.
-  kmer_sorter<kmer_size> sorter{KMerComparator<kmer_size>(), 64 * 1024 * 1024};
+  kmer_sorter<kmer_size> sorter{ReverseKMerComparator<kmer_size>(), 64 * 1024 * 1024};
   support_pruning(kmer_database, sorter);
 
   sorter.sort();
