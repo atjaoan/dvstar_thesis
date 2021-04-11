@@ -1,12 +1,14 @@
 #include <gtest/gtest.h>
 
-#include <tuple>
-#include <filesystem>
-#include <string>
-#include <fstream>
 #include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <string>
+#include <tuple>
 
 #include <kmc_file.h>
+
+#include "read_helper.hpp"
 
 // TODO: This test checks for all k-mers in the sequence.
 // This is not the same the count of all characters, as this also includes
@@ -35,20 +37,7 @@ std::map<std::string, size_t> get_kmer_counts(std::string &sequence) {
   return counts;
 }
 
-std::tuple<std::string, size_t, std::array<size_t, 4>>
-read_line(std::string &line) {
-  std::istringstream input(line);
-  std::vector<std::string> values;
-  for (std::string c; std::getline(input, c, ' ');) {
-    values.push_back(c);
-  }
-
-  return {values[0], std::stoull(values[1]),
-          std::array<size_t, 4>{std::stoull(values[2]), std::stoull(values[3]),
-                                std::stoull(values[4]), std::stoull(values[5])}};
-}
-
-TEST_F(CountCorrectnessTests, VLMCKmerConstructor) {
+TEST_F(CountCorrectnessTests, CorrectCounts) {
   std::filesystem::path fasta_path{"../python-prototype/NC_022098.1.fasta"};
   std::ifstream fasta_stream{fasta_path};
 

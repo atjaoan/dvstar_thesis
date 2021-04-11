@@ -15,8 +15,8 @@ public:
   VLMCKmer() = default;
   VLMCKmer(uint32 length_, size_t count_,
            std::array<size_t, 4> next_symbol_counts_)
-      : length(length_), count(count_),
-        next_symbol_counts(next_symbol_counts_) {
+      : length(length_), count(count_), next_symbol_counts(next_symbol_counts_),
+        divergence(-1.0) {
     this->n_rows = (length_ / 32) + 1;
   }
 
@@ -25,6 +25,7 @@ public:
   std::array<uint64, 2> kmer_data;
   size_t count;
   std::array<size_t, 4> next_symbol_counts;
+  double divergence;
   int length;
   int n_rows;
 
@@ -97,13 +98,8 @@ public:
   }
 
   inline bool reverse_less_than(const VLMCKmer &kmer) const {
-    // 00 = A
-    // 01 = C
-    // 10 = G
-    // 11 = T
-
-    int this_pos = this->length;
-    int kmer_pos = kmer.length;
+    int this_pos = this->length - 1;
+    int kmer_pos = kmer.length - 1;
 
     while (this_pos >= 0 && kmer_pos >= 0) {
       auto this_2_bits = this->extract2bits(this_pos--);
@@ -114,7 +110,10 @@ public:
       }
     }
 
-    return kmer.length < this->length;
+    if (kmer.length != this->length) {
+      return kmer.length < this->length;
+    }
+    return kmer.count > this->count;
   }
 
   inline bool operator<(const VLMCKmer &kmer) const {
@@ -180,7 +179,7 @@ public:
     for (auto &c : this->next_symbol_counts) {
       stream << c << " ";
     }
-    stream << std::endl;
+    stream << divergence << std::endl;
   }
 
 protected:
@@ -212,13 +211,7 @@ public:
   }
 };
 
-template<int MAX_K> struct Comparator {
-  virtual bool operator()(const VLMCKmer &a, const VLMCKmer &b) const;
-  virtual VLMCKmer min_value() const;
-  virtual VLMCKmer max_value() const;
-};
-
-template <int MAX_K> struct KMerComparator : public Comparator<MAX_K> {
+template <int MAX_K> struct KMerComparator {
   bool operator()(const VLMCKmer &a, const VLMCKmer &b) const { return a < b; }
   VLMCKmer min_value() const {
     std::array<size_t, 4> vec{};
@@ -233,12 +226,12 @@ template <int MAX_K> struct KMerComparator : public Comparator<MAX_K> {
   }
 };
 
-template <int MAX_K> struct ReverseKMerComparator : public Comparator<MAX_K> {
+template <int MAX_K> struct ReverseKMerComparator {
   bool operator()(const VLMCKmer &a, const VLMCKmer &b) const {
     return a.reverse_less_than(b);
   }
   VLMCKmer min_value() const {
-    VLMCKmer max_kmer(MAX_K, 0, {});
+    VLMCKmer max_kmer(MAX_K, (size_t)-1, {});
     for (int row = 0; row < max_kmer.n_rows; row++) {
       max_kmer.kmer_data[row] = 0xFFFFFFFFFFFFFFFF;
     }
@@ -252,4 +245,4 @@ template <int MAX_K> struct ReverseKMerComparator : public Comparator<MAX_K> {
 
 template <int MAX_K>
 using kmer_sorter =
-    stxxl::sorter<VLMCKmer, ReverseKMerComparator<MAX_K>, 1 * 1024 * 1024>;
+    stxxl::sorter<VLMCKmer, ReverseKMerComparator<MAX_K>, 16 * 1024 * 1024>;

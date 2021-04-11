@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "../src/support_pruning.hpp"
+#include "../src/kmer.hpp"
 
 #include <kmc_file.h>
 
@@ -171,6 +171,20 @@ TEST_F(KmerTests, ReverseSortTestDiffLength) {
   auto from_kmer = create_kmer("TTTTTTTTTT");
   auto to_kmer = create_kmer("TTTTTTTTT");
 
+  EXPECT_TRUE(from_kmer.reverse_less_than(to_kmer));
+}
+
+TEST_F(KmerTests, CountSort) {
+  auto from_kmer = create_kmer("");
+  auto to_kmer = create_kmer("");
+  to_kmer.count = 50;
+
+  EXPECT_TRUE(from_kmer.reverse_less_than(to_kmer));
+}
+
+TEST_F(KmerTests, ReverseSortComplex) {
+  auto from_kmer = create_kmer("TAGCAAAAA");
+  auto to_kmer = create_kmer("AAAAAAAAA");
 
   EXPECT_TRUE(from_kmer.reverse_less_than(to_kmer));
 }
@@ -181,4 +195,21 @@ TEST_F(KmerTests, ReverseComparator) {
   ReverseKMerComparator<10> comparator{};
 
   EXPECT_TRUE(comparator(from_kmer, to_kmer));
+}
+
+TEST_F(KmerTests, ReverseSortTestSimilarEnds) {
+  auto kmer_t = create_kmer("TTTTTTTTTT");
+  auto kmer_a = create_kmer("TTTTTTTTTA");
+  auto a_kmer = create_kmer("ATTTTTTTTT");
+
+  std::vector<VLMCKmer> kmers{kmer_a, kmer_t, a_kmer};
+  std::sort(kmers.begin(), kmers.end(), ReverseKMerComparator<10>());
+
+  std::string first = kmers[0].to_string();
+  std::string second = kmers[1].to_string();
+  std::string third = kmers[2].to_string();
+
+  EXPECT_EQ(first, "TTTTTTTTTT");
+  EXPECT_EQ(second, "ATTTTTTTTT");
+  EXPECT_EQ(third, "TTTTTTTTTA");
 }
