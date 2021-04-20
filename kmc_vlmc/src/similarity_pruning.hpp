@@ -52,7 +52,8 @@ void reset_children(VLMCKmer &kmer,
 
 bool process_parent(VLMCKmer &prev_kmer, VLMCKmer &kmer,
                     std::vector<std::array<PstKmer, 4>> &kmers_per_level,
-                    std::ostream &stream) {
+                    std::ostream &stream,
+                    const std::function<bool(double)> &remove_node) {
   auto &children = kmers_per_level[prev_kmer.length];
 
   int removed_children = 0;
@@ -72,7 +73,7 @@ bool process_parent(VLMCKmer &prev_kmer, VLMCKmer &kmer,
 
     auto divergence = kl_divergence(child, kmer);
 
-    if (divergence < 3.9075) {
+    if (remove_node(divergence)) {
       removed_children++;
 //      child.divergence = divergence;
 //      child.output(stream);
@@ -90,12 +91,12 @@ bool process_parent(VLMCKmer &prev_kmer, VLMCKmer &kmer,
 
 void similarity_prune(VLMCKmer &prev_kmer, VLMCKmer &kmer,
                       std::vector<std::array<PstKmer, 4>> &kmers_per_level,
-                      std::ostream &stream) {
+                      std::ostream &stream, const std::function<bool(double)> &remove_node) {
   bool has_children = true;
 
   if (prev_kmer.length > kmer.length) {
     // Has different length, kmer must be parent of the previous nodes
-    has_children = process_parent(prev_kmer, kmer, kmers_per_level, stream);
+    has_children = process_parent(prev_kmer, kmer, kmers_per_level, stream, remove_node);
   } else {
     // Has same length, or shorter so the kmers have to be children
     // of the same node, or the first kmer in a new set of children.
@@ -112,7 +113,7 @@ void similarity_prune(VLMCKmer &prev_kmer, VLMCKmer &kmer,
 }
 
 template <int kmer_size>
-void similarity_pruning(kmer_sorter<kmer_size> &sorter, std::ostream &stream) {
+void similarity_pruning(kmer_sorter<kmer_size> &sorter, std::ostream &stream, const std::function<bool(double)> &remove_node) {
 
   std::vector<std::array<PstKmer, 4>> kmers_per_level(kmer_size + 1);
 
@@ -128,17 +129,12 @@ void similarity_pruning(kmer_sorter<kmer_size> &sorter, std::ostream &stream) {
   // TTTTTTT
   // TTTTTTGT
 
-
-  std::filesystem::path path{"rev_out.txt"};
-  std::ofstream ofs(path);
   while (!sorter.empty()) {
     kmer = *sorter;
 
-    kmer.output(ofs);
-    similarity_prune(prev_kmer, kmer, kmers_per_level, stream);
+    similarity_prune(prev_kmer, kmer, kmers_per_level, stream, remove_node);
 
     prev_kmer = kmer;
     ++sorter;
   }
-  ofs.close();
 }
