@@ -22,6 +22,11 @@ protected:
   }
 
   std::vector<std::array<PstKmer, 4>> kmers_per_level;
+
+  std::function<bool(double)> keep_node = [](double delta) -> bool {
+    return delta <= 3.9075;
+  };
+
 };
 
 TEST_F(SimilarityPruningTests, KullbackLiebler) {
@@ -52,7 +57,7 @@ TEST_F(SimilarityPruningTests, SimilarityPruneSameLevel) {
   auto prev_kmer = create_kmer("TTTTTT");
   auto kmer = create_kmer("ATTTTT");
 
-  similarity_prune(prev_kmer, kmer, kmers_per_level, std::cout);
+  similarity_prune(prev_kmer, kmer, kmers_per_level, std::cout, keep_node);
 
   ASSERT_TRUE(kmers_per_level[6][0].real_child);
   EXPECT_EQ(kmers_per_level[6][0].kmer.to_string(), "ATTTTT");
@@ -86,7 +91,7 @@ TEST_F(SimilarityPruningTests, SimilarityPruneParent) {
 
   std::stringstream out;
 
-  bool has_children = process_parent(a_kmer, kmer, kmers_per_level, out);
+  bool has_children = process_parent(a_kmer, kmer, kmers_per_level, out, keep_node);
 
   EXPECT_TRUE(has_children);
 

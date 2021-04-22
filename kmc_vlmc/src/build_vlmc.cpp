@@ -1,13 +1,13 @@
+#include <chrono>
 #include <filesystem>
 #include <iostream>
 #include <string>
-#include <chrono>
 
 #include <kmc_file.h>
 
 #include "CLI/App.hpp"
-#include "CLI/Formatter.hpp"
 #include "CLI/Config.hpp"
+#include "CLI/Formatter.hpp"
 
 #include "kmer.hpp"
 #include "similarity_pruning.hpp"
@@ -42,8 +42,8 @@ int main(int argc, char *argv[]) {
 
   cli_arguments arguments{};
 
-  app.add_option("-p,--fasta-path", arguments.fasta_path,
-                 "Path to fasta file.")->required();
+  app.add_option("-p,--fasta-path", arguments.fasta_path, "Path to fasta file.")
+      ->required();
   app.add_option("-c,--min-count", arguments.min_count,
                  "Minimum count required for every k-mer in the tree.");
   app.add_option("-k,--threshold", arguments.threshold,
@@ -64,7 +64,6 @@ int main(int argc, char *argv[]) {
   auto kmc_db_name = run_kmc(arguments.fasta_path, kmer_size);
 
   auto kmc_done = std::chrono::steady_clock::now();
-
 
   CKMCFile kmer_database;
   auto status = kmer_database.OpenForListing(kmc_db_name);
@@ -102,23 +101,25 @@ int main(int argc, char *argv[]) {
   similarity_pruning(sorter, ofs, keep_node);
   auto similarity_pruning_done = std::chrono::steady_clock::now();
 
-
   ofs.close();
 
-  std::chrono::duration<double> total_seconds = similarity_pruning_done-start;
+  std::chrono::duration<double> total_seconds = similarity_pruning_done - start;
   std::cout << "Total time: " << total_seconds.count() << "s\n";
 
-  std::chrono::duration<double> kmc_seconds = kmc_done-start;
+  std::chrono::duration<double> kmc_seconds = kmc_done - start;
   std::cout << "KMC time: " << kmc_seconds.count() << "s\n";
 
-  std::chrono::duration<double> support_seconds = support_pruning_done-support_pruning_start;
+  std::chrono::duration<double> support_seconds =
+      support_pruning_done - support_pruning_start;
   std::cout << "Support pruning time: " << support_seconds.count() << "s\n";
 
-  std::chrono::duration<double> sort_seconds = sorting_done-sorting_start;
+  std::chrono::duration<double> sort_seconds = sorting_done - sorting_start;
   std::cout << "Sorting time: " << sort_seconds.count() << "s\n";
 
-  std::chrono::duration<double> similarity_seconds = similarity_pruning_done-sorting_done;
-  std::cout << "Similarity pruning time: " << similarity_seconds.count() << "s\n";
+  std::chrono::duration<double> similarity_seconds =
+      similarity_pruning_done - sorting_done;
+  std::cout << "Similarity pruning time: " << similarity_seconds.count()
+            << "s\n";
 
   return EXIT_SUCCESS;
 }

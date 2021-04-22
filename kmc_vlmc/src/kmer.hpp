@@ -70,7 +70,7 @@ public:
         int diff_pos = n_leading_zeros / 2;
         int final_diff_pos = diff_pos + offset;
 
-        if (final_diff_pos > current_kmer.length) {
+        if (final_diff_pos >= current_kmer.length) {
           return -1;
         } else {
           return final_diff_pos;
@@ -204,7 +204,7 @@ public:
         uchar val = this->extract2bits(pos);
         new_kmer.kmer_data[row] += (uint64)val << (62 - ((pos & 31) * 2));
       }
-    } else if (this->kmer_length > 0) {
+    } else  {
       new_kmer.kmer_data[0] = this->kmer_data[0] << (this->byte_alignment) * 2;
     }
     return new_kmer;

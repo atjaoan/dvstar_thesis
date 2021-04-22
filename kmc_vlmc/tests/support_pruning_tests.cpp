@@ -25,6 +25,9 @@ protected:
 
   std::vector<std::vector<size_t>> counters;
   kmer_sorter<5> sorter{ReverseKMerComparator<5>(), 64 * 1024 * 1024};
+
+  const std::function<bool(int, size_t)> include_node =
+      [](int length, size_t count) -> bool { return true; };
 };
 
 TEST_F(SupportPruningTests, ProcessKMerOneDiff) {
@@ -72,7 +75,7 @@ TEST_F(SupportPruningTests, ProcessKMerBigDiff) {
 TEST_F(SupportPruningTests, SortAll4Mers) {
   std::vector<VLMCKmer> kmers = {
       create_kmer("ACGT"), create_kmer("ACG"), create_kmer("ACTA"),
-      create_kmer("ACT"), create_kmer("AC"),  create_kmer("A"),
+      create_kmer("ACT"),  create_kmer("AC"),  create_kmer("A"),
 
   };
 
@@ -98,8 +101,10 @@ TEST_F(SupportPruningTests, SortAll4Mers) {
 
 TEST_F(SupportPruningTests, PrefixSortTest) {
   std::vector<VLMCKmer> start_kmers = {
-      create_kmer("AAAAA"), create_kmer("ACGTA"), create_kmer("ACTAG"),
-      create_kmer("TTTTA"), create_kmer("TTTTT"),
+      create_kmer("ACGTA"),
+      create_kmer("ACTAG"),
+      create_kmer("TTTTA"),
+      create_kmer("TTTTT"),
   };
 
   std::cout << "input" << std::endl;
@@ -109,16 +114,14 @@ TEST_F(SupportPruningTests, PrefixSortTest) {
 
   sorter.sort();
 
-  std::vector<std::string> sorted_kmers = {
-      "ACGT", "ACT", "ACG", "AC", "ACTA", "A"
-  };
+  std::vector<std::string> sorted_kmers = {"ACGT", "ACT",  "ACG",
+                                           "AC",   "ACTA", "A"};
 
   std::cout << "output" << std::endl;
   int i = 0;
   while (!sorter.empty()) {
     VLMCKmer kmer = *sorter;
     EXPECT_EQ(kmer.to_string(), sorted_kmers[i]);
-
     ++i;
     ++sorter;
   }
