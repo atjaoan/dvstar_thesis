@@ -21,11 +21,14 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${STXXL_CXX_FLAGS}")
 # add STXXL includes path
 include_directories(${STXXL_INCLUDE_DIRS})
 
+# CLI11 for command line interface
+add_subdirectory(CLI11)
 
 add_executable(build_vlmc kmc_vlmc/src/build_vlmc.cpp)
 target_link_libraries(build_vlmc Threads::Threads)
 target_link_libraries(build_vlmc kmc_file kmer_api mmer)
 target_link_libraries(build_vlmc ${STXXL_LIBRARIES})
+target_link_libraries(build_vlmc CLI11::CLI11)
 
 
 add_subdirectory(kmc_vlmc/tests)
