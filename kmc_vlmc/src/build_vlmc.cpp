@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
   };
 
   auto support_pruning_start = std::chrono::steady_clock::now();
-  support_pruning(kmer_database, sorter, kmer_size, include_node);
+  support_pruning(kmc_db_name, sorter, kmer_size, include_node);
   auto support_pruning_done = std::chrono::steady_clock::now();
 
   kmer_database.Close();

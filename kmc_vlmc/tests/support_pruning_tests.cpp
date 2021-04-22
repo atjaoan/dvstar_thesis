@@ -38,7 +38,7 @@ TEST_F(SupportPruningTests, ProcessKMerOneDiff) {
   auto next_kmer = create_kmer("AAAAT");
   next_kmer.count = 5;
 
-  process_kmer(next_kmer, kmer, counters, sorter);
+  process_kmer(next_kmer, kmer, counters, sorter, include_node, 1);
 
   EXPECT_EQ(counters[4][2], kmer.count);
 
@@ -58,7 +58,7 @@ TEST_F(SupportPruningTests, ProcessKMerBigDiff) {
   auto next_kmer = create_kmer("CAAAA");
   next_kmer.count = 5;
 
-  process_kmer(next_kmer, kmer, counters, sorter);
+  process_kmer(next_kmer, kmer, counters, sorter, include_node, 1);
 
   EXPECT_EQ(counters[0][1], 20);
   EXPECT_EQ(counters[1][4], 0);
@@ -109,7 +109,8 @@ TEST_F(SupportPruningTests, PrefixSortTest) {
 
   std::cout << "input" << std::endl;
   for (int j = 1; j < start_kmers.size(); j++) {
-    process_kmer(start_kmers[j], start_kmers[j - 1], counters, sorter);
+    process_kmer(start_kmers[j], start_kmers[j - 1], counters, sorter,
+                 include_node, 1);
   }
 
   sorter.sort();
@@ -125,4 +126,25 @@ TEST_F(SupportPruningTests, PrefixSortTest) {
     ++i;
     ++sorter;
   }
+}
+
+TEST_F(SupportPruningTests, AllPrefixes) {
+  auto prefixes = get_all_string_prefixes(2);
+
+  EXPECT_EQ(prefixes[0], "AA");
+  EXPECT_EQ(prefixes[1], "AC");
+  EXPECT_EQ(prefixes[2], "AG");
+  EXPECT_EQ(prefixes[3], "AT");
+  EXPECT_EQ(prefixes[4], "CA");
+  EXPECT_EQ(prefixes[5], "CC");
+  EXPECT_EQ(prefixes[6], "CG");
+  EXPECT_EQ(prefixes[7], "CT");
+  EXPECT_EQ(prefixes[8], "GA");
+  EXPECT_EQ(prefixes[9], "GC");
+  EXPECT_EQ(prefixes[10], "GG");
+  EXPECT_EQ(prefixes[11], "GT");
+  EXPECT_EQ(prefixes[12], "TA");
+  EXPECT_EQ(prefixes[13], "TC");
+  EXPECT_EQ(prefixes[14], "TG");
+  EXPECT_EQ(prefixes[15], "TT");
 }
