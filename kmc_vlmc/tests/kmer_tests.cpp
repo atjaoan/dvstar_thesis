@@ -213,3 +213,43 @@ TEST_F(KmerTests, ReverseSortTestSimilarEnds) {
   EXPECT_EQ(second, "ATTTTTTTTT");
   EXPECT_EQ(third, "TTTTTTTTTA");
 }
+
+TEST_F(KmerTests, ReverseKey2) {
+  auto ta_kmer = create_kmer("TA");
+  auto gc_kmer = create_kmer("GC");
+  auto at_kmer = create_kmer("AT");
+  auto c_kmer = create_kmer("C");
+  auto e_kmer = create_kmer("");
+  KMerReverseKeyExtractor<2> comparator{};
+
+  auto c_comparator = comparator(c_kmer);
+
+  auto ta_comparator = comparator(ta_kmer);
+
+  EXPECT_EQ(ta_comparator, 16) << ta_kmer.to_string();
+  EXPECT_EQ(comparator(gc_kmer), 12);
+  EXPECT_EQ(comparator(at_kmer), 4);
+
+
+  EXPECT_EQ(comparator(c_kmer), 15);
+
+  EXPECT_EQ(comparator(e_kmer), 21);
+}
+
+
+TEST_F(KmerTests, ReverseKey3) {
+  auto ttt_kmer = create_kmer("TTT");
+  auto tt_kmer = create_kmer("TT");
+  auto aaa_kmer = create_kmer("AAA");
+  auto a_kmer = create_kmer("A");
+  auto e_kmer = create_kmer("");
+  KMerReverseKeyExtractor<3> comparator{};
+
+  EXPECT_EQ(comparator(ttt_kmer), 1);
+  EXPECT_EQ(comparator(tt_kmer), 5);
+  EXPECT_EQ(comparator(aaa_kmer), 82);
+
+  EXPECT_EQ(comparator(a_kmer), 84);
+
+  EXPECT_EQ(comparator(e_kmer), 85);
+}

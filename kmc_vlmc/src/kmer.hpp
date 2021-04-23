@@ -243,6 +243,57 @@ template <int MAX_K> struct ReverseKMerComparator {
   }
 };
 
+template <int MAX_K> struct KMerReverseKeyExtractor {
+  typedef uint64 key_type;
+  uint64 upper_bound = (1 - std::pow(4, MAX_K + 1)) / (1 - 4);
+
+  uint64 n_kmers_with_length(uint32_t len) const {
+    return (1 - std::pow(4, len + 1)) / (1 - 4);
+  }
+
+  key_type operator()(const VLMCKmer &a) const {
+    uint64 key = 0;
+
+    for (int i = 0; i < a.length; i++) {
+      int bits = a.extract2bits(a.length - i - 1);
+
+      // Length is reversed - suffixes should count as having only the most
+      // significant digits.
+      int length_from_end = MAX_K - i - 1;
+
+      // For every position we add the number of k-mers with a specific
+      // length that have to come before this one, multiplied by the bit values.
+      // This can be viewed as dividing the space of all MAX_K k-mers
+      // into divisions for every suffix, where every such division at a
+      // specific length is n_kmers_with_length(i) large.  Thus, we need
+      // to find which such division this kmer belongs to.
+      // Plus one so e.g. AT and T don't get same values.
+
+      key += bits * this->n_kmers_with_length(length_from_end) + 1;
+    }
+
+    return upper_bound - key;
+  }
+
+  VLMCKmer min_value() const {
+    VLMCKmer max_kmer(MAX_K, (size_t)-1, {});
+    for (int row = 0; row < max_kmer.n_rows; row++) {
+      max_kmer.kmer_data[row] = 0xFFFFFFFFFFFFFFFF;
+    }
+    return max_kmer;
+  }
+  VLMCKmer max_value() const {
+    std::array<size_t, 4> vec{};
+    return VLMCKmer(0, 0, vec);
+  }
+};
+
+// template <int MAX_K>
+// using kmer_sorter =
+//     stxxl::sorter<VLMCKmer, ReverseKMerComparator<MAX_K>, 128 * 1024 * 1024>;
+
+// template <int MAX_K> using kmer_sorter = stxxl::vector<VLMCKmer>;
+
 template <int MAX_K>
 using kmer_sorter =
     stxxl::sorter<VLMCKmer, ReverseKMerComparator<MAX_K>, 16 * 1024 * 1024>;
