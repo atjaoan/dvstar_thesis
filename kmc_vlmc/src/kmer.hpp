@@ -204,8 +204,10 @@ public:
         uchar val = this->extract2bits(pos);
         new_kmer.kmer_data[row] += (uint64)val << (62 - ((pos & 31) * 2));
       }
-    } else  {
+    } else if (this->kmer_length > 0) {
       new_kmer.kmer_data[0] = this->kmer_data[0] << (this->byte_alignment) * 2;
+    } else {
+      new_kmer.kmer_data[0] = 0;
     }
     return new_kmer;
   }
