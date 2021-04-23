@@ -85,3 +85,5 @@ test_case(support_pruning_tests.cpp)
 test_case(similarity_pruning_tests.cpp)
 test_case(count_correctness_tests.cpp)
 test_case(regression_tests.cpp)
+
+benchmark_case(benchmarks.cpp)
