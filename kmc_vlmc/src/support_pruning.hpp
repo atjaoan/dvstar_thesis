@@ -10,10 +10,11 @@
 #include <kmc_file.h>
 
 #include "kmer.hpp"
+#include "kmer_container.hpp"
 
 template <int kmer_size>
 void output_root(std::vector<size_t> &root_counts,
-                 kmer_sorter<kmer_size> &sorter) {
+                 KmerContainer &sorter) {
   size_t count = std::accumulate(root_counts.begin(), root_counts.end(), 0.0);
   VLMCKmer root{0, count,
                 std::array<size_t, 4>{root_counts[1], root_counts[2],
@@ -26,7 +27,7 @@ void output_root(std::vector<size_t> &root_counts,
 template <int kmer_size>
 void output_node(VLMCKmer &prev_kmer, int diff_pos,
                  std::vector<std::vector<size_t>> &counters,
-                 kmer_sorter<kmer_size> &sorter) {
+                 KmerContainer &sorter) {
   auto &next_counts = counters[diff_pos + 1];
 
   auto prefix_kmer = VLMCKmer::create_prefix_kmer(
@@ -47,7 +48,7 @@ void increase_counts(std::vector<std::vector<size_t>> &counters, size_t count) {
 template <int kmer_size>
 void process_kmer(VLMCKmer &current_kmer, VLMCKmer &prev_kmer,
                   std::vector<std::vector<size_t>> &counters,
-                  kmer_sorter<kmer_size> &sorter,
+                  KmerContainer &sorter,
                   const std::function<bool(int, size_t)> &include_node) {
   // This should check what differs, and output the kmers that
   // don't match this level, with appropriate counters.
@@ -68,7 +69,7 @@ void process_kmer(VLMCKmer &current_kmer, VLMCKmer &prev_kmer,
   // Output kmers, reverse order to get counts right
   for (int i = counters.size() - 2; i >= diff_pos; i--) {
     if (include_node(i + 1, counters[i][0])) {
-      output_node(prev_kmer, i, counters, sorter);
+      output_node<31>(prev_kmer, i, counters, sorter);
     }
 
     // Reset counters for outputted kmer
@@ -81,7 +82,7 @@ void process_kmer(VLMCKmer &current_kmer, VLMCKmer &prev_kmer,
 }
 
 template <int kmer_size>
-void support_pruning(CKMCFile &kmer_database, kmer_sorter<kmer_size> &sorter, int actual_kmer_size, const std::function<bool(int, size_t)> &include_node) {
+void support_pruning(CKMCFile &kmer_database, KmerContainer &sorter, int actual_kmer_size, const std::function<bool(int, size_t)> &include_node) {
   VLMCTranslator kmer_api(actual_kmer_size);
   VLMCKmer kmer(actual_kmer_size, 0, {});
 
@@ -101,7 +102,7 @@ void support_pruning(CKMCFile &kmer_database, kmer_sorter<kmer_size> &sorter, in
   while (kmer_database.ReadNextKmer(kmer_api, counter)) {
     kmer = kmer_api.construct_vlmc_kmer();
     kmer.count = counter;
-    process_kmer(kmer, prev_kmer, counters, sorter, include_node);
+    process_kmer<31>(kmer, prev_kmer, counters, sorter, include_node);
 
     prev_kmer = std::move(kmer);
   }
@@ -109,7 +110,7 @@ void support_pruning(CKMCFile &kmer_database, kmer_sorter<kmer_size> &sorter, in
   api_epsilon.from_string("A");
   VLMCKmer epsilon = api_epsilon.construct_vlmc_kmer();
   epsilon.count = 0;
-  process_kmer(epsilon, prev_kmer, counters, sorter, include_node);
+  process_kmer<31>(epsilon, prev_kmer, counters, sorter, include_node);
 
-  output_root(counters[0], sorter);
+  output_root<31>(counters[0], sorter);
 }

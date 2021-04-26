@@ -289,13 +289,3 @@ template <int MAX_K> struct KMerReverseKeyExtractor {
     return VLMCKmer(0, 0, vec);
   }
 };
-
-// template <int MAX_K>
-// using kmer_sorter =
-//     stxxl::sorter<VLMCKmer, ReverseKMerComparator<MAX_K>, 128 * 1024 * 1024>;
-
-// template <int MAX_K> using kmer_sorter = stxxl::vector<VLMCKmer>;
-
-template <int MAX_K>
-using kmer_sorter =
-    stxxl::sorter<VLMCKmer, ReverseKMerComparator<MAX_K>, 16 * 1024 * 1024>;

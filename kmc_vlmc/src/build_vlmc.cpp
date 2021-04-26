@@ -1,4 +1,5 @@
 #include <chrono>
+#include <execution>
 #include <filesystem>
 #include <iostream>
 #include <string>
@@ -10,6 +11,7 @@
 #include "CLI/Formatter.hpp"
 
 #include "kmer.hpp"
+#include "kmer_container.hpp"
 #include "similarity_pruning.hpp"
 #include "support_pruning.hpp"
 
@@ -18,9 +20,10 @@ struct cli_arguments {
   int min_count = 10;
   int max_depth = 15;
   double threshold = 3.9075;
+  std::string in_or_out_of_core{"internal"};
 };
 
-std::string run_kmc(std::string fasta_path, const int kmer_size) {
+std::string run_kmc(std::string &fasta_path, const int kmer_size) {
   std::string kmc_db_name{"res"};
   std::string kmc_tmp{"tmp"};
 
@@ -50,6 +53,10 @@ int main(int argc, char *argv[]) {
                  "Kullback-Leibler threshold.");
   app.add_option("-d,--max-depth", arguments.max_depth,
                  "Maximum depth for included k-mers.");
+  app.add_option(
+      "-m, --in-or-out-of-core", arguments.in_or_out_of_core,
+      "Specify 'internal' for in-core or 'external for out-of-core memory "
+      "model.  Out of core is slower, but is not memory bound. ");
 
   try {
     app.parse(argc, argv);
@@ -73,21 +80,40 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  // second parameter is RAM to use, should be parameter.
-  kmer_sorter<31> sorter{ReverseKMerComparator<31>(), 128 * 1024 * 1024};
+  KmerContainer *container;
+  OutOfCoreKmerContainer out_of_core_container{};
+  InCoreKmerContainer in_core_container{};
+
+  std::cout << arguments.in_or_out_of_core << std::endl;
+  if (arguments.in_or_out_of_core == "external") {
+    container = &out_of_core_container;
+  } else if (arguments.in_or_out_of_core == "internal") {
+    container = &in_core_container;
+  } else {
+    std::cout << "parameter --out-or-in-of-core not 'internal' or 'external'"
+              << std::endl;
+    return EXIT_FAILURE;
+  }
 
   auto include_node = [&](int length, size_t count) -> bool {
     return length <= arguments.max_depth && count >= arguments.min_count;
   };
 
   auto support_pruning_start = std::chrono::steady_clock::now();
-  support_pruning(kmer_database, sorter, kmer_size, include_node);
+  support_pruning<31>(kmer_database, *container, kmer_size, include_node);
   auto support_pruning_done = std::chrono::steady_clock::now();
 
   kmer_database.Close();
 
   auto sorting_start = std::chrono::steady_clock::now();
-  sorter.sort();
+  (*container).sort();
+
+  //  sorter.sort();
+  //  std::sort(std::execution::par, sorter.begin(), sorter.end(),
+  //  ReverseKMerComparator<31>()); stxxl::ksort(sorter.begin(), sorter.end(),
+  //  KMerReverseKeyExtractor<13>(), 1024*1024*1024);
+  //  stxxl::sort(sorter.begin(), sorter.end(), ReverseKMerComparator<31>(),
+  //  1024*1024*1024);
   auto sorting_done = std::chrono::steady_clock::now();
 
   std::filesystem::path path{"out.txt"};
@@ -98,7 +124,7 @@ int main(int argc, char *argv[]) {
   };
 
   auto similarity_pruning_start = std::chrono::steady_clock::now();
-  similarity_pruning(sorter, ofs, keep_node);
+  similarity_pruning<31>(*container, ofs, keep_node);
   auto similarity_pruning_done = std::chrono::steady_clock::now();
 
   ofs.close();

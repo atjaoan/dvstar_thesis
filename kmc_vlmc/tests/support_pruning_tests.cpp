@@ -24,7 +24,7 @@ protected:
   int alphabet_size = 4;
 
   std::vector<std::vector<size_t>> counters;
-  kmer_sorter<5> sorter{ReverseKMerComparator<5>(), 64 * 1024 * 1024};
+  OutOfCoreKmerContainer sorter{};
 
   const std::function<bool(int, size_t)> include_node =
       [](int length, size_t count) -> bool { return true; };
@@ -38,7 +38,7 @@ TEST_F(SupportPruningTests, ProcessKMerOneDiff) {
   auto next_kmer = create_kmer("AAAAT");
   next_kmer.count = 5;
 
-  process_kmer(next_kmer, kmer, counters, sorter);
+  process_kmer<5>(next_kmer, kmer, counters, sorter, include_node);
 
   EXPECT_EQ(counters[4][2], kmer.count);
 
@@ -58,7 +58,7 @@ TEST_F(SupportPruningTests, ProcessKMerBigDiff) {
   auto next_kmer = create_kmer("CAAAA");
   next_kmer.count = 5;
 
-  process_kmer(next_kmer, kmer, counters, sorter);
+  process_kmer<5>(next_kmer, kmer, counters, sorter, include_node);
 
   EXPECT_EQ(counters[0][1], 20);
   EXPECT_EQ(counters[1][4], 0);
@@ -85,10 +85,7 @@ TEST_F(SupportPruningTests, SortAll4Mers) {
   sorter.sort();
 
   std::vector<VLMCKmer> stxxl_sorted_kmers{};
-  while (!sorter.empty()) {
-    stxxl_sorted_kmers.push_back(*sorter);
-    ++sorter;
-  }
+  sorter.for_each([&](VLMCKmer &kmer) { stxxl_sorted_kmers.push_back(kmer); });
 
   std::sort(kmers.begin(), kmers.end(), ReverseKMerComparator<10>());
 
@@ -109,7 +106,8 @@ TEST_F(SupportPruningTests, PrefixSortTest) {
 
   std::cout << "input" << std::endl;
   for (int j = 1; j < start_kmers.size(); j++) {
-    process_kmer(start_kmers[j], start_kmers[j - 1], counters, sorter);
+    process_kmer<5>(start_kmers[j], start_kmers[j - 1], counters, sorter,
+                 include_node);
   }
 
   sorter.sort();
@@ -119,10 +117,8 @@ TEST_F(SupportPruningTests, PrefixSortTest) {
 
   std::cout << "output" << std::endl;
   int i = 0;
-  while (!sorter.empty()) {
-    VLMCKmer kmer = *sorter;
+  sorter.for_each([&](VLMCKmer &kmer) {
     EXPECT_EQ(kmer.to_string(), sorted_kmers[i]);
     ++i;
-    ++sorter;
-  }
+  });
 }

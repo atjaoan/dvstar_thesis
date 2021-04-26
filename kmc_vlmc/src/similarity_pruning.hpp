@@ -6,6 +6,7 @@
 #include <numeric>
 
 #include "kmer.hpp"
+#include "kmer_container.hpp"
 
 // Need to keep track of which kmers have children, as those with children
 // can't be removed.
@@ -20,10 +21,10 @@ std::array<double, 4> get_next_symbol_probabilities(VLMCKmer &node) {
   double sum = std::accumulate(node.next_symbol_counts.begin(),
                                node.next_symbol_counts.end(), 4.0);
 
-  return {(node.next_symbol_counts[0] + 1) / sum,
-          (node.next_symbol_counts[1] + 1) / sum,
-          (node.next_symbol_counts[2] + 1) / sum,
-          (node.next_symbol_counts[3] + 1) / sum};
+  return {double(node.next_symbol_counts[0] + 1) / sum,
+          double(node.next_symbol_counts[1] + 1) / sum,
+          double(node.next_symbol_counts[2] + 1) / sum,
+          double(node.next_symbol_counts[3] + 1) / sum};
 }
 
 double kl_divergence(VLMCKmer &child, VLMCKmer &parent) {
@@ -113,15 +114,14 @@ void similarity_prune(VLMCKmer &prev_kmer, VLMCKmer &kmer,
 }
 
 template <int kmer_size>
-void similarity_pruning(kmer_sorter<kmer_size> &sorter, std::ostream &stream, const std::function<bool(double)> &remove_node) {
+void similarity_pruning(KmerContainer &container, std::ostream &stream, const std::function<bool(double)> &remove_node) {
 
   std::vector<std::array<PstKmer, 4>> kmers_per_level(kmer_size + 1);
 
-  VLMCKmer kmer;
   VLMCTranslator kmer_api(kmer_size);
   VLMCKmer prev_kmer = kmer_api.construct_vlmc_kmer();
 
-  // Example sorter output:
+  // Example container output:
   // TTTTTTTT
   // TTTTTTTG
   // TTTTTTTC
@@ -129,12 +129,10 @@ void similarity_pruning(kmer_sorter<kmer_size> &sorter, std::ostream &stream, co
   // TTTTTTT
   // TTTTTTGT
 
-  while (!sorter.empty()) {
-    kmer = *sorter;
-
+  container.for_each([&](VLMCKmer &kmer) {
     similarity_prune(prev_kmer, kmer, kmers_per_level, stream, remove_node);
 
     prev_kmer = kmer;
-    ++sorter;
-  }
+  });
+
 }

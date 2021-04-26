@@ -110,7 +110,7 @@ BENCHMARK_F(KmerVLMCBenchmarks, WriteToSorter)
   kmer_translator.from_string("ACTGACTGACTG");
   VLMCKmer kmer_from = kmer_translator.construct_vlmc_kmer();
 
-  kmer_sorter<31> sorter{ReverseKMerComparator<31>(), 128 * 1024 * 1024};
+  OutOfCoreKmerContainer sorter{};
 
   size_t sum = 0.0;
   for (auto _ : state) {
@@ -125,14 +125,29 @@ BENCHMARK_F(KmerVLMCBenchmarks, OnlyKMCIteration)(benchmark::State &state) {
   }
 }
 
-BENCHMARK_F(KmerVLMCBenchmarks, SupportPruning)
+BENCHMARK_F(KmerVLMCBenchmarks, SupportPruningOutOfCore)
 (benchmark::State &state) {
-  kmer_sorter<31> sorter{ReverseKMerComparator<31>(), 128 * 1024 * 1024};
+  OutOfCoreKmerContainer sorter{};
 
   size_t sum = 0.0;
   for (auto _ : state) {
-    support_pruning(kmer_database, sorter, 12,
-                    [](int length, size_t count) -> bool { return true; });
+    support_pruning<12>(kmer_database, sorter, 12,
+                        [](int length, size_t count) -> bool { return true; });
+
+    state.PauseTiming();
+    kmer_database.RestartListing();
+    state.ResumeTiming();
+  }
+}
+
+BENCHMARK_F(KmerVLMCBenchmarks, SupportPruningInCore)
+(benchmark::State &state) {
+  InCoreKmerContainer sorter{};
+
+  size_t sum = 0.0;
+  for (auto _ : state) {
+    support_pruning<12>(kmer_database, sorter, 12,
+                        [](int length, size_t count) -> bool { return true; });
 
     state.PauseTiming();
     kmer_database.RestartListing();
