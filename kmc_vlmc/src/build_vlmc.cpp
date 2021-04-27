@@ -10,22 +10,25 @@
 #include "CLI/Config.hpp"
 #include "CLI/Formatter.hpp"
 
-#include "kmer.hpp"
 #include "kmer_container.hpp"
 #include "similarity_pruning.hpp"
 #include "support_pruning.hpp"
 
 struct cli_arguments {
   std::string fasta_path;
+  std::filesystem::path tmp_path = std::filesystem::temp_directory_path() / "kmc-vlmc";
+  std::filesystem::path out_path{};
   int min_count = 10;
   int max_depth = 15;
   double threshold = 3.9075;
   std::string in_or_out_of_core{"internal"};
 };
 
-std::string run_kmc(std::string &fasta_path, const int kmer_size) {
-  std::string kmc_db_name{"res"};
-  std::string kmc_tmp{"tmp"};
+std::filesystem::path run_kmc(std::string &fasta_path, const int kmer_size, const std::filesystem::path &tmp_path)  {
+  std::string tmp_name = std::tmpnam(nullptr);
+
+  std::filesystem::path kmc_db_name = tmp_path / (tmp_name + "res");
+  std::filesystem::path kmc_tmp = tmp_path / (tmp_name + "tmp");
 
   std::ostringstream stringStream;
   stringStream << "./kmc -b -ci1 -cs4294967295 ";
@@ -47,6 +50,9 @@ int main(int argc, char *argv[]) {
 
   app.add_option("-p,--fasta-path", arguments.fasta_path, "Path to fasta file.")
       ->required();
+  app.add_option("-t,--temp-path", arguments.tmp_path, "Path to temporary folder for intermediate outputs.");
+  app.add_option("-o,--out-path", arguments.out_path, "Path to output file.  If no file is given, writes result to standard out.");
+
   app.add_option("-c,--min-count", arguments.min_count,
                  "Minimum count required for every k-mer in the tree.");
   app.add_option("-k,--threshold", arguments.threshold,
@@ -64,11 +70,13 @@ int main(int argc, char *argv[]) {
     return app.exit(e);
   }
 
+  std::filesystem::create_directories(arguments.tmp_path);
+
   auto start = std::chrono::steady_clock::now();
 
   const int kmer_size = arguments.max_depth + 1;
 
-  auto kmc_db_name = run_kmc(arguments.fasta_path, kmer_size);
+  auto kmc_db_name = run_kmc(arguments.fasta_path, kmer_size, arguments.tmp_path);
 
   auto kmc_done = std::chrono::steady_clock::now();
 
@@ -107,27 +115,30 @@ int main(int argc, char *argv[]) {
 
   auto sorting_start = std::chrono::steady_clock::now();
   (*container).sort();
-
-  //  sorter.sort();
-  //  std::sort(std::execution::par, sorter.begin(), sorter.end(),
-  //  ReverseKMerComparator<31>()); stxxl::ksort(sorter.begin(), sorter.end(),
-  //  KMerReverseKeyExtractor<13>(), 1024*1024*1024);
-  //  stxxl::sort(sorter.begin(), sorter.end(), ReverseKMerComparator<31>(),
-  //  1024*1024*1024);
   auto sorting_done = std::chrono::steady_clock::now();
 
-  std::filesystem::path path{"out.txt"};
-  std::ofstream ofs(path);
+
+  std::filesystem::path path = std::filesystem::path(arguments.fasta_path).stem();
+  path += ".txt";
+
+  std::ostream *ofs = &std::cout;
+  std::ofstream file_stream(arguments.out_path);
+
+  if (!arguments.out_path.empty()) {
+    ofs = &file_stream;
+  }
 
   auto keep_node = [&](double delta) -> bool {
     return delta <= arguments.threshold;
   };
 
   auto similarity_pruning_start = std::chrono::steady_clock::now();
-  similarity_pruning<31>(*container, ofs, keep_node);
+  similarity_pruning<31>(*container, *ofs, keep_node);
   auto similarity_pruning_done = std::chrono::steady_clock::now();
 
-  ofs.close();
+  if (!arguments.out_path.empty()) {
+    file_stream.close();
+  }
 
   std::chrono::duration<double> total_seconds = similarity_pruning_done - start;
   std::cout << "Total time: " << total_seconds.count() << "s\n";
@@ -146,6 +157,8 @@ int main(int argc, char *argv[]) {
       similarity_pruning_done - sorting_done;
   std::cout << "Similarity pruning time: " << similarity_seconds.count()
             << "s\n";
+
+  std::filesystem::remove_all(arguments.tmp_path);
 
   return EXIT_SUCCESS;
 }
