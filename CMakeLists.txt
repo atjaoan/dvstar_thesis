@@ -31,6 +31,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ltbb -fopenmp")
 # CLI11 for command line interface
 add_subdirectory(CLI11)
 
+# Cereal for serialisation
+include_directories(cereal/include)
+
 add_executable(build_vlmc kmc_vlmc/src/build_vlmc.cpp)
 target_link_libraries(build_vlmc Threads::Threads)
 target_link_libraries(build_vlmc kmc_file kmer_api mmer)
