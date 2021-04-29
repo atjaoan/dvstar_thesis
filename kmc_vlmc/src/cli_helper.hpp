@@ -9,13 +9,42 @@
 struct cli_arguments {
   std::string mode{"build"};
   std::filesystem::path in_path;
-  std::filesystem::path tmp_path{};
+  std::filesystem::path tmp_path{"./tmp"};
   std::filesystem::path out_path{};
   int min_count = 10;
   int max_depth = 15;
   double threshold = 3.9075;
   std::string in_or_out_of_core{"internal"};
 };
+
+void add_options(CLI::App &app, cli_arguments &arguments) {
+  app.add_option("-m,--mode", arguments.mode,
+                 "Program mode, 'build', 'dump', or 'score'.");
+
+  app.add_option("-p,--in-path", arguments.in_path, "Path to fasta file.")
+      ->required();
+  app.add_option("-o,--out-path", arguments.out_path,
+                 "Path to output file.  The VLMCs are stored as binary, and "
+                 "can be read by the 'dump' or 'score' modes.")
+      ->required();
+
+  app.add_option("-t,--temp-path", arguments.tmp_path,
+                 "Path to temporary folder for the external memory algorithms. "
+                 " For good performance, this needs to be on a local machine.  "
+                 "For sorting, at least 2GB will be allocated to this path.  Defaults to ./tmp");
+
+  app.add_option("-c,--min-count", arguments.min_count,
+                 "Minimum count required for every k-mer in the tree.");
+  app.add_option("-k,--threshold", arguments.threshold,
+                 "Kullback-Leibler threshold.");
+  app.add_option("-d,--max-depth", arguments.max_depth,
+                 "Maximum depth for included k-mers.");
+
+  app.add_option(
+      "-i, --in-or-out-of-core", arguments.in_or_out_of_core,
+      "Specify 'internal' for in-core or 'external for out-of-core memory "
+      "model.  Out of core is slower, but is not memory bound. ");
+}
 
 std::random_device rd;
 std::mt19937 gen = std::mt19937{rd()};

@@ -38,34 +38,25 @@ std::filesystem::path run_kmc(std::filesystem::path &in_path,
   return kmc_db_name;
 }
 
+void configure_stxxl(const std::filesystem::path &tmp_path) {
+  std::string random_name = get_random_name("stxxl");
+  // get uninitialized config singleton
+  stxxl::config *cfg = stxxl::config::get_instance();
+  std::filesystem::path stxxl_disk_path = tmp_path / random_name;
+  // create a disk_config structure.
+  stxxl::disk_config disk1(stxxl_disk_path, 2000 * 1024 * 1024,
+                           "syscall unlink");
+  disk1.direct = stxxl::disk_config::DIRECT_ON; // force O_DIRECT
+
+  cfg->add_disk(disk1);
+}
+
 int main(int argc, char *argv[]) {
   CLI::App app{"Variable-length Markov chain construction construction using "
                "k-mer counter."};
 
   cli_arguments arguments{};
-
-  app.add_option("-m,--mode", arguments.mode,
-                 "Program mode, 'build', 'dump', or 'score'.");
-
-  app.add_option("-p,--in-path", arguments.in_path, "Path to fasta file.")
-      ->required();
-  app.add_option("-t,--temp-path", arguments.tmp_path,
-                 "Path to temporary folder for intermediate outputs.");
-  app.add_option("-o,--out-path", arguments.out_path,
-                 "Path to output file.  If no file is given, writes result to "
-                 "standard out.");
-
-  app.add_option("-c,--min-count", arguments.min_count,
-                 "Minimum count required for every k-mer in the tree.");
-  app.add_option("-k,--threshold", arguments.threshold,
-                 "Kullback-Leibler threshold.");
-  app.add_option("-d,--max-depth", arguments.max_depth,
-                 "Maximum depth for included k-mers.");
-
-  app.add_option(
-      "-i, --in-or-out-of-core", arguments.in_or_out_of_core,
-      "Specify 'internal' for in-core or 'external for out-of-core memory "
-      "model.  Out of core is slower, but is not memory bound. ");
+  add_options(app, arguments);
 
   try {
     app.parse(argc, argv);
@@ -75,6 +66,7 @@ int main(int argc, char *argv[]) {
 
   if (arguments.mode == "build") {
     std::filesystem::create_directories(arguments.tmp_path);
+    configure_stxxl(arguments.tmp_path);
 
     auto start = std::chrono::steady_clock::now();
 
