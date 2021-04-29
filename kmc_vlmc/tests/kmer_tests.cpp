@@ -4,12 +4,17 @@
 
 #include <kmc_file.h>
 
+#include <cereal/archives/binary.hpp>
+#include <cereal/archives/json.hpp>
+#include <cereal/cereal.hpp>
+
+
 class KmerTests : public ::testing::Test {
 protected:
   void SetUp() override {}
   VLMCKmer create_kmer(std::string kmer_string) {
     VLMCTranslator kmer{static_cast<int>(kmer_string.size())};
-    if (kmer_string.size() > 0) {
+    if (!kmer_string.empty()) {
       kmer.from_string(kmer_string);
     }
 
@@ -117,7 +122,7 @@ TEST_F(KmerTests, CreatePrefixKmerOdd) {
 }
 
 TEST_F(KmerTests, CreatePrefixKmerLong) {
-  std::string kmer_string{"TACTAGCTACGATCATTACTAGCTACGATCATTACTAGCTACGAT"};
+  std::string kmer_string{"TACTAGCTACGATCATTACTAGCTACGATCATTACTAG"};
   auto current_kmer = create_kmer(kmer_string);
 
   check_prefixes(current_kmer, kmer_string);
@@ -252,4 +257,11 @@ TEST_F(KmerTests, ReverseKey3) {
   EXPECT_EQ(comparator(a_kmer), 84);
 
   EXPECT_EQ(comparator(e_kmer), 85);
+}
+
+TEST_F(KmerTests, CerealSerialisable) {
+  auto n_serializers = cereal::traits::detail::count_output_serializers<VLMCKmer, cereal::BinaryOutputArchive>::value;
+  auto is_serializable = cereal::traits::is_output_serializable<std::vector<uint64>, cereal::BinaryOutputArchive>::value;
+  EXPECT_TRUE(is_serializable);
+  EXPECT_NE(n_serializers, 0);
 }

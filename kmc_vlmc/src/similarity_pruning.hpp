@@ -53,7 +53,7 @@ void reset_children(VLMCKmer &kmer,
 
 bool process_parent(VLMCKmer &prev_kmer, VLMCKmer &kmer,
                     std::vector<std::array<PstKmer, 4>> &kmers_per_level,
-                    std::ostream &stream,
+                    cereal::BinaryOutputArchive &oarchive,
                     const std::function<bool(double)> &remove_node) {
   auto &children = kmers_per_level[prev_kmer.length];
 
@@ -68,7 +68,7 @@ bool process_parent(VLMCKmer &prev_kmer, VLMCKmer &kmer,
     if (has_children) {
       // Can't remove nodes with children.
       child.divergence = -1.0;
-      child.output(stream);
+      oarchive(child);
       continue;
     }
 
@@ -80,7 +80,7 @@ bool process_parent(VLMCKmer &prev_kmer, VLMCKmer &kmer,
 //      child.output(stream);
     } else {
       child.divergence = divergence;
-      child.output(stream);
+      oarchive(child);
     }
   }
 
@@ -92,12 +92,12 @@ bool process_parent(VLMCKmer &prev_kmer, VLMCKmer &kmer,
 
 void similarity_prune(VLMCKmer &prev_kmer, VLMCKmer &kmer,
                       std::vector<std::array<PstKmer, 4>> &kmers_per_level,
-                      std::ostream &stream, const std::function<bool(double)> &remove_node) {
+                      cereal::BinaryOutputArchive &oarchive, const std::function<bool(double)> &remove_node) {
   bool has_children = true;
 
   if (prev_kmer.length > kmer.length) {
     // Has different length, kmer must be parent of the previous nodes
-    has_children = process_parent(prev_kmer, kmer, kmers_per_level, stream, remove_node);
+    has_children = process_parent(prev_kmer, kmer, kmers_per_level, oarchive, remove_node);
   } else {
     // Has same length, or shorter so the kmers have to be children
     // of the same node, or the first kmer in a new set of children.
@@ -106,7 +106,7 @@ void similarity_prune(VLMCKmer &prev_kmer, VLMCKmer &kmer,
 
   if (kmer.length == 0) {
     // Root node, should be the last node, and always outputted.
-    kmer.output(stream);
+    oarchive(kmer);
   } else {
     auto start_char_pos = kmer.char_pos(0);
     kmers_per_level[kmer.length][start_char_pos] = {kmer, has_children, true};
@@ -114,7 +114,7 @@ void similarity_prune(VLMCKmer &prev_kmer, VLMCKmer &kmer,
 }
 
 template <int kmer_size>
-void similarity_pruning(KmerContainer &container, std::ostream &stream, const std::function<bool(double)> &remove_node) {
+void similarity_pruning(KmerContainer &container, cereal::BinaryOutputArchive &oarchive, const std::function<bool(double)> &remove_node) {
 
   std::vector<std::array<PstKmer, 4>> kmers_per_level(kmer_size + 1);
 
@@ -130,7 +130,7 @@ void similarity_pruning(KmerContainer &container, std::ostream &stream, const st
   // TTTTTTGT
 
   container.for_each([&](VLMCKmer &kmer) {
-    similarity_prune(prev_kmer, kmer, kmers_per_level, stream, remove_node);
+    similarity_prune(prev_kmer, kmer, kmers_per_level, oarchive, remove_node);
 
     prev_kmer = kmer;
   });

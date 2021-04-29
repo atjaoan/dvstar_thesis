@@ -3,6 +3,8 @@
 #include <execution>
 #include <functional>
 
+#include <stxxl/sorter>
+
 #include "kmer.hpp"
 
 // template <int MAX_K>

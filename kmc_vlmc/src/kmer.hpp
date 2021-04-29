@@ -5,13 +5,12 @@
 #include <array>
 #include <bitset>
 
-#include <stxxl/sorter>
+#include <cereal/cereal.hpp>
 
 // For stxxl, this class needs to be POD
 // Otherwise, borrows implementations from KMCs CKmerApi,
 // but disregards the byte alignment.
-class VLMCKmer {
-public:
+struct VLMCKmer {
   VLMCKmer() = default;
   VLMCKmer(uint32 length_, size_t count_,
            std::array<size_t, 4> next_symbol_counts_)
@@ -50,6 +49,13 @@ public:
     }
 
     return prefix_kmer;
+  }
+
+  // This method lets cereal know which data members to serialize
+  template <class Archive> void serialize(Archive &archive) {
+    archive(kmer_data[0], kmer_data[1], length, n_rows, count,
+            next_symbol_counts[0], next_symbol_counts[1], next_symbol_counts[2],
+            next_symbol_counts[3], divergence);
   }
 
   static int get_first_differing_position(VLMCKmer &current_kmer,
@@ -181,8 +187,6 @@ public:
     }
     stream << divergence << std::endl;
   }
-
-protected:
 };
 
 class VLMCTranslator : public CKmerAPI {
