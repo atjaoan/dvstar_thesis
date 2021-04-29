@@ -27,7 +27,7 @@ std::filesystem::path run_kmc(std::filesystem::path &in_path,
   std::filesystem::path kmc_tmp = tmp_path / (random_name + "_tmp");
 
   std::ostringstream stringStream;
-  stringStream << "./kmc -b -ci1 -cs4294967295 ";
+  stringStream << "./kmc -b -ci2 -cs4294967295 ";
   stringStream << "-k" << kmer_size << " ";
   stringStream << "-fm " << in_path << " ";
   stringStream << kmc_db_name << " " << kmc_tmp;

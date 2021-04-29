@@ -68,7 +68,8 @@ void process_kmer(VLMCKmer &current_kmer, VLMCKmer &prev_kmer,
 
   // Output kmers, reverse order to get counts right
   for (int i = counters.size() - 2; i >= diff_pos; i--) {
-    if (include_node(i + 1, counters[i][0])) {
+    // For pseudo-counts, add 4 to counter
+    if (include_node(i + 1, counters[i][0] + 4)) {
       output_node<31>(prev_kmer, i, counters, sorter);
     }
 
