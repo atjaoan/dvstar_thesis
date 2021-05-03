@@ -4,21 +4,13 @@
 
 #include <kmc_file.h>
 
+#include "read_helper.hpp"
+
 class SupportPruningTests : public ::testing::Test {
 protected:
   void SetUp() override {
     counters = std::vector<std::vector<size_t>>(
         7, std::vector<size_t>(alphabet_size + 1));
-  }
-  VLMCKmer create_kmer(std::string kmer_string) {
-    VLMCTranslator kmer{static_cast<int>(kmer_string.size())};
-    if (kmer_string.size() > 0) {
-      kmer.from_string(kmer_string);
-    }
-    VLMCKmer kmer_ = kmer.construct_vlmc_kmer();
-    kmer_.count = 10;
-
-    return kmer_;
   }
 
   int alphabet_size = 4;

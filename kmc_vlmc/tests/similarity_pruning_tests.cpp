@@ -3,6 +3,7 @@
 #include "../src/kmer.hpp"
 #include "../src/similarity_pruning.hpp"
 
+#include <cereal/archives/binary.hpp>
 #include <kmc_file.h>
 
 #include "read_helper.hpp"
@@ -12,21 +13,12 @@ protected:
   void SetUp() override {
     kmers_per_level = std::vector<std::array<PstKmer, 4>>(7);
   }
-  VLMCKmer create_kmer(std::string kmer_string) {
-    VLMCTranslator kmer{static_cast<int>(kmer_string.size())};
-    if (kmer_string.size() > 0) {
-      kmer.from_string(kmer_string);
-    }
-
-    return kmer.construct_vlmc_kmer();
-  }
 
   std::vector<std::array<PstKmer, 4>> kmers_per_level;
 
   std::function<bool(double)> keep_node = [](double delta) -> bool {
     return delta <= 3.9075;
   };
-
 };
 
 TEST_F(SimilarityPruningTests, KullbackLiebler) {
@@ -57,7 +49,10 @@ TEST_F(SimilarityPruningTests, SimilarityPruneSameLevel) {
   auto prev_kmer = create_kmer("TTTTTT");
   auto kmer = create_kmer("ATTTTT");
 
-  similarity_prune(prev_kmer, kmer, kmers_per_level, std::cout, keep_node);
+  std::ofstream file_stream("test_tmp.bin", std::ios::binary);
+  cereal::BinaryOutputArchive oarchive(file_stream);
+
+  similarity_prune(prev_kmer, kmer, kmers_per_level, oarchive, keep_node);
 
   ASSERT_TRUE(kmers_per_level[6][0].real_child);
   EXPECT_EQ(kmers_per_level[6][0].kmer.to_string(), "ATTTTT");
@@ -91,24 +86,41 @@ TEST_F(SimilarityPruningTests, SimilarityPruneParent) {
 
   std::stringstream out;
 
-  bool has_children = process_parent(a_kmer, kmer, kmers_per_level, out, keep_node);
+  {
+    std::ofstream file_stream("test_tmp.bin", std::ios::binary);
+    cereal::BinaryOutputArchive oarchive(file_stream);
 
-  EXPECT_TRUE(has_children);
+    bool has_children =
+        process_parent(a_kmer, kmer, kmers_per_level, oarchive, keep_node);
+
+    EXPECT_TRUE(has_children);
+  }
 
   EXPECT_EQ(kmers_per_level[6][0].real_child, false);
   EXPECT_EQ(kmers_per_level[6][1].real_child, false);
   EXPECT_EQ(kmers_per_level[6][2].real_child, false);
   EXPECT_EQ(kmers_per_level[6][3].real_child, false);
 
-  std::string out_string = out.str();
-  std::istringstream stream{out_string};
-  for (std::string line; std::getline(stream, line);) {
-    auto [kmer, count, next_symbol_counts] = read_line(line);
-    EXPECT_EQ(kmer, "TTTTTT");
-    EXPECT_EQ(count, t_kmer.count);
-    EXPECT_EQ(next_symbol_counts[0], 0);
-    EXPECT_EQ(next_symbol_counts[1], 1);
-    EXPECT_EQ(next_symbol_counts[2], 0);
-    EXPECT_EQ(next_symbol_counts[3], 0);
+  {
+
+    std::ifstream file_stream("test_tmp.bin", std::ios::binary);
+    cereal::BinaryInputArchive iarchive(file_stream);
+
+    VLMCKmer kmer{};
+
+    while (file_stream.peek() != EOF) {
+      try {
+        iarchive(kmer);
+
+        EXPECT_EQ(kmer.to_string(), "TTTTTT");
+        EXPECT_EQ(kmer.count, t_kmer.count);
+        EXPECT_EQ(kmer.next_symbol_counts[0], 0);
+        EXPECT_EQ(kmer.next_symbol_counts[1], 1);
+        EXPECT_EQ(kmer.next_symbol_counts[2], 0);
+        EXPECT_EQ(kmer.next_symbol_counts[3], 0);
+      } catch (const cereal::Exception &e) {
+        EXPECT_TRUE(file_stream.peek() == EOF);
+      }
+    }
   }
 }

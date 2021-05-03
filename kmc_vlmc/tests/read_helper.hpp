@@ -1,5 +1,14 @@
 #pragma once
 
+VLMCKmer create_kmer(const std::string &kmer_string) {
+  VLMCTranslator kmer{static_cast<int>(kmer_string.size())};
+  if (!kmer_string.empty()) {
+    kmer.from_string(kmer_string);
+  }
+
+  return kmer.construct_vlmc_kmer();
+}
+
 std::tuple<std::string, size_t, std::array<size_t, 4>>
 read_line(std::string &line) {
   std::istringstream input(line);

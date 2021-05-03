@@ -156,7 +156,6 @@ int main(int argc, char *argv[]) {
 
     VLMCKmer kmer{};
 
-    bool data_left_to_read;
     while (file_stream.peek() != EOF) {
       try {
         iarchive(kmer);

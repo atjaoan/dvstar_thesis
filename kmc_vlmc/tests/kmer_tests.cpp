@@ -8,18 +8,11 @@
 #include <cereal/archives/json.hpp>
 #include <cereal/cereal.hpp>
 
+#include "read_helper.hpp"
 
 class KmerTests : public ::testing::Test {
 protected:
   void SetUp() override {}
-  VLMCKmer create_kmer(std::string kmer_string) {
-    VLMCTranslator kmer{static_cast<int>(kmer_string.size())};
-    if (!kmer_string.empty()) {
-      kmer.from_string(kmer_string);
-    }
-
-    return kmer.construct_vlmc_kmer();
-  }
 
   VLMCKmer current_kmer{15, 0, {}};
   VLMCKmer prev_kmer{15, 0, {}};
