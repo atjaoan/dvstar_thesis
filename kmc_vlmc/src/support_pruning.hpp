@@ -3,31 +3,30 @@
 #include <bitset>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <string>
-#include <functional>
 
 #include <kmc_file.h>
 
 #include "kmer.hpp"
 #include "kmer_container.hpp"
+#include "kmers_per_level.hpp"
 
 template <int kmer_size>
-void output_root(std::vector<size_t> &root_counts,
-                 KmerContainer &sorter) {
+void output_root(std::vector<size_t> &root_counts, KmerContainer<> &sorter) {
   size_t count = std::accumulate(root_counts.begin(), root_counts.end(), 0.0);
   VLMCKmer root{0, count,
                 std::array<size_t, 4>{root_counts[1], root_counts[2],
                                       root_counts[3], root_counts[4]}};
 
-//  root.output(std::cout);
+  //  root.output(std::cout);
   sorter.push(root);
 }
 
 template <int kmer_size>
 void output_node(VLMCKmer &prev_kmer, int diff_pos,
-                 std::vector<std::vector<size_t>> &counters,
-                 KmerContainer &sorter) {
+                 KMersPerLevel<size_t> &counters, KmerContainer<> &sorter) {
   auto &next_counts = counters[diff_pos + 1];
 
   auto prefix_kmer = VLMCKmer::create_prefix_kmer(
@@ -35,11 +34,11 @@ void output_node(VLMCKmer &prev_kmer, int diff_pos,
       std::array<size_t, 4>{next_counts[1], next_counts[2], next_counts[3],
                             next_counts[4]});
 
-//  prefix_kmer.output(std::cout);
+  //  prefix_kmer.output(std::cout);
   sorter.push(prefix_kmer);
 }
 
-void increase_counts(std::vector<std::vector<size_t>> &counters, size_t count) {
+void increase_counts(KMersPerLevel<size_t> &counters, size_t count) {
   for (int i = 0; i < counters.size(); i++) {
     counters[i][0] += count;
   }
@@ -47,8 +46,7 @@ void increase_counts(std::vector<std::vector<size_t>> &counters, size_t count) {
 
 template <int kmer_size>
 void process_kmer(VLMCKmer &current_kmer, VLMCKmer &prev_kmer,
-                  std::vector<std::vector<size_t>> &counters,
-                  KmerContainer &sorter,
+                  KMersPerLevel<size_t> &counters, KmerContainer<> &sorter,
                   const std::function<bool(int, size_t)> &include_node) {
   // This should check what differs, and output the kmers that
   // don't match this level, with appropriate counters.
@@ -67,10 +65,10 @@ void process_kmer(VLMCKmer &current_kmer, VLMCKmer &prev_kmer,
   }
 
   // Output kmers, reverse order to get counts right
-  for (int i = counters.size() - 2; i >= diff_pos; i--) {
+  for (int i = counters.size() - 1; i >= diff_pos; i--) {
     // For pseudo-counts, add 4 to counter
     if (include_node(i + 1, counters[i][0] + 4)) {
-      output_node<31>(prev_kmer, i, counters, sorter);
+      output_node<kmer_size>(prev_kmer, i, counters, sorter);
     }
 
     // Reset counters for outputted kmer
@@ -83,15 +81,16 @@ void process_kmer(VLMCKmer &current_kmer, VLMCKmer &prev_kmer,
 }
 
 template <int kmer_size>
-void support_pruning(CKMCFile &kmer_database, KmerContainer &sorter, int actual_kmer_size, const std::function<bool(int, size_t)> &include_node) {
+void support_pruning(CKMCFile &kmer_database, KmerContainer<> &sorter,
+                     int actual_kmer_size,
+                     const std::function<bool(int, size_t)> &include_node) {
   VLMCTranslator kmer_api(actual_kmer_size);
   VLMCKmer kmer(actual_kmer_size, 0, {});
 
-  int alphabet_size = 4;
-  // actual_kmer_size + 2 as 0 is used for the root, and end is used for next-counts of the longest
-  // kmers.
-  std::vector<std::vector<size_t>> counters(
-      actual_kmer_size + 2, std::vector<size_t>(alphabet_size + 1));
+  const int alphabet_size = 4;
+
+  // kmer_size + 2 as 0 is used for the root.
+  KMersPerLevel<size_t> counters{alphabet_size + 1, kmer_size + 1};
 
   uint64 counter;
 
@@ -103,15 +102,15 @@ void support_pruning(CKMCFile &kmer_database, KmerContainer &sorter, int actual_
   while (kmer_database.ReadNextKmer(kmer_api, counter)) {
     kmer = kmer_api.construct_vlmc_kmer();
     kmer.count = counter;
-    process_kmer<31>(kmer, prev_kmer, counters, sorter, include_node);
+    process_kmer<kmer_size>(kmer, prev_kmer, counters, sorter, include_node);
 
-    prev_kmer = std::move(kmer);
+    prev_kmer = kmer;
   }
   VLMCTranslator api_epsilon(actual_kmer_size);
   api_epsilon.from_string("A");
   VLMCKmer epsilon = api_epsilon.construct_vlmc_kmer();
   epsilon.count = 0;
-  process_kmer<31>(epsilon, prev_kmer, counters, sorter, include_node);
+  process_kmer<kmer_size>(epsilon, prev_kmer, counters, sorter, include_node);
 
-  output_root<31>(counters[0], sorter);
+  output_root<kmer_size>(counters[0], sorter);
 }

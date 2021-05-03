@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <memory>
 #include <random>
 #include <string>
 
@@ -8,6 +9,7 @@
 
 struct cli_arguments {
   std::string mode{"build"};
+  std::filesystem::path fasta_path;
   std::filesystem::path in_path;
   std::filesystem::path tmp_path{"./tmp"};
   std::filesystem::path out_path{};
@@ -21,17 +23,23 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
   app.add_option("-m,--mode", arguments.mode,
                  "Program mode, 'build', 'dump', or 'score'.");
 
-  app.add_option("-p,--in-path", arguments.in_path, "Path to fasta file.")
-      ->required();
+  app.add_option(
+      "-p,--fasta-path", arguments.fasta_path,
+      "Path to fasta file.  Required for 'build' and 'score' modes.");
+  app.add_option(
+      "--in-path", arguments.in_path,
+      "Path to saved tree file.  Required for 'dump' and 'score' modes.");
+
   app.add_option("-o,--out-path", arguments.out_path,
                  "Path to output file.  The VLMCs are stored as binary, and "
-                 "can be read by the 'dump' or 'score' modes.")
-      ->required();
+                 "can be read by the 'dump' or 'score' modes.  Required for "
+                 "'build' and 'dump' modes.");
 
   app.add_option("-t,--temp-path", arguments.tmp_path,
                  "Path to temporary folder for the external memory algorithms. "
                  " For good performance, this needs to be on a local machine.  "
-                 "For sorting, at least 2GB will be allocated to this path.  Defaults to ./tmp");
+                 "For sorting, at least 2GB will be allocated to this path.  "
+                 "Defaults to ./tmp");
 
   app.add_option("-c,--min-count", arguments.min_count,
                  "Minimum count required for every k-mer in the tree.");
@@ -63,13 +71,14 @@ std::string get_random_name(const std::string &start) {
   return ss.str();
 }
 
-std::unique_ptr<KmerContainer>
+template <class Comparator>
+std::unique_ptr<KmerContainer<Comparator>>
 parse_kmer_container(const std::string &in_or_out_of_core) {
   std::cout << in_or_out_of_core << std::endl;
   if (in_or_out_of_core == "external") {
-    return std::make_unique<OutOfCoreKmerContainer>();
+    return std::make_unique<OutOfCoreKmerContainer<Comparator>>();
   } else if (in_or_out_of_core == "internal") {
-    return std::make_unique<InCoreKmerContainer>();
+    return std::make_unique<InCoreKmerContainer<Comparator>>();
   } else {
     throw(std::invalid_argument(
         "parameter --out-or-in-of-core not 'internal' or 'external'"));

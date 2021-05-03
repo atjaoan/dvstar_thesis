@@ -6,6 +6,7 @@
 #include <bitset>
 
 #include <cereal/cereal.hpp>
+#include <cereal/types/array.hpp>
 
 // For stxxl, this class needs to be POD
 // Otherwise, borrows implementations from KMCs CKmerApi,
@@ -53,19 +54,32 @@ struct VLMCKmer {
 
   // This method lets cereal know which data members to serialize
   template <class Archive> void serialize(Archive &archive) {
-    archive(kmer_data[0], kmer_data[1], length, n_rows, count,
-            next_symbol_counts[0], next_symbol_counts[1], next_symbol_counts[2],
-            next_symbol_counts[3], divergence);
+    archive(kmer_data, length, n_rows, count, next_symbol_counts, divergence);
   }
 
+  /**
+   * Finds the first position between the two kmers that is different.
+   * E.g. for two kmers "ACGT" and "ACTT", it would return 2
+   *
+   * @param current_kmer
+   * @param prev_kmer
+   * @return position the k-mers differ at.
+   */
   static int get_first_differing_position(VLMCKmer &current_kmer,
-                                          VLMCKmer &prev_kmer) {
+                                          VLMCKmer &prev_kmer,
+                                          const int current_kmer_prefix = 0,
+                                          const int prev_kmer_prefix = 0) {
     auto n_rows = current_kmer.n_rows;
     int offset = 0;
 
     for (uint32 row_counter = 0; row_counter < n_rows; row_counter++) {
       unsigned long long current_data = current_kmer.kmer_data[row_counter];
       unsigned long long prev_data = prev_kmer.kmer_data[row_counter];
+
+      if (row_counter == 0) {
+        current_data = current_data << (current_kmer_prefix * 2);
+        prev_data = prev_data << (prev_kmer_prefix * 2);
+      }
 
       unsigned long long diff = (current_data) ^ (prev_data);
 
@@ -76,7 +90,7 @@ struct VLMCKmer {
         int diff_pos = n_leading_zeros / 2;
         int final_diff_pos = diff_pos + offset;
 
-        if (final_diff_pos >= current_kmer.length) {
+        if (final_diff_pos >= current_kmer.length - current_kmer_prefix) {
           return -1;
         } else {
           return final_diff_pos;
@@ -217,7 +231,16 @@ public:
   }
 };
 
-template <int MAX_K> struct KMerComparator {
+template <int MAX_K> struct VirtualKMerComparator {
+  virtual bool operator()(const VLMCKmer &a, const VLMCKmer &b) const {
+    return false;
+  };
+  virtual VLMCKmer min_value() const { return VLMCKmer(0, 0, {}); }
+  virtual VLMCKmer max_value() const { return VLMCKmer(0, 0, {}); }
+};
+
+template <int MAX_K>
+struct KMerComparator : public VirtualKMerComparator<MAX_K> {
   bool operator()(const VLMCKmer &a, const VLMCKmer &b) const { return a < b; }
   VLMCKmer min_value() const {
     std::array<size_t, 4> vec{};
@@ -232,7 +255,8 @@ template <int MAX_K> struct KMerComparator {
   }
 };
 
-template <int MAX_K> struct ReverseKMerComparator {
+template <int MAX_K>
+struct ReverseKMerComparator : public VirtualKMerComparator<MAX_K> {
   bool operator()(const VLMCKmer &a, const VLMCKmer &b) const {
     return a.reverse_less_than(b);
   }

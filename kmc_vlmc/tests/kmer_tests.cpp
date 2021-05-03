@@ -6,6 +6,7 @@
 
 #include <cereal/archives/binary.hpp>
 #include <cereal/archives/json.hpp>
+#include <cereal/types/vector.hpp>
 #include <cereal/cereal.hpp>
 
 #include "read_helper.hpp"
@@ -79,6 +80,20 @@ TEST_F(KmerTests, AllDifferingPosition) {
   auto diff_pos =
       VLMCKmer::get_first_differing_position(current_kmer, prev_kmer);
   EXPECT_EQ(diff_pos, 0);
+}
+
+TEST_F(KmerTests, DifferingPositionPrefix) {
+  auto current_kmer = create_kmer("AC");
+  auto prev_kmer = create_kmer("AAC");
+
+  auto diff_pos =
+      VLMCKmer::get_first_differing_position(current_kmer, prev_kmer, 0, 0);
+  EXPECT_EQ(diff_pos, 1);
+
+  auto diff_pos_prefix =
+      VLMCKmer::get_first_differing_position(current_kmer, prev_kmer, 0, 1);
+  EXPECT_EQ(diff_pos_prefix, -1);
+
 }
 
 TEST_F(KmerTests, LongDifferingPosition) {
@@ -190,7 +205,7 @@ TEST_F(KmerTests, ReverseSortComplex) {
 TEST_F(KmerTests, ReverseComparator) {
   auto from_kmer = create_kmer("TTTTTTTTTT");
   auto to_kmer = create_kmer("TTTTTTTTTC");
-  ReverseKMerComparator<10> comparator{};
+  ReverseKMerComparator<11> comparator{};
 
   EXPECT_TRUE(comparator(from_kmer, to_kmer));
 }
@@ -201,7 +216,7 @@ TEST_F(KmerTests, ReverseSortTestSimilarEnds) {
   auto a_kmer = create_kmer("ATTTTTTTTT");
 
   std::vector<VLMCKmer> kmers{kmer_a, kmer_t, a_kmer};
-  std::sort(kmers.begin(), kmers.end(), ReverseKMerComparator<10>());
+  std::sort(kmers.begin(), kmers.end(), ReverseKMerComparator<11>());
 
   std::string first = kmers[0].to_string();
   std::string second = kmers[1].to_string();

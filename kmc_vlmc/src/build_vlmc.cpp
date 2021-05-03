@@ -1,8 +1,4 @@
-#include <chrono>
-#include <execution>
-#include <filesystem>
-#include <iostream>
-#include <string>
+
 
 #include <kmc_file.h>
 
@@ -10,46 +6,7 @@
 #include "CLI/Config.hpp"
 #include "CLI/Formatter.hpp"
 
-#include <cereal/archives/binary.hpp>
-#include <cereal/cereal.hpp>
-
-#include "cli_helper.hpp"
-#include "kmer_container.hpp"
-#include "similarity_pruning.hpp"
-#include "support_pruning.hpp"
-
-std::filesystem::path run_kmc(std::filesystem::path &in_path,
-                              const int kmer_size,
-                              const std::filesystem::path &tmp_path) {
-  std::string random_name = get_random_name("kmc");
-
-  std::filesystem::path kmc_db_name = tmp_path / (random_name + "_res");
-  std::filesystem::path kmc_tmp = tmp_path / (random_name + "_tmp");
-
-  std::ostringstream stringStream;
-  stringStream << "./kmc -b -ci2 -cs4294967295 ";
-  stringStream << "-k" << kmer_size << " ";
-  stringStream << "-fm " << in_path << " ";
-  stringStream << kmc_db_name << " " << kmc_tmp;
-  std::string command = stringStream.str();
-
-  system(command.c_str());
-
-  return kmc_db_name;
-}
-
-void configure_stxxl(const std::filesystem::path &tmp_path) {
-  std::string random_name = get_random_name("stxxl");
-  // get uninitialized config singleton
-  stxxl::config *cfg = stxxl::config::get_instance();
-  std::filesystem::path stxxl_disk_path = tmp_path / random_name;
-  // create a disk_config structure.
-  stxxl::disk_config disk1(stxxl_disk_path, 2000 * 1024 * 1024,
-                           "syscall unlink");
-  disk1.direct = stxxl::disk_config::DIRECT_ON; // force O_DIRECT
-
-  cfg->add_disk(disk1);
-}
+#include "build_vlmc.hpp"
 
 int main(int argc, char *argv[]) {
   CLI::App app{"Variable-length Markov chain construction construction using "
@@ -64,82 +21,13 @@ int main(int argc, char *argv[]) {
     return app.exit(e);
   }
 
+  std::filesystem::create_directories(arguments.tmp_path);
+  configure_stxxl(arguments.tmp_path);
+
   if (arguments.mode == "build") {
-    std::filesystem::create_directories(arguments.tmp_path);
-    configure_stxxl(arguments.tmp_path);
-
-    auto start = std::chrono::steady_clock::now();
-
-    const int kmer_size = arguments.max_depth + 1;
-
-    auto kmc_db_name =
-        run_kmc(arguments.in_path, kmer_size, arguments.tmp_path);
-
-    auto kmc_done = std::chrono::steady_clock::now();
-
-    CKMCFile kmer_database;
-    auto status = kmer_database.OpenForListing(kmc_db_name);
-
-    if (!status) {
-      std::cout << "opening file not successful" << std::endl;
-      return EXIT_FAILURE;
-    }
-
-    auto include_node = [&](int length, size_t count) -> bool {
-      return length <= arguments.max_depth && count >= arguments.min_count;
-    };
-
-    auto container = parse_kmer_container(arguments.in_or_out_of_core);
-
-    auto support_pruning_start = std::chrono::steady_clock::now();
-    support_pruning<31>(kmer_database, *container, kmer_size, include_node);
-    auto support_pruning_done = std::chrono::steady_clock::now();
-
-    kmer_database.Close();
-
-    auto sorting_start = std::chrono::steady_clock::now();
-    (*container).sort();
-    auto sorting_done = std::chrono::steady_clock::now();
-
-    std::filesystem::path path =
-        std::filesystem::path(arguments.in_path).stem();
-    path += ".txt";
-
-    std::ofstream file_stream(arguments.out_path, std::ios::binary);
-    cereal::BinaryOutputArchive oarchive(file_stream);
-
-    auto keep_node = [&](double delta) -> bool {
-      return delta <= arguments.threshold;
-    };
-
-    auto similarity_pruning_start = std::chrono::steady_clock::now();
-    similarity_pruning<31>(*container, oarchive, keep_node);
-    auto similarity_pruning_done = std::chrono::steady_clock::now();
-
-    if (!arguments.out_path.empty()) {
-      file_stream.close();
-    }
-
-    std::chrono::duration<double> total_seconds =
-        similarity_pruning_done - start;
-    std::cout << "Total time: " << total_seconds.count() << "s\n";
-
-    std::chrono::duration<double> kmc_seconds = kmc_done - start;
-    std::cout << "KMC time: " << kmc_seconds.count() << "s\n";
-
-    std::chrono::duration<double> support_seconds =
-        support_pruning_done - support_pruning_start;
-    std::cout << "Support pruning time: " << support_seconds.count() << "s\n";
-
-    std::chrono::duration<double> sort_seconds = sorting_done - sorting_start;
-    std::cout << "Sorting time: " << sort_seconds.count() << "s\n";
-
-    std::chrono::duration<double> similarity_seconds =
-        similarity_pruning_done - sorting_done;
-    std::cout << "Similarity pruning time: " << similarity_seconds.count()
-              << "s\n";
-
-    //    std::filesystem::remove_all(arguments.tmp_path);
+    return build(arguments.fasta_path, arguments.max_depth, arguments.min_count,
+                 arguments.threshold, arguments.out_path, arguments.tmp_path,
+                 arguments.in_or_out_of_core);
 
   } else if (arguments.mode == "dump") {
     std::ifstream file_stream(arguments.in_path, std::ios::binary);
@@ -166,7 +54,13 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
       }
     }
+  } else if (arguments.mode == "score") {
+    negative_log_likelihood(arguments.fasta_path, arguments.tmp_path,
+                            arguments.in_path, arguments.in_or_out_of_core,
+                            arguments.max_depth);
   }
+
+  std::filesystem::remove_all(arguments.tmp_path);
 
   return EXIT_SUCCESS;
 }

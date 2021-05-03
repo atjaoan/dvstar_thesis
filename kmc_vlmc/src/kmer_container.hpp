@@ -2,6 +2,7 @@
 
 #include <execution>
 #include <functional>
+#include <memory>
 
 #include <stxxl/sorter>
 
@@ -13,17 +14,23 @@
 
 // template <int MAX_K> using kmer_sorter = stxxl::vector<VLMCKmer>;
 
-class KmerContainer {
+template <class Comparator = ReverseKMerComparator<31>> class KmerContainer {
+  static_assert(std::is_base_of<VirtualKMerComparator<31>, Comparator>::value,
+                "Invalid comparator template");
   // using array_type = std::array<T, 3>;
   // using iterator = array_type::iterator;
   // using const_iterator = array_type::const_iterator;
 public:
+  KmerContainer() = default;
+  ~KmerContainer() = default;
+
   virtual void push(VLMCKmer &kmer){};
   virtual void sort(){};
-  virtual void for_each(std::function<void(VLMCKmer &kmer)>){};
+  virtual void for_each(const std::function<void(VLMCKmer &kmer)> &){};
 };
 
-class InCoreKmerContainer : public KmerContainer{
+template <class Comparator>
+class InCoreKmerContainer : public KmerContainer<Comparator> {
   std::deque<VLMCKmer> container{};
 
 public:
@@ -34,19 +41,20 @@ public:
 
   void sort() {
     std::sort(std::execution::par_unseq, container.begin(), container.end(),
-              ReverseKMerComparator<31>());
+              Comparator());
   };
 
-  void for_each(std::function<void(VLMCKmer &kmer)> f) {
+  void for_each(const std::function<void(VLMCKmer &kmer)> &f) {
     std::for_each(container.begin(), container.end(), f);
   }
 };
 
-class OutOfCoreKmerContainer : public KmerContainer {
+template <class Comparator>
+class OutOfCoreKmerContainer : public KmerContainer<Comparator> {
   template <int MAX_K>
   using kmer_sorter =
-      stxxl::sorter<VLMCKmer, ReverseKMerComparator<MAX_K>, 16 * 1024 * 1024>;
-  kmer_sorter<31> sorter{ReverseKMerComparator<31>(), 128 * 1024 * 1024};
+      stxxl::sorter<VLMCKmer, VirtualKMerComparator<MAX_K>, 16 * 1024 * 1024>;
+  kmer_sorter<31> sorter{Comparator(), 128 * 1024 * 1024};
 
 public:
   OutOfCoreKmerContainer() = default;
@@ -57,6 +65,8 @@ public:
   void sort() { sorter.sort(); };
 
   void for_each(std::function<void(VLMCKmer &kmer)> f) {
+    sorter.rewind();
+
     VLMCKmer kmer{};
 
     while (!sorter.empty()) {
