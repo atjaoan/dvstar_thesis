@@ -205,7 +205,8 @@ double negative_log_likelihood(const std::filesystem::path &fasta_path,
 
   kmer_container->for_each([](VLMCKmer &kmer) { kmer.output(std::cout); });
 
-  auto kmc_db_name = run_kmc(fasta_path, actual_kmer_size + 1, tmp_path, 1);
+  auto kmc_db_name =
+      run_kmc(fasta_path, actual_kmer_size + 1, tmp_path, in_or_out_of_core, 1);
 
   double score_ = score(*kmer_container, kmc_db_name, actual_kmer_size);
   std::cout << "nll: " << score_ << std::endl;

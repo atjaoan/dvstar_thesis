@@ -59,7 +59,6 @@ int main(int argc, char *argv[]) {
                             arguments.in_path, arguments.in_or_out_of_core,
                             arguments.max_depth);
   }
-
   std::filesystem::remove_all(arguments.tmp_path);
 
   return EXIT_SUCCESS;

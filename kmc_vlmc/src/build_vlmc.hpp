@@ -39,7 +39,8 @@ int build(const std::filesystem::path &fasta_path, const int max_depth,
 
   const int kmer_size = max_depth + 1;
 
-  auto kmc_db_name = run_kmc(fasta_path, kmer_size, tmp_path, 1);
+  auto kmc_db_name =
+      run_kmc(fasta_path, kmer_size, tmp_path, in_or_out_of_core, 2);
 
   auto kmc_done = std::chrono::steady_clock::now();
 
@@ -67,9 +68,6 @@ int build(const std::filesystem::path &fasta_path, const int max_depth,
   auto sorting_start = std::chrono::steady_clock::now();
   container->sort();
   auto sorting_done = std::chrono::steady_clock::now();
-
-  container->for_each([](VLMCKmer &kmer) { kmer.output(std::cout); });
-
 
   std::filesystem::path path = std::filesystem::path(fasta_path).stem();
   path += ".txt";
@@ -106,7 +104,6 @@ int build(const std::filesystem::path &fasta_path, const int max_depth,
       similarity_pruning_done - sorting_done;
   std::cout << "Similarity pruning time: " << similarity_seconds.count()
             << "s\n";
-
 
   return EXIT_SUCCESS;
 }
