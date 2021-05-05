@@ -7,3 +7,9 @@
 [submodule "CLI11"]
 	path = CLI11
 	url = git@github.com:CLIUtils/CLI11.git
+[submodule "yas"]
+	path = yas
+	url = git@github.com:niXman/yas.git
+[submodule "cereal"]
+	path = cereal
+	url = git@github.com:USCiLab/cereal.git

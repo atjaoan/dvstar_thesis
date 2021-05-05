@@ -60,6 +60,7 @@ macro(test_case unit_test)
     target_link_libraries(${target} Threads::Threads)
     target_link_libraries(${target} kmc_file kmer_api mmer)
     target_link_libraries(${target} ${STXXL_LIBRARIES})
+    target_link_libraries(${target} tbb)
 
     add_test(NAME ${target} COMMAND ${target})
 
@@ -75,6 +76,7 @@ macro(benchmark_case case)
     target_link_libraries(${target} Threads::Threads)
     target_link_libraries(${target} kmc_file kmer_api mmer)
     target_link_libraries(${target} ${STXXL_LIBRARIES})
+    target_link_libraries(${target} tbb)
 
     unset (case)
     unset (target)
@@ -85,3 +87,6 @@ test_case(support_pruning_tests.cpp)
 test_case(similarity_pruning_tests.cpp)
 test_case(count_correctness_tests.cpp)
 test_case(regression_tests.cpp)
+test_case(negative_log_likelihood_tests.cpp)
+
+benchmark_case(benchmarks.cpp)

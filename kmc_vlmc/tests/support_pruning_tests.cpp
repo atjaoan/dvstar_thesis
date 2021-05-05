@@ -4,27 +4,17 @@
 
 #include <kmc_file.h>
 
+#include "read_helper.hpp"
+
 class SupportPruningTests : public ::testing::Test {
 protected:
-  void SetUp() override {
-    counters = std::vector<std::vector<size_t>>(
-        7, std::vector<size_t>(alphabet_size + 1));
-  }
-  VLMCKmer create_kmer(std::string kmer_string) {
-    VLMCTranslator kmer{static_cast<int>(kmer_string.size())};
-    if (kmer_string.size() > 0) {
-      kmer.from_string(kmer_string);
-    }
-    VLMCKmer kmer_ = kmer.construct_vlmc_kmer();
-    kmer_.count = 10;
-
-    return kmer_;
-  }
+  void SetUp() override {}
 
   int alphabet_size = 4;
 
-  std::vector<std::vector<size_t>> counters;
-  kmer_sorter<5> sorter{ReverseKMerComparator<5>(), 64 * 1024 * 1024};
+  KMersPerLevel<size_t> counters{alphabet_size + 1, 7};
+  ;
+  OutOfCoreKmerContainer<ReverseKMerComparator<31>> sorter{};
 
   const std::function<bool(int, size_t)> include_node =
       [](int length, size_t count) -> bool { return true; };
@@ -85,10 +75,7 @@ TEST_F(SupportPruningTests, SortAll4Mers) {
   sorter.sort();
 
   std::vector<VLMCKmer> stxxl_sorted_kmers{};
-  while (!sorter.empty()) {
-    stxxl_sorted_kmers.push_back(*sorter);
-    ++sorter;
-  }
+  sorter.for_each([&](VLMCKmer &kmer) { stxxl_sorted_kmers.push_back(kmer); });
 
   std::sort(kmers.begin(), kmers.end(), ReverseKMerComparator<10>());
 
@@ -120,12 +107,10 @@ TEST_F(SupportPruningTests, PrefixSortTest) {
 
   std::cout << "output" << std::endl;
   int i = 0;
-  while (!sorter.empty()) {
-    VLMCKmer kmer = *sorter;
+  sorter.for_each([&](VLMCKmer &kmer) {
     EXPECT_EQ(kmer.to_string(), sorted_kmers[i]);
     ++i;
-    ++sorter;
-  }
+  });
 }
 
 TEST_F(SupportPruningTests, AllPrefixes) {
