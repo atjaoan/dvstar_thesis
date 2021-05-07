@@ -13,41 +13,45 @@
 // but disregards the byte alignment.
 struct VLMCKmer {
   VLMCKmer() = default;
-  VLMCKmer(uint32 length_, size_t count_,
-           std::array<size_t, 4> next_symbol_counts_)
+  VLMCKmer(uint32 length_, uint64 count_,
+           std::array<uint64, 4> next_symbol_counts_)
       : length(length_), count(count_), next_symbol_counts(next_symbol_counts_),
-        divergence(-1.0) {
-    this->n_rows = (length_ / 32) + 1;
+        divergence(-1.0), kmer_data() {
+    this->n_rows = (length_ / 32.0) + 1; // std::ceil, but no float conversion
   }
 
   ~VLMCKmer() = default;
 
   std::array<uint64, 2> kmer_data;
-  size_t count;
-  std::array<size_t, 4> next_symbol_counts;
+  uint64 count;
+  std::array<uint64, 4> next_symbol_counts;
   double divergence;
-  int length;
-  int n_rows;
+  uint32 length;
+  uint32 n_rows;
 
   static constexpr char char_codes[4] = {'A', 'C', 'G', 'T'};
 
-  static VLMCKmer create_prefix_kmer(VLMCKmer &kmer, uint32 length,
-                                     size_t count,
-                                     std::array<size_t, 4> child_counts) {
+  static VLMCKmer create_prefix_kmer(const VLMCKmer &kmer, uint32 length,
+                                     uint64 count,
+                                     std::array<uint64, 4> child_counts) {
     VLMCKmer prefix_kmer{length, count, child_counts};
 
-    for (int row_counter = 0; row_counter < prefix_kmer.n_rows; row_counter++) {
-      unsigned long long kmer_data = kmer.kmer_data[row_counter];
+    prefix_kmer.kmer_data[0] = 0;
+    prefix_kmer.kmer_data[1] = 0;
 
-      int positions_to_remove_from_row = (32 - length) * 2 % 32;
-      if (length > 32 * (row_counter + 1)) {
-        positions_to_remove_from_row = 0;
-      }
-      unsigned long long mask = 0xFFFFFFFFFFFFFFFF
-                                << positions_to_remove_from_row;
+    uint32 row = length >> 5;
 
-      prefix_kmer.kmer_data[row_counter] = (kmer_data & mask);
+    if (row == 1) {
+      prefix_kmer.kmer_data[0] = kmer.kmer_data[0];
     }
+
+    uint32 length_in_row = length & 31;
+
+    uint32 positions_to_remove_from_row = (31 - length_in_row) * 2;
+    unsigned long long mask = 0xFFFFFFFFFFFFFFFF
+                              << positions_to_remove_from_row;
+
+    prefix_kmer.kmer_data[row] = (kmer.kmer_data[row] & mask);
 
     return prefix_kmer;
   }
@@ -65,8 +69,8 @@ struct VLMCKmer {
    * @param prev_kmer
    * @return position the k-mers differ at.
    */
-  static int get_first_differing_position(VLMCKmer &current_kmer,
-                                          VLMCKmer &prev_kmer,
+  static int get_first_differing_position(const VLMCKmer &current_kmer,
+                                          const VLMCKmer &prev_kmer,
                                           const int current_kmer_prefix = 0,
                                           const int prev_kmer_prefix = 0) {
     auto n_rows = current_kmer.n_rows;
@@ -101,7 +105,7 @@ struct VLMCKmer {
     return -1;
   }
 
-  inline uchar extract2bits(uint32 pos) const {
+  [[nodiscard]] uchar extract2bits(uint32 pos) const {
     // pos >> 5 = pos // 31
     // pos & 31 = remainder(pos, 31)
 
@@ -111,13 +115,63 @@ struct VLMCKmer {
     return (kmer_data[row] >> n_shift_pos_to_end) & 3;
   }
 
-  inline int char_pos(int pos) const {
+  [[nodiscard]] int char_pos(int pos) const {
     auto bits = extract2bits(pos);
 
     return bits;
   }
 
-  inline bool reverse_less_than(const VLMCKmer &kmer) const {
+  [[nodiscard]] static int n_kmers_with_length(uint32_t len) {
+    static std::vector<int> vals = {1, 5, 21, 85, 341, 1365};
+    //    return vals[len];
+
+    if (len > vals.size()) {
+      return (1 - std::pow(4, len + 1)) / (1 - 4);
+    } else {
+      return vals[len];
+    }
+  }
+
+  /*
+   * Get the value of the first prefix_length characters.
+   *
+   * Useful for splitting the kmers into subsets based on their first
+   * `prefix_length` characters.
+   *
+   * WARNING: Assumes the prefix is smaller than 32, as this is our only
+   * use case.
+   *
+   * @param prefix_length length of prefix.
+   * @return unique value per prefix.
+   */
+  [[nodiscard]] uint64 get_prefix_index(int prefix_length) const {
+    uint64 key = 0;
+
+    int n_shift_pos_to_end = (32 - prefix_length) * 2;
+    return kmer_data[0] >> n_shift_pos_to_end;
+
+    for (int i = 0; i < prefix_length; i++) {
+      int bits = extract2bits(i);
+
+      // Length is reversed - suffixes should count as having only the most
+      // significant digits.
+      int length_from_end = prefix_length - i - 1;
+
+      // For every position we add the number of k-mers with a specific
+      // length that have to come before this one, multiplied by the bit values.
+      // This can be viewed as dividing the space of all prefix_length k-mers
+      // into divisions for every suffix, where every such division at a
+      // specific length is n_kmers_with_length(i) large.  Thus, we need
+      // to find which such division this kmer belongs to.
+      // Plus one so e.g. AT and T don't get same values.
+
+      key += bits * VLMCKmer::n_kmers_with_length(length_from_end) + 1;
+    }
+
+    return key;
+  }
+
+  [[nodiscard]] bool reverse_less_than(const VLMCKmer &kmer) const {
     int this_pos = this->length - 1;
     int kmer_pos = kmer.length - 1;
 
@@ -146,10 +200,14 @@ struct VLMCKmer {
         return this_2_bits < kmer_2_bits;
       }
     }
-    return kmer.length > this->length;
+
+    if (kmer.length != this->length) {
+      return kmer.length > this->length;
+    }
+    return kmer.count < this->count;
   };
 
-  inline std::string to_string() {
+  [[nodiscard]] std::string to_string() const {
     std::string out_string(this->length, ' ');
 
     uchar *byte_ptr;
@@ -157,7 +215,8 @@ struct VLMCKmer {
     uint32 cur_string_size = 0;
 
     for (uint32 row_counter = 0; row_counter < this->n_rows; row_counter++) {
-      byte_ptr = reinterpret_cast<uchar *>(&kmer_data[row_counter]);
+      byte_ptr = reinterpret_cast<uchar *>(
+          &(const_cast<VLMCKmer *>(this)->kmer_data[row_counter]));
 
       byte_ptr += 7; // Read from the left
 
@@ -205,7 +264,7 @@ struct VLMCKmer {
 
 class VLMCTranslator : public CKmerAPI {
 public:
-  VLMCTranslator(int length) : CKmerAPI(length) {}
+  explicit VLMCTranslator(int length) : CKmerAPI(length) {}
   ~VLMCTranslator() = default;
 
   VLMCKmer construct_vlmc_kmer() {
@@ -216,11 +275,11 @@ public:
     new_kmer.kmer_data[0] = 0;
     new_kmer.kmer_data[1] = 0;
 
-    if (this->kmer_length > 32 - this->byte_alignment) {
+    if (this->kmer_length > 31 - this->byte_alignment) {
       for (int pos = 0; pos < this->kmer_length; pos++) {
         uint32 row = pos >> 5;
-        uchar val = this->extract2bits(pos);
-        new_kmer.kmer_data[row] += (uint64)val << (62 - ((pos & 31) * 2));
+        uint64 val = this->extract2bits(pos);
+        new_kmer.kmer_data[row] += val << (31 - (pos & 31)) * 2;
       }
     } else if (this->kmer_length > 0) {
       new_kmer.kmer_data[0] = this->kmer_data[0] << (this->byte_alignment) * 2;
@@ -232,22 +291,26 @@ public:
 };
 
 template <int MAX_K> struct VirtualKMerComparator {
-  virtual bool operator()(const VLMCKmer &a, const VLMCKmer &b) const {
-    return false;
-  };
-  virtual VLMCKmer min_value() const { return VLMCKmer(0, 0, {}); }
-  virtual VLMCKmer max_value() const { return VLMCKmer(0, 0, {}); }
+  virtual bool operator()(const VLMCKmer &a, const VLMCKmer &b) const = 0;
+  [[nodiscard]] virtual VLMCKmer min_value() const {
+    return VLMCKmer(0, 0, {});
+  }
+  [[nodiscard]] virtual VLMCKmer max_value() const {
+    return VLMCKmer(MAX_K, 0, {});
+  }
 };
 
 template <int MAX_K>
 struct KMerComparator : public VirtualKMerComparator<MAX_K> {
-  bool operator()(const VLMCKmer &a, const VLMCKmer &b) const { return a < b; }
-  VLMCKmer min_value() const {
-    std::array<size_t, 4> vec{};
+  bool operator()(const VLMCKmer &a, const VLMCKmer &b) const override {
+    return a < b;
+  }
+  [[nodiscard]] VLMCKmer min_value() const override {
+    std::array<uint64, 4> vec{};
     return VLMCKmer(0, 0, vec);
   }
-  VLMCKmer max_value() const {
-    VLMCKmer max_kmer(MAX_K, 0, {});
+  [[nodiscard]] VLMCKmer max_value() const override {
+    VLMCKmer max_kmer(MAX_K, (size_t)-1, {});
     for (int row = 0; row < max_kmer.n_rows; row++) {
       max_kmer.kmer_data[row] = 0xFFFFFFFFFFFFFFFF;
     }
@@ -257,18 +320,18 @@ struct KMerComparator : public VirtualKMerComparator<MAX_K> {
 
 template <int MAX_K>
 struct ReverseKMerComparator : public VirtualKMerComparator<MAX_K> {
-  bool operator()(const VLMCKmer &a, const VLMCKmer &b) const {
+  bool operator()(const VLMCKmer &a, const VLMCKmer &b) const override {
     return a.reverse_less_than(b);
   }
-  VLMCKmer min_value() const {
+  [[nodiscard]] VLMCKmer min_value() const override {
     VLMCKmer max_kmer(MAX_K, (size_t)-1, {});
     for (int row = 0; row < max_kmer.n_rows; row++) {
       max_kmer.kmer_data[row] = 0xFFFFFFFFFFFFFFFF;
     }
     return max_kmer;
   }
-  VLMCKmer max_value() const {
-    std::array<size_t, 4> vec{};
+  [[nodiscard]] VLMCKmer max_value() const override {
+    std::array<uint64, 4> vec{};
     return VLMCKmer(0, 0, vec);
   }
 };
@@ -277,7 +340,7 @@ template <int MAX_K> struct KMerReverseKeyExtractor {
   typedef uint64 key_type;
   uint64 upper_bound = (1 - std::pow(4, MAX_K + 1)) / (1 - 4);
 
-  uint64 n_kmers_with_length(uint32_t len) const {
+  [[nodiscard]] uint64 n_kmers_with_length(uint32_t len) const {
     return (1 - std::pow(4, len + 1)) / (1 - 4);
   }
 
@@ -305,15 +368,15 @@ template <int MAX_K> struct KMerReverseKeyExtractor {
     return upper_bound - key;
   }
 
-  VLMCKmer min_value() const {
+  [[nodiscard]] VLMCKmer min_value() const {
     VLMCKmer max_kmer(MAX_K, (size_t)-1, {});
     for (int row = 0; row < max_kmer.n_rows; row++) {
       max_kmer.kmer_data[row] = 0xFFFFFFFFFFFFFFFF;
     }
     return max_kmer;
   }
-  VLMCKmer max_value() const {
-    std::array<size_t, 4> vec{};
+  [[nodiscard]] VLMCKmer max_value() const {
+    std::array<uint64, 4> vec{};
     return VLMCKmer(0, 0, vec);
   }
 };

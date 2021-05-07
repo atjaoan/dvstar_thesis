@@ -7,8 +7,8 @@ template <class T> struct KMersPerLevel {
   int n_levels;
   std::vector<std::vector<T>> levels;
 
-  KMersPerLevel(int size__, int n_levels_) : size_(size__), n_levels(n_levels) {
-    levels = std::vector<std::vector<T>>(n_levels_, std::vector<T>(size__));
+  KMersPerLevel(int _size_, int n_levels_) : size_(_size_), n_levels(n_levels) {
+    levels = std::vector<std::vector<T>>(n_levels_, std::vector<T>(_size_));
   };
 
   std::vector<T> &operator[](size_t pos) { return levels[pos]; }
@@ -21,5 +21,5 @@ template <class T> struct KMersPerLevel {
     }
   }
 
-  size_t size() const { return size_; }
+  [[nodiscard]] size_t size() const { return levels.size(); }
 };

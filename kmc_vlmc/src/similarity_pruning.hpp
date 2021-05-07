@@ -112,7 +112,7 @@ void similarity_prune(VLMCKmer &prev_kmer, VLMCKmer &kmer,
 }
 
 template <int kmer_size>
-void similarity_pruning(KmerContainer<> &container,
+void similarity_pruning(std::shared_ptr<KmerContainer<>> &container,
                         cereal::BinaryOutputArchive &oarchive,
                         const std::function<bool(double)> &remove_node) {
 
@@ -129,7 +129,7 @@ void similarity_pruning(KmerContainer<> &container,
   // TTTTTTT
   // TTTTTTGT
 
-  container.for_each([&](VLMCKmer &kmer) {
+  container->for_each([&](VLMCKmer &kmer) {
     similarity_prune(prev_kmer, kmer, kmers_per_level, oarchive, remove_node);
 
     prev_kmer = kmer;

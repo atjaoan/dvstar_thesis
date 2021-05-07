@@ -4,67 +4,79 @@
 #include <functional>
 #include <memory>
 
+#include <stxxl/sort>
 #include <stxxl/sorter>
 
 #include "kmer.hpp"
 
-// template <int MAX_K>
-// using kmer_sorter =
-//     stxxl::sorter<VLMCKmer, ReverseKMerComparator<MAX_K>, 128 * 1024 * 1024>;
-
-// template <int MAX_K> using kmer_sorter = stxxl::vector<VLMCKmer>;
+enum Core { out, in };
+enum Iteration { parallel, sequential };
 
 template <class Comparator = ReverseKMerComparator<31>> class KmerContainer {
   static_assert(std::is_base_of<VirtualKMerComparator<31>, Comparator>::value,
                 "Invalid comparator template");
-  // using array_type = std::array<T, 3>;
-  // using iterator = array_type::iterator;
-  // using const_iterator = array_type::const_iterator;
+
 public:
   KmerContainer() = default;
   ~KmerContainer() = default;
 
-  virtual void push(VLMCKmer &kmer){};
+  [[nodiscard]] virtual size_t size() const { return 0; };
+  virtual void push(const VLMCKmer &kmer){};
   virtual void sort(){};
+  virtual void clear(){};
   virtual void for_each(const std::function<void(VLMCKmer &kmer)> &){};
 };
 
-template <class Comparator>
+template <class Comparator = ReverseKMerComparator<31>>
 class InCoreKmerContainer : public KmerContainer<Comparator> {
   std::deque<VLMCKmer> container{};
 
 public:
   InCoreKmerContainer() = default;
+  InCoreKmerContainer(Iteration iteration_) : iteration(iteration_){};
   ~InCoreKmerContainer() = default;
 
-  void push(VLMCKmer &kmer) { container.push_back(kmer); }
+  Iteration iteration = Iteration::parallel;
 
-  void sort() {
-    std::sort(std::execution::par_unseq, container.begin(), container.end(),
-              Comparator());
+  [[nodiscard]] size_t size() const override { return container.size(); }
+
+  void push(const VLMCKmer &kmer) override { container.push_back(kmer); }
+
+  void sort() override {
+    if (iteration == Iteration::parallel) {
+      std::sort(std::execution::par_unseq, container.begin(), container.end(),
+                Comparator());
+    } else {
+      std::sort(container.begin(), container.end(), Comparator());
+    }
   };
 
-  void for_each(const std::function<void(VLMCKmer &kmer)> &f) {
+  void clear() override { container.clear(); };
+
+  void for_each(const std::function<void(VLMCKmer &kmer)> &f) override {
     std::for_each(container.begin(), container.end(), f);
   }
 };
 
-template <class Comparator>
+template <class Comparator = ReverseKMerComparator<31>>
 class OutOfCoreKmerContainer : public KmerContainer<Comparator> {
   template <int MAX_K>
-  using kmer_sorter =
-      stxxl::sorter<VLMCKmer, VirtualKMerComparator<MAX_K>, 16 * 1024 * 1024>;
+  using kmer_sorter = stxxl::sorter<VLMCKmer, Comparator, 16 * 1024 * 1024>;
   kmer_sorter<31> sorter{Comparator(), 128 * 1024 * 1024};
 
 public:
   OutOfCoreKmerContainer() = default;
   ~OutOfCoreKmerContainer() = default;
 
-  void push(VLMCKmer &kmer) { sorter.push(kmer); }
+  [[nodiscard]] size_t size() const override { return sorter.size(); }
 
-  void sort() { sorter.sort(); };
+  void push(const VLMCKmer &kmer) override { sorter.push(kmer); }
 
-  void for_each(std::function<void(VLMCKmer &kmer)> f) {
+  void sort() override { sorter.sort(); };
+
+  void clear() override { sorter.clear(); };
+
+  void for_each(const std::function<void(VLMCKmer &kmer)> &f) override {
     sorter.rewind();
 
     VLMCKmer kmer{};
@@ -76,5 +88,30 @@ public:
 
       ++sorter;
     }
+  }
+};
+
+template <class Comparator = ReverseKMerComparator<31>>
+class OutOfCoreSequentialKmerContainer : public KmerContainer<Comparator> {
+  typedef stxxl::VECTOR_GENERATOR<VLMCKmer>::result vector_type;
+  stxxl::vector<VLMCKmer> container{};
+
+public:
+  OutOfCoreSequentialKmerContainer() = default;
+  ~OutOfCoreSequentialKmerContainer() = default;
+
+  [[nodiscard]] size_t size() const override { return container.size(); }
+
+  void push(const VLMCKmer &kmer) override { container.push_back(kmer); }
+
+  void sort() override {
+    stxxl::sort(container.begin(), container.end(), Comparator(),
+                512 * 1024 * 1024);
+  };
+
+  void clear() override { container.clear(); };
+
+  void for_each(const std::function<void(VLMCKmer &kmer)> &f) override {
+    std::for_each(container.begin(), container.end(), f);
   }
 };

@@ -24,7 +24,8 @@ void configure_stxxl(const std::filesystem::path &tmp_path) {
   stxxl::config *cfg = stxxl::config::get_instance();
   std::filesystem::path stxxl_disk_path = tmp_path / random_name;
   // create a disk_config structure.
-  stxxl::disk_config disk1(stxxl_disk_path, 2000 * 1024 * 1024,
+  // allocate 6GB
+  stxxl::disk_config disk1(stxxl_disk_path, uint64(6000) * 1024 * 1024,
                            "linuxaio unlink");
 
   cfg->add_disk(disk1);
@@ -60,12 +61,13 @@ int build(const std::filesystem::path &fasta_path, const int max_depth,
       parse_kmer_container<ReverseKMerComparator<31>>(in_or_out_of_core);
 
   auto support_pruning_start = std::chrono::steady_clock::now();
-  support_pruning<31>(kmer_database, *container, kmer_size, include_node);
+  support_pruning<31>(kmer_database, container, kmer_size, include_node, in_or_out_of_core);
   auto support_pruning_done = std::chrono::steady_clock::now();
 
   kmer_database.Close();
 
   auto sorting_start = std::chrono::steady_clock::now();
+
   container->sort();
   auto sorting_done = std::chrono::steady_clock::now();
 
@@ -79,7 +81,7 @@ int build(const std::filesystem::path &fasta_path, const int max_depth,
 
     auto keep_node = [&](double delta) -> bool { return delta <= threshold; };
 
-    similarity_pruning<31>(*container, oarchive, keep_node);
+    similarity_pruning<31>(container, oarchive, keep_node);
   }
   auto similarity_pruning_done = std::chrono::steady_clock::now();
 

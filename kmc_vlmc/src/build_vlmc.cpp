@@ -1,10 +1,4 @@
-
-
 #include <kmc_file.h>
-
-#include "CLI/App.hpp"
-#include "CLI/Config.hpp"
-#include "CLI/Formatter.hpp"
 
 #include "build_vlmc.hpp"
 
@@ -25,9 +19,12 @@ int main(int argc, char *argv[]) {
   configure_stxxl(arguments.tmp_path);
 
   if (arguments.mode == "build") {
-    return build(arguments.fasta_path, arguments.max_depth, arguments.min_count,
+    int exit_code= build(arguments.fasta_path, arguments.max_depth, arguments.min_count,
                  arguments.threshold, arguments.out_path, arguments.tmp_path,
                  arguments.in_or_out_of_core);
+    std::filesystem::remove_all(arguments.tmp_path);
+
+    return exit_code;
 
   } else if (arguments.mode == "dump") {
     std::ifstream file_stream(arguments.in_path, std::ios::binary);

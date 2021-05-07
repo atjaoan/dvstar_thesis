@@ -6,17 +6,14 @@
 
 #include <cereal/archives/binary.hpp>
 #include <cereal/archives/json.hpp>
-#include <cereal/types/vector.hpp>
 #include <cereal/cereal.hpp>
+#include <cereal/types/vector.hpp>
 
 #include "read_helper.hpp"
 
 class KmerTests : public ::testing::Test {
 protected:
   void SetUp() override {}
-
-  VLMCKmer current_kmer{15, 0, {}};
-  VLMCKmer prev_kmer{15, 0, {}};
 };
 
 TEST_F(KmerTests, VLMCKmerConstructor) {
@@ -93,7 +90,6 @@ TEST_F(KmerTests, DifferingPositionPrefix) {
   auto diff_pos_prefix =
       VLMCKmer::get_first_differing_position(current_kmer, prev_kmer, 0, 1);
   EXPECT_EQ(diff_pos_prefix, -1);
-
 }
 
 TEST_F(KmerTests, LongDifferingPosition) {
@@ -106,7 +102,7 @@ TEST_F(KmerTests, LongDifferingPosition) {
   EXPECT_EQ(diff_pos, 37);
 }
 
-void check_prefixes(VLMCKmer &current_kmer, std::string &kmer_string) {
+void check_prefixes(VLMCKmer &current_kmer, const std::string &kmer_string) {
   for (int i = kmer_string.size(); i >= 0; i--) {
     auto prefix = VLMCKmer::create_prefix_kmer(current_kmer, (uint32)i, 0, {});
     std::string expected_string = kmer_string.substr(0, i);
@@ -130,7 +126,7 @@ TEST_F(KmerTests, CreatePrefixKmerOdd) {
 }
 
 TEST_F(KmerTests, CreatePrefixKmerLong) {
-  std::string kmer_string{"TACTAGCTACGATCATTACTAGCTACGATCATTACTAG"};
+  std::string kmer_string{"TACTAGCTACGATCATTACTAGCTACGAT"};
   auto current_kmer = create_kmer(kmer_string);
 
   check_prefixes(current_kmer, kmer_string);
@@ -216,7 +212,7 @@ TEST_F(KmerTests, ReverseSortTestSimilarEnds) {
   auto a_kmer = create_kmer("ATTTTTTTTT");
 
   std::vector<VLMCKmer> kmers{kmer_a, kmer_t, a_kmer};
-  std::sort(kmers.begin(), kmers.end(), ReverseKMerComparator<11>());
+  std::sort(kmers.begin(), kmers.end(), ReverseKMerComparator<12>());
 
   std::string first = kmers[0].to_string();
   std::string second = kmers[1].to_string();
@@ -243,12 +239,10 @@ TEST_F(KmerTests, ReverseKey2) {
   EXPECT_EQ(comparator(gc_kmer), 12);
   EXPECT_EQ(comparator(at_kmer), 4);
 
-
   EXPECT_EQ(comparator(c_kmer), 15);
 
   EXPECT_EQ(comparator(e_kmer), 21);
 }
-
 
 TEST_F(KmerTests, ReverseKey3) {
   auto ttt_kmer = create_kmer("TTT");
@@ -268,8 +262,33 @@ TEST_F(KmerTests, ReverseKey3) {
 }
 
 TEST_F(KmerTests, CerealSerialisable) {
-  auto n_serializers = cereal::traits::detail::count_output_serializers<VLMCKmer, cereal::BinaryOutputArchive>::value;
-  auto is_serializable = cereal::traits::is_output_serializable<std::vector<uint64>, cereal::BinaryOutputArchive>::value;
+  auto n_serializers = cereal::traits::detail::count_output_serializers<
+      VLMCKmer, cereal::BinaryOutputArchive>::value;
+  auto is_serializable = cereal::traits::is_output_serializable<
+      std::vector<uint64>, cereal::BinaryOutputArchive>::value;
   EXPECT_TRUE(is_serializable);
   EXPECT_NE(n_serializers, 0);
+}
+
+TEST_F(KmerTests, GetPrefix) {
+  auto aaa_kmer = create_kmer("AAA");
+  auto prefix_index = aaa_kmer.get_prefix_index(2);
+
+  auto caa_kmer = create_kmer("CAA");
+  auto caa_prefix_index = caa_kmer.get_prefix_index(2);
+
+  auto ca_kmer = create_kmer("CA");
+  auto ca_prefix_index = ca_kmer.get_prefix_index(2);
+
+  auto gc_kmer = create_kmer("GCCC");
+  auto gc_prefix_index = gc_kmer.get_prefix_index(2);
+
+  auto gca_kmer = create_kmer("GCAC");
+  auto gca_prefix_index = gca_kmer.get_prefix_index(3);
+
+  EXPECT_EQ(0, prefix_index);
+  EXPECT_EQ(4, caa_prefix_index);
+  EXPECT_EQ(4, ca_prefix_index);
+  EXPECT_EQ(9, gc_prefix_index);
+  EXPECT_EQ(36, gca_prefix_index);
 }

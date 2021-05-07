@@ -7,6 +7,10 @@
 
 #include "kmer_container.hpp"
 
+#include "CLI/App.hpp"
+#include "CLI/Config.hpp"
+#include "CLI/Formatter.hpp"
+
 struct cli_arguments {
   std::string mode{"build"};
   std::filesystem::path fasta_path;
@@ -72,13 +76,13 @@ std::string get_random_name(const std::string &start) {
 }
 
 template <class Comparator>
-std::unique_ptr<KmerContainer<Comparator>>
+std::shared_ptr<KmerContainer<Comparator>>
 parse_kmer_container(const std::string &in_or_out_of_core) {
   std::cout << in_or_out_of_core << std::endl;
   if (in_or_out_of_core == "external") {
-    return std::make_unique<OutOfCoreKmerContainer<Comparator>>();
+    return std::make_shared<OutOfCoreKmerContainer<Comparator>>();
   } else if (in_or_out_of_core == "internal") {
-    return std::make_unique<InCoreKmerContainer<Comparator>>();
+    return std::make_shared<InCoreKmerContainer<Comparator>>();
   } else {
     throw(std::invalid_argument(
         "parameter --out-or-in-of-core not 'internal' or 'external'"));

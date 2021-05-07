@@ -1,6 +1,6 @@
-cmake_minimum_required (VERSION 3.4...3.12)
+cmake_minimum_required(VERSION 3.4...3.12)
 
-project (kmc_vlmc_tests CXX)
+project(kmc_vlmc_tests CXX)
 
 include(CTest)
 find_package(Threads REQUIRED)
@@ -14,16 +14,16 @@ macro(dependency name)
     configure_file(CMakeLists.txt.${name} ${name}-download/CMakeLists.txt)
     execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
             RESULT_VARIABLE result
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${name}-download )
-    if(result)
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${name}-download)
+    if (result)
         message(FATAL_ERROR "CMake step for ${name} failed: ${result}")
-    endif()
+    endif ()
     execute_process(COMMAND ${CMAKE_COMMAND} --build .
             RESULT_VARIABLE result
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${name}-download )
-    if(result)
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${name}-download)
+    if (result)
         message(FATAL_ERROR "Build step for ${name} failed: ${result}")
-    endif()
+    endif ()
 
     # Add googletest directly to our build. This defines
     # the gtest and gtest_main targets.
@@ -43,14 +43,14 @@ if (NOT KMC_Libraries)
     add_library(kmc_file SHARED ../../KMC/kmc_api/kmc_file.cpp)
     add_library(kmer_api SHARED ../../KMC/kmc_api/kmer_api.cpp)
     add_library(mmer SHARED ../../KMC/kmc_api/mmer.cpp)
-endif()
+endif ()
 
 # The gtest/gtest_main targets carry header search path
 # dependencies automatically when using CMake 2.8.11 or
 # later. Otherwise we have to add them here ourselves.
 if (CMAKE_VERSION VERSION_LESS 2.8.11)
     include_directories("${gtest_SOURCE_DIR}/include")
-endif()
+endif ()
 
 macro(test_case unit_test)
     get_filename_component(target "${unit_test}" NAME_WE)
@@ -61,11 +61,12 @@ macro(test_case unit_test)
     target_link_libraries(${target} kmc_file kmer_api mmer)
     target_link_libraries(${target} ${STXXL_LIBRARIES})
     target_link_libraries(${target} tbb)
+    target_link_libraries(${target} CLI11::CLI11)
 
     add_test(NAME ${target} COMMAND ${target})
 
-    unset (unit_test)
-    unset (target)
+    unset(unit_test)
+    unset(target)
 endmacro(test_case)
 
 macro(benchmark_case case)
@@ -77,9 +78,10 @@ macro(benchmark_case case)
     target_link_libraries(${target} kmc_file kmer_api mmer)
     target_link_libraries(${target} ${STXXL_LIBRARIES})
     target_link_libraries(${target} tbb)
+    target_link_libraries(${target} CLI11::CLI11)
 
-    unset (case)
-    unset (target)
+    unset(case)
+    unset(target)
 endmacro(benchmark_case)
 
 test_case(kmer_tests.cpp)
