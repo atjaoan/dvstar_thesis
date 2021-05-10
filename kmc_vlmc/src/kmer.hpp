@@ -31,29 +31,41 @@ struct VLMCKmer {
 
   static constexpr char char_codes[4] = {'A', 'C', 'G', 'T'};
 
+
   static VLMCKmer create_prefix_kmer(const VLMCKmer &kmer, uint32 length,
                                      uint64 count,
-                                     std::array<uint64, 4> child_counts) {
-    VLMCKmer prefix_kmer{length, count, child_counts};
+                                     const std::array<uint64, 4> &child_counts, VLMCKmer &out_kmer) {
+    out_kmer.length = length;
+    out_kmer.count = count;
+    out_kmer.next_symbol_counts = child_counts;
 
-    prefix_kmer.kmer_data[0] = 0;
-    prefix_kmer.kmer_data[1] = 0;
+
+    out_kmer.kmer_data[0] = 0;
+    out_kmer.kmer_data[1] = 0;
 
     uint32 row = length >> 5;
 
     if (row == 1) {
-      prefix_kmer.kmer_data[0] = kmer.kmer_data[0];
+      out_kmer.kmer_data[0] = kmer.kmer_data[0];
     }
 
     uint32 length_in_row = length & 31;
 
     uint32 positions_to_remove_from_row = (31 - length_in_row) * 2;
     unsigned long long mask = 0xFFFFFFFFFFFFFFFF
-                              << positions_to_remove_from_row;
+        << positions_to_remove_from_row;
 
-    prefix_kmer.kmer_data[row] = (kmer.kmer_data[row] & mask);
+    out_kmer.kmer_data[row] = (kmer.kmer_data[row] & mask);
 
-    return prefix_kmer;
+    return out_kmer;
+  }
+
+  static VLMCKmer create_prefix_kmer(const VLMCKmer &kmer, uint32 length,
+                                     uint64 count,
+                                     const std::array<uint64, 4> &child_counts) {
+    VLMCKmer prefix_kmer{length, count, child_counts};
+
+    return create_prefix_kmer(kmer, length, count, child_counts, prefix_kmer);
   }
 
   // This method lets cereal know which data members to serialize
@@ -69,14 +81,13 @@ struct VLMCKmer {
    * @param prev_kmer
    * @return position the k-mers differ at.
    */
-  static int get_first_differing_position(const VLMCKmer &current_kmer,
-                                          const VLMCKmer &prev_kmer,
-                                          const int current_kmer_prefix = 0,
-                                          const int prev_kmer_prefix = 0) {
+  static int32 get_first_differing_position(
+      const VLMCKmer &current_kmer, const VLMCKmer &prev_kmer,
+      const uint32 current_kmer_prefix = 0, const uint32 prev_kmer_prefix = 0) {
     auto n_rows = current_kmer.n_rows;
-    int offset = 0;
+    int32 offset = 0;
 
-    for (uint32 row_counter = 0; row_counter < n_rows; row_counter++) {
+    for (int32 row_counter = 0; row_counter < n_rows; row_counter++) {
       unsigned long long current_data = current_kmer.kmer_data[row_counter];
       unsigned long long prev_data = prev_kmer.kmer_data[row_counter];
 
@@ -88,11 +99,11 @@ struct VLMCKmer {
       unsigned long long diff = (current_data) ^ (prev_data);
 
       // GCC instruction, counts leading zeros.
-      int n_leading_zeros = __builtin_clzll(diff);
+      int32 n_leading_zeros = __builtin_clzll(diff);
 
       if (n_leading_zeros != 63) {
-        int diff_pos = n_leading_zeros / 2;
-        int final_diff_pos = diff_pos + offset;
+        int32 diff_pos = n_leading_zeros / 2;
+        int32 final_diff_pos = diff_pos + offset;
 
         if (final_diff_pos >= current_kmer.length - current_kmer_prefix) {
           return -1;
@@ -106,20 +117,16 @@ struct VLMCKmer {
   }
 
   [[nodiscard]] uchar extract2bits(uint32 pos) const {
-    // pos >> 5 = pos // 31
-    // pos & 31 = remainder(pos, 31)
+    // pos >> 5 == pos // 31
+    // pos & 31 == remainder(pos, 31)
 
-    int row = pos >> 5;
-    int pos_in_row = pos & 31;
-    int n_shift_pos_to_end = (62 - pos_in_row * 2);
+    uchar row = pos >> 5;
+    uchar pos_in_row = pos & 31;
+    uchar n_shift_pos_to_end = (62 - pos_in_row * 2);
     return (kmer_data[row] >> n_shift_pos_to_end) & 3;
   }
 
-  [[nodiscard]] int char_pos(int pos) const {
-    auto bits = extract2bits(pos);
-
-    return bits;
-  }
+  [[nodiscard]] uchar char_pos(uint32 pos) const { return extract2bits(pos); }
 
   [[nodiscard]] static int n_kmers_with_length(uint32_t len) {
     static std::vector<int> vals = {1, 5, 21, 85, 341, 1365};
@@ -253,7 +260,7 @@ struct VLMCKmer {
     return out_string;
   }
 
-  void output(std::ostream &stream) {
+  void output(std::ostream &stream) const {
     stream << this->to_string() << " " << this->count << " ";
     for (auto &c : this->next_symbol_counts) {
       stream << c << " ";
@@ -275,18 +282,51 @@ public:
     new_kmer.kmer_data[0] = 0;
     new_kmer.kmer_data[1] = 0;
 
-    if (this->kmer_length > 31 - this->byte_alignment) {
+    if (this->kmer_length < 31 - this->byte_alignment) {
+      new_kmer.kmer_data[0] = this->kmer_data[0] << (this->byte_alignment * 2);
+
+      return new_kmer;
+    } else if (this->kmer_length > 31 - this->byte_alignment) {
       for (int pos = 0; pos < this->kmer_length; pos++) {
         uint32 row = pos >> 5;
-        uint64 val = this->extract2bits(pos);
+        uchar val = this->extract2bits(pos);
         new_kmer.kmer_data[row] += val << (31 - (pos & 31)) * 2;
       }
-    } else if (this->kmer_length > 0) {
-      new_kmer.kmer_data[0] = this->kmer_data[0] << (this->byte_alignment) * 2;
+
+      return new_kmer;
+
     } else {
       new_kmer.kmer_data[0] = 0;
+
+      return new_kmer;
     }
-    return new_kmer;
+  }
+
+  VLMCKmer construct_vlmc_kmer(VLMCKmer &new_kmer) {
+    // To make sure the VLMCKmer class stays a POD, we're only allowing k-mers
+    // up to 64 or so.  Should be fine.
+
+    new_kmer.kmer_data[0] = 0;
+    new_kmer.kmer_data[1] = 0;
+
+    if (this->kmer_length < 31 - this->byte_alignment) {
+      new_kmer.kmer_data[0] = this->kmer_data[0] << (this->byte_alignment * 2);
+
+      return new_kmer;
+    } else if (this->kmer_length > 31 - this->byte_alignment) {
+      for (int pos = 0; pos < this->kmer_length; pos++) {
+        uint32 row = pos >> 5;
+        uchar val = this->extract2bits(pos);
+        new_kmer.kmer_data[row] += val << (31 - (pos & 31)) * 2;
+      }
+
+      return new_kmer;
+
+    } else {
+      new_kmer.kmer_data[0] = 0;
+
+      return new_kmer;
+    }
   }
 };
 

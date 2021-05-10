@@ -1,20 +1,18 @@
 #pragma once
 
-#include <filesystem>
-
-#include <cereal/archives/binary.hpp>
-#include <cereal/cereal.hpp>
 #include <chrono>
 #include <execution>
 #include <filesystem>
 #include <iostream>
 #include <string>
 
+#include <cereal/archives/binary.hpp>
+#include <cereal/cereal.hpp>
+
 #include "cli_helper.hpp"
 #include "kmc_runner.hpp"
 #include "kmer_container.hpp"
 #include "negative_log_likelihood.hpp"
-
 #include "similarity_pruning.hpp"
 #include "support_pruning.hpp"
 
@@ -61,7 +59,8 @@ int build(const std::filesystem::path &fasta_path, const int max_depth,
       parse_kmer_container<ReverseKMerComparator<31>>(in_or_out_of_core);
 
   auto support_pruning_start = std::chrono::steady_clock::now();
-  support_pruning<31>(kmer_database, container, kmer_size, include_node, in_or_out_of_core);
+  sequential_support_pruning<31>(kmer_database, container, kmer_size,
+                                 include_node);
   auto support_pruning_done = std::chrono::steady_clock::now();
 
   kmer_database.Close();
@@ -69,6 +68,9 @@ int build(const std::filesystem::path &fasta_path, const int max_depth,
   auto sorting_start = std::chrono::steady_clock::now();
 
   container->sort();
+
+//  container->for_each([](VLMCKmer &kmer) { kmer.output(std::cout); });
+
   auto sorting_done = std::chrono::steady_clock::now();
 
   std::filesystem::path path = std::filesystem::path(fasta_path).stem();
@@ -98,7 +100,6 @@ int build(const std::filesystem::path &fasta_path, const int max_depth,
   std::chrono::duration<double> support_seconds =
       support_pruning_done - support_pruning_start;
   std::cout << "Support pruning time: " << support_seconds.count() << "s\n";
-
   std::chrono::duration<double> sort_seconds = sorting_done - sorting_start;
   std::cout << "Sorting time: " << sort_seconds.count() << "s\n";
 

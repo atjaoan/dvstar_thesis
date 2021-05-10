@@ -22,6 +22,7 @@ public:
 
   [[nodiscard]] virtual size_t size() const { return 0; };
   virtual void push(const VLMCKmer &kmer){};
+  virtual void push(VLMCKmer &kmer){};
   virtual void sort(){};
   virtual void clear(){};
   virtual void for_each(const std::function<void(VLMCKmer &kmer)> &){};
@@ -33,7 +34,7 @@ class InCoreKmerContainer : public KmerContainer<Comparator> {
 
 public:
   InCoreKmerContainer() = default;
-  InCoreKmerContainer(Iteration iteration_) : iteration(iteration_){};
+  explicit InCoreKmerContainer(Iteration iteration_) : iteration(iteration_){};
   ~InCoreKmerContainer() = default;
 
   Iteration iteration = Iteration::parallel;
@@ -41,6 +42,7 @@ public:
   [[nodiscard]] size_t size() const override { return container.size(); }
 
   void push(const VLMCKmer &kmer) override { container.push_back(kmer); }
+  void push(VLMCKmer &kmer) override { container.push_back(kmer); }
 
   void sort() override {
     if (iteration == Iteration::parallel) {
@@ -71,6 +73,7 @@ public:
   [[nodiscard]] size_t size() const override { return sorter.size(); }
 
   void push(const VLMCKmer &kmer) override { sorter.push(kmer); }
+  void push(VLMCKmer &kmer) override { sorter.push(kmer); }
 
   void sort() override { sorter.sort(); };
 
@@ -103,6 +106,7 @@ public:
   [[nodiscard]] size_t size() const override { return container.size(); }
 
   void push(const VLMCKmer &kmer) override { container.push_back(kmer); }
+  void push(VLMCKmer &kmer) override { container.push_back(kmer); }
 
   void sort() override {
     stxxl::sort(container.begin(), container.end(), Comparator(),
