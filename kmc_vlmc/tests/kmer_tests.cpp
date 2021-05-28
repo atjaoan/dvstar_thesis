@@ -49,6 +49,13 @@ TEST_F(KmerTests, VLMCKmerConstructor9) {
   EXPECT_EQ(created.to_string(), kmer_string);
 }
 
+
+TEST_F(KmerTests, VLMCKmerConstructor28) {
+  std::string kmer_string{"ACTGCTGATACTGCTGATACTGCTGATATA"};
+  auto created = create_kmer(kmer_string);
+  EXPECT_EQ(created.to_string(), kmer_string);
+}
+
 TEST_F(KmerTests, IsPod) {
   EXPECT_FALSE(std::is_pod<CKmerAPI>::value);
   EXPECT_TRUE(std::is_pod<VLMCKmer>::value);

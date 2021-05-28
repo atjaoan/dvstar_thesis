@@ -58,10 +58,10 @@ int build(const std::filesystem::path &fasta_path, const int max_depth,
   };
 
   auto container =
-      parse_kmer_container<ReverseKMerComparator<31>>(in_or_out_of_core);
+      parse_kmer_container<ReverseKMerComparator<max_k>>(in_or_out_of_core);
 
   auto support_pruning_start = std::chrono::steady_clock::now();
-  sequential_support_pruning<31>(kmer_database, container, kmer_size,
+  sequential_support_pruning<max_k>(kmer_database, container, kmer_size,
                                  include_node);
   auto support_pruning_done = std::chrono::steady_clock::now();
 
@@ -70,8 +70,6 @@ int build(const std::filesystem::path &fasta_path, const int max_depth,
   auto sorting_start = std::chrono::steady_clock::now();
 
   container->sort();
-
-  //  container->for_each([](VLMCKmer &kmer) { kmer.output(std::cout); });
 
   auto sorting_done = std::chrono::steady_clock::now();
 
@@ -85,7 +83,7 @@ int build(const std::filesystem::path &fasta_path, const int max_depth,
 
     auto keep_node = [&](double delta) -> bool { return delta <= threshold; };
 
-    similarity_pruning<31>(container, oarchive, keep_node);
+    similarity_pruning<max_k>(container, oarchive, keep_node);
   }
   auto similarity_pruning_done = std::chrono::steady_clock::now();
 

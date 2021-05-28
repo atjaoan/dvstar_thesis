@@ -16,11 +16,11 @@ protected:
 
   KMersPerLevel<uint64> counters{alphabet_size + 1, 7};
 
-  std::shared_ptr<KmerContainer<ReverseKMerComparator<31>>> sorter =
-      std::make_shared<OutOfCoreKmerContainer<ReverseKMerComparator<31>>>();
+  std::shared_ptr<KmerContainer<ReverseKMerComparator<max_k>>> sorter =
+      std::make_shared<OutOfCoreKmerContainer<ReverseKMerComparator<max_k>>>();
 
   vector_type local_kmers =
-      std::make_shared<InCoreKmerContainer<ReverseKMerComparator<31>>>();
+      std::make_shared<InCoreKmerContainer<ReverseKMerComparator<max_k>>>();
 
   const std::function<bool(int, uint64)> include_node =
       [](int length, uint64 count) -> bool { return true; };
@@ -82,7 +82,7 @@ TEST_F(SupportPruningTests, SortAll4Mers) {
   std::vector<VLMCKmer> stxxl_sorted_kmers{};
   sorter->for_each([&](VLMCKmer &kmer) { stxxl_sorted_kmers.push_back(kmer); });
 
-  std::sort(kmers.begin(), kmers.end(), ReverseKMerComparator<31>());
+  std::sort(kmers.begin(), kmers.end(), ReverseKMerComparator<max_k>());
 
   std::cout << "output" << std::endl;
   for (int i = 0; i < kmers.size(); i++) {

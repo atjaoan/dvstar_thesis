@@ -8,6 +8,7 @@
 
 #include <kmc_file.h>
 
+#include "../src/build_vlmc.hpp"
 #include "read_helper.hpp"
 
 using namespace vlmc;
@@ -25,8 +26,8 @@ protected:
 std::map<std::string, size_t> get_kmer_counts(std::string &sequence) {
   std::map<std::string, size_t> counts{};
 
-  for (size_t i = 0; i <= sequence.size() - 10; i++) {
-    for (int j = 0; j < 11 && j + i <= sequence.size(); j++) {
+  for (size_t i = 0; i <= sequence.size() - 11; i++) {
+    for (int j = 0; j < 12 && j + i <= sequence.size(); j++) {
       auto kmer = sequence.substr(i, j);
       if (counts.find(kmer) != counts.end()) {
         counts[kmer] += 1;
@@ -57,20 +58,36 @@ TEST_F(CountCorrectnessTests, CorrectCounts) {
 
   auto counts = get_kmer_counts(sequence);
 
-  std::filesystem::path run_path{"out.txt"};
+  std::filesystem::path tmp_path = std::filesystem::temp_directory_path();
+
+  std::filesystem::create_directories(tmp_path);
+  vlmc::configure_stxxl(tmp_path);
+
+  std::filesystem::path run_path{"out.tree"};
+  int exit_code =
+      vlmc::build(fasta_path, 10, 1, 3.9075, run_path, tmp_path, "internal");
+
   std::ifstream run_stream{run_path};
 
-  for (std::string line; std::getline(run_stream, line);) {
-    if (line.empty()) {
-      continue;
+  std::ifstream file_stream(run_path, std::ios::binary);
+  {
+    cereal::BinaryInputArchive iarchive(file_stream);
+
+    VLMCKmer kmer{};
+    while (file_stream.peek() != EOF) {
+      iarchive(kmer);
+      auto kmer_string = kmer.to_string();
+      EXPECT_EQ(counts[kmer_string], kmer.count) << kmer_string;
+      EXPECT_EQ(counts[kmer_string + 'A'], kmer.next_symbol_counts[0])
+          << kmer_string + 'A';
+      EXPECT_EQ(counts[kmer_string + 'C'], kmer.next_symbol_counts[1])
+          << kmer_string + 'C';
+      EXPECT_EQ(counts[kmer_string + 'G'], kmer.next_symbol_counts[2])
+          << kmer_string + 'G';
+      ASSERT_EQ(counts[kmer_string + 'T'], kmer.next_symbol_counts[3])
+          << kmer_string + 'T';
     }
-
-    auto [kmer, count, next_symbol_counts] = read_line(line);
-
-    EXPECT_EQ(counts[kmer], count) << kmer;
-    EXPECT_EQ(counts[kmer + 'A'], next_symbol_counts[0]) << kmer + 'A';
-    EXPECT_EQ(counts[kmer + 'C'], next_symbol_counts[1]) << kmer + 'C';
-    EXPECT_EQ(counts[kmer + 'G'], next_symbol_counts[2]) << kmer + 'G';
-    ASSERT_EQ(counts[kmer + 'T'], next_symbol_counts[3]) << kmer + 'T';
   }
+
+  file_stream.close();
 }

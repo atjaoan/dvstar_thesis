@@ -9,7 +9,7 @@
 
 namespace vlmc {
 void load_kmers(const std::filesystem::path &vlmc_path,
-                KmerContainer<KMerComparator<31>> &container) {
+                KmerContainer<KMerComparator<max_k>> &container) {
   std::ifstream file_stream(vlmc_path, std::ios::binary);
   {
     cereal::BinaryInputArchive iarchive(file_stream);
@@ -58,7 +58,7 @@ std::tuple<double, bool, bool> compare_kmers(VLMCKmer &vlmc_kmer,
 }
 
 std::tuple<double, stxxl::vector<VLMCKmer>>
-score_kmers(KmerContainer<KMerComparator<31>> &container,
+score_kmers(KmerContainer<KMerComparator<max_k>> &container,
             const stxxl::vector<VLMCKmer> &kmers, const int kmer_length,
             const int prefix_length) {
   if (kmers.empty()) {
@@ -104,7 +104,7 @@ score_kmers(KmerContainer<KMerComparator<31>> &container,
 }
 
 std::tuple<double, stxxl::vector<VLMCKmer>, size_t>
-score_kmers_full_length(KmerContainer<KMerComparator<31>> &container,
+score_kmers_full_length(KmerContainer<KMerComparator<max_k>> &container,
                         const std::string &kmc_db_name,
                         const int actual_kmer_size) {
   CKMCFile kmer_database;
@@ -167,7 +167,7 @@ score_kmers_full_length(KmerContainer<KMerComparator<31>> &container,
   return {log_likelihood, next_level_kmers, sequence_length};
 }
 
-double score(KmerContainer<KMerComparator<31>> &container,
+double score(KmerContainer<KMerComparator<max_k>> &container,
              const std::string &kmc_db_name, const int actual_kmer_size) {
 
   auto [full_log_likelihood, next_level_kmers, sequence_length] =
@@ -199,7 +199,7 @@ double negative_log_likelihood(const std::filesystem::path &fasta_path,
                                const std::string &in_or_out_of_core,
                                const int actual_kmer_size) {
   auto kmer_container =
-      parse_kmer_container<KMerComparator<31>>(in_or_out_of_core);
+      parse_kmer_container<KMerComparator<max_k>>(in_or_out_of_core);
   load_kmers(vlmc_path, *kmer_container);
 
   kmer_container->sort();

@@ -26,7 +26,7 @@ std::filesystem::path run_kmc(const std::filesystem::path &fasta_path,
   auto kmc_run = std::chrono::steady_clock::now();
 
   std::ostringstream kmc_run_stream;
-  kmc_run_stream << "./kmc -b -ci" << exclude_infrequent_count
+  kmc_run_stream << "./kmc -b -ci1"
                  << " -cs4294967295 ";
   if (in_or_out_of_core == "internal") {
     kmc_run_stream << "-r ";

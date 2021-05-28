@@ -139,7 +139,7 @@ BENCHMARK_F(KmerVLMCBenchmarks, WriteToSorterOutOfCore)
   kmer_translator.from_string("ACTGACTGACTG");
   VLMCKmer kmer_from = kmer_translator.construct_vlmc_kmer();
 
-  OutOfCoreKmerContainer<ReverseKMerComparator<31>> sorter{};
+  OutOfCoreKmerContainer<ReverseKMerComparator<max_k>> sorter{};
 
   for (auto _ : state) {
     sorter.push(kmer_from);
@@ -152,7 +152,7 @@ BENCHMARK_F(KmerVLMCBenchmarks, WriteToSorterInCore)
   kmer_translator.from_string("ACTGACTGACTG");
   VLMCKmer kmer_from = kmer_translator.construct_vlmc_kmer();
 
-  InCoreKmerContainer<ReverseKMerComparator<31>> sorter{};
+  InCoreKmerContainer<ReverseKMerComparator<max_k>> sorter{};
 
   for (auto _ : state) {
     sorter.push(kmer_from);
@@ -242,16 +242,16 @@ BENCHMARK_F(KmerVLMCBenchmarks, IncreaseCounters)
 
 BENCHMARK_F(KmerVLMCBenchmarks, SupportPruningSplitTasksInCore)
 (benchmark::State &state) {
-  std::shared_ptr<KmerContainer<ReverseKMerComparator<31>>> sorter =
-      std::make_shared<InCoreKmerContainer<ReverseKMerComparator<31>>>();
+  std::shared_ptr<KmerContainer<ReverseKMerComparator<max_k>>> sorter =
+      std::make_shared<InCoreKmerContainer<ReverseKMerComparator<max_k>>>();
 
   int prefix_length = 3;
   int n_tasks = VLMCKmer::n_kmers_with_length(prefix_length);
 
-  std::vector<std::shared_ptr<KmerContainer<KMerComparator<31>>>> tasks(
+  std::vector<std::shared_ptr<KmerContainer<KMerComparator<max_k>>>> tasks(
       n_tasks);
   for (int i = 0; i < n_tasks; i++) {
-    tasks[i] = std::make_shared<InCoreKmerContainer<KMerComparator<31>>>();
+    tasks[i] = std::make_shared<InCoreKmerContainer<KMerComparator<max_k>>>();
   }
 
   for (auto _ : state) {
@@ -275,10 +275,10 @@ BENCHMARK_F(KmerVLMCBenchmarks, SupportPruningSplitTasksOutOfCore)
   int prefix_length = 3;
   int n_tasks = VLMCKmer::n_kmers_with_length(prefix_length);
 
-  std::vector<std::shared_ptr<KmerContainer<KMerComparator<31>>>> tasks(
+  std::vector<std::shared_ptr<KmerContainer<KMerComparator<max_k>>>> tasks(
       n_tasks);
   for (int i = 0; i < n_tasks; i++) {
-    tasks[i] = std::make_shared<OutOfCoreKmerContainer<KMerComparator<31>>>();
+    tasks[i] = std::make_shared<OutOfCoreKmerContainer<KMerComparator<max_k>>>();
   }
 
   for (auto _ : state) {
@@ -299,8 +299,8 @@ BENCHMARK_F(KmerVLMCBenchmarks, SupportPruningSplitTasksOutOfCore)
 
 BENCHMARK_F(KmerVLMCBenchmarks, SupportPruningOutOfCore)
 (benchmark::State &state) {
-  std::shared_ptr<KmerContainer<ReverseKMerComparator<31>>> sorter =
-      std::make_shared<OutOfCoreKmerContainer<ReverseKMerComparator<31>>>();
+  std::shared_ptr<KmerContainer<ReverseKMerComparator<max_k>>> sorter =
+      std::make_shared<OutOfCoreKmerContainer<ReverseKMerComparator<max_k>>>();
 
   for (auto _ : state) {
     support_pruning<12>(
@@ -315,8 +315,8 @@ BENCHMARK_F(KmerVLMCBenchmarks, SupportPruningOutOfCore)
 
 BENCHMARK_F(KmerVLMCBenchmarks, SupportPruningInCore)
 (benchmark::State &state) {
-  std::shared_ptr<KmerContainer<ReverseKMerComparator<31>>> sorter =
-      std::make_shared<InCoreKmerContainer<ReverseKMerComparator<31>>>();
+  std::shared_ptr<KmerContainer<ReverseKMerComparator<max_k>>> sorter =
+      std::make_shared<InCoreKmerContainer<ReverseKMerComparator<max_k>>>();
 
   for (auto _ : state) {
     support_pruning<12>(
@@ -331,8 +331,8 @@ BENCHMARK_F(KmerVLMCBenchmarks, SupportPruningInCore)
 
 BENCHMARK_F(KmerVLMCBenchmarks, SequentialSupportPruningOutOfCore)
 (benchmark::State &state) {
-  std::shared_ptr<KmerContainer<ReverseKMerComparator<31>>> sorter =
-      std::make_shared<OutOfCoreKmerContainer<ReverseKMerComparator<31>>>();
+  std::shared_ptr<KmerContainer<ReverseKMerComparator<max_k>>> sorter =
+      std::make_shared<OutOfCoreKmerContainer<ReverseKMerComparator<max_k>>>();
 
   for (auto _ : state) {
     sequential_support_pruning<12>(
@@ -347,8 +347,8 @@ BENCHMARK_F(KmerVLMCBenchmarks, SequentialSupportPruningOutOfCore)
 
 BENCHMARK_F(KmerVLMCBenchmarks, SequentialSupportPruningInCore)
 (benchmark::State &state) {
-  std::shared_ptr<KmerContainer<ReverseKMerComparator<31>>> sorter =
-      std::make_shared<InCoreKmerContainer<ReverseKMerComparator<31>>>();
+  std::shared_ptr<KmerContainer<ReverseKMerComparator<max_k>>> sorter =
+      std::make_shared<InCoreKmerContainer<ReverseKMerComparator<max_k>>>();
 
   for (auto _ : state) {
     sequential_support_pruning<12>(

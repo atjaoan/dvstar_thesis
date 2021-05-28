@@ -24,7 +24,7 @@ struct VLMCKmer {
 
   ~VLMCKmer() = default;
 
-  std::array<uint64, 2> kmer_data;
+  std::array<uint64, 8> kmer_data;
   uint64 count;
   std::array<uint64, 4> next_symbol_counts;
   double divergence;
@@ -41,13 +41,15 @@ struct VLMCKmer {
     out_kmer.count = count;
     out_kmer.next_symbol_counts = child_counts;
 
-    out_kmer.kmer_data[0] = 0;
-    out_kmer.kmer_data[1] = 0;
+    for (int i = 0; i < 8; i++) {
+      out_kmer.kmer_data[i] = 0;
+    }
+
 
     uint32 row = length >> 5;
 
-    if (row == 1) {
-      out_kmer.kmer_data[0] = kmer.kmer_data[0];
+    for (int i = 0; i < row; i++) {
+      out_kmer.kmer_data[i] = kmer.kmer_data[i];
     }
 
     uint32 length_in_row = length & 31;
@@ -280,8 +282,16 @@ public:
     // up to 64 or so.  Should be fine.
     VLMCKmer new_kmer{this->kmer_length, 0, {}};
 
-    new_kmer.kmer_data[0] = 0;
-    new_kmer.kmer_data[1] = 0;
+    return construct_vlmc_kmer(new_kmer);
+  }
+
+  VLMCKmer construct_vlmc_kmer(VLMCKmer &new_kmer) {
+    // To make sure the VLMCKmer class stays a POD, we're only allowing k-mers
+    // up to 64 or so.  Should be fine.
+
+    for (int i = 0; i < 8; i++) {
+      new_kmer.kmer_data[i] = 0;
+    }
 
     if (this->kmer_length == 0) {
       return new_kmer;
@@ -295,37 +305,6 @@ public:
       for (int pos = 0; pos < this->kmer_length; pos++) {
         uint32 row = pos >> 5;
         uint64 val = this->extract2bits(pos);
-        new_kmer.kmer_data[row] += val << (31 - (pos & 31)) * 2;
-      }
-
-      return new_kmer;
-
-    } else {
-      new_kmer.kmer_data[0] = 0;
-
-      return new_kmer;
-    }
-  }
-
-  VLMCKmer construct_vlmc_kmer(VLMCKmer &new_kmer) {
-    // To make sure the VLMCKmer class stays a POD, we're only allowing k-mers
-    // up to 64 or so.  Should be fine.
-
-    new_kmer.kmer_data[0] = 0;
-    new_kmer.kmer_data[1] = 0;
-
-    if (this->kmer_length == 0) {
-      return new_kmer;
-    }
-
-    if (this->kmer_length < 31 - this->byte_alignment) {
-      new_kmer.kmer_data[0] = this->kmer_data[0] << (this->byte_alignment * 2);
-
-      return new_kmer;
-    } else if (this->kmer_length > 31 - this->byte_alignment) {
-      for (int pos = 0; pos < this->kmer_length; pos++) {
-        uint32 row = pos >> 5;
-        uchar val = this->extract2bits(pos);
         new_kmer.kmer_data[row] += val << (31 - (pos & 31)) * 2;
       }
 

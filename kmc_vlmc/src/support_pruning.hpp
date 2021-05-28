@@ -99,7 +99,7 @@ void process_kmer(const VLMCKmer &current_kmer, const VLMCKmer &prev_kmer,
 template <int kmer_size>
 std::tuple<VLMCKmer, vector_type>
 run_kmer_subset(std::atomic<int> &running_tasks, int actual_kmer_size,
-                std::shared_ptr<KmerContainer<KMerComparator<31>>> &in_kmers,
+                std::shared_ptr<KmerContainer<KMerComparator<max_k>>> &in_kmers,
                 int prefix_length, vector_type &container,
                 const std::function<bool(int, size_t)> &include_node,
                 bool end) {
@@ -157,15 +157,15 @@ void support_pruning(CKMCFile &kmer_database, vector_type &container,
   int prefix_length = 3; // TODO determine this based on task size in some way
   int n_tasks = std::pow(4, prefix_length);
 
-  std::vector<std::shared_ptr<KmerContainer<KMerComparator<31>>>> tasks(
+  std::vector<std::shared_ptr<KmerContainer<KMerComparator<max_k>>>> tasks(
       n_tasks);
   for (int i = 0; i < n_tasks; i++) {
     if (in_or_out_of_core == "internal") {
-      tasks[i] = std::make_shared<InCoreKmerContainer<KMerComparator<31>>>(
+      tasks[i] = std::make_shared<InCoreKmerContainer<KMerComparator<max_k>>>(
           Iteration::sequential);
     } else {
       tasks[i] = std::make_shared<
-          OutOfCoreSequentialKmerContainer<KMerComparator<31>>>();
+          OutOfCoreSequentialKmerContainer<KMerComparator<max_k>>>();
     }
   }
 
@@ -198,8 +198,8 @@ void support_pruning(CKMCFile &kmer_database, vector_type &container,
       actual_kmer_size, std::ref(tasks[current_prefix_idx]), prefix_length,
       std::ref(container), include_node, false));
 
-  std::shared_ptr<KmerContainer<KMerComparator<31>>> merge_kmers =
-      std::make_shared<InCoreKmerContainer<KMerComparator<31>>>();
+  std::shared_ptr<KmerContainer<KMerComparator<max_k>>> merge_kmers =
+      std::make_shared<InCoreKmerContainer<KMerComparator<max_k>>>();
 
   for (auto &future : prefix_runs) {
     auto [kmer_, kmers] = future.get();

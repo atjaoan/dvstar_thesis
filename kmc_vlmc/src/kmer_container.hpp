@@ -14,8 +14,10 @@ namespace vlmc {
 enum Core { out, in };
 enum Iteration { parallel, sequential };
 
-template <class Comparator = ReverseKMerComparator<31>> class KmerContainer {
-  static_assert(std::is_base_of<VirtualKMerComparator<31>, Comparator>::value,
+constexpr int max_k = 255;
+
+template <class Comparator = ReverseKMerComparator<max_k>> class KmerContainer {
+  static_assert(std::is_base_of<VirtualKMerComparator<max_k>, Comparator>::value,
                 "Invalid comparator template");
 
 public:
@@ -30,7 +32,7 @@ public:
   virtual void for_each(const std::function<void(VLMCKmer &kmer)> &){};
 };
 
-template <class Comparator = ReverseKMerComparator<31>>
+template <class Comparator = ReverseKMerComparator<max_k>>
 class InCoreKmerContainer : public KmerContainer<Comparator> {
   std::deque<VLMCKmer> container{};
 
@@ -62,11 +64,11 @@ public:
   }
 };
 
-template <class Comparator = ReverseKMerComparator<31>>
+template <class Comparator = ReverseKMerComparator<max_k>>
 class OutOfCoreKmerContainer : public KmerContainer<Comparator> {
   template <int MAX_K>
   using kmer_sorter = stxxl::sorter<VLMCKmer, Comparator, 16 * 1024 * 1024>;
-  kmer_sorter<31> sorter{Comparator(), 128 * 1024 * 1024};
+  kmer_sorter<max_k> sorter{Comparator(), 128 * 1024 * 1024};
 
 public:
   OutOfCoreKmerContainer() = default;
@@ -96,7 +98,7 @@ public:
   }
 };
 
-template <class Comparator = ReverseKMerComparator<31>>
+template <class Comparator = ReverseKMerComparator<max_k>>
 class OutOfCoreSequentialKmerContainer : public KmerContainer<Comparator> {
   typedef stxxl::VECTOR_GENERATOR<VLMCKmer>::result vector_type;
   stxxl::vector<VLMCKmer> container{};

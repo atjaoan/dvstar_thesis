@@ -6,7 +6,7 @@ int main(int argc, char *argv[]) {
   CLI::App app{"Variable-length Markov chain construction construction using "
                "k-mer counter."};
 
-  cli_arguments arguments{};
+  vlmc::cli_arguments arguments{};
   add_options(app, arguments);
 
   try {
@@ -19,10 +19,10 @@ int main(int argc, char *argv[]) {
   vlmc::configure_stxxl(arguments.tmp_path);
 
   if (arguments.mode == "build") {
-    int exit_code =
-        build(arguments.fasta_path, arguments.max_depth, arguments.min_count,
-              arguments.threshold, arguments.out_path, arguments.tmp_path,
-              arguments.in_or_out_of_core);
+    int exit_code = vlmc::build(arguments.fasta_path, arguments.max_depth,
+                                arguments.min_count, arguments.threshold,
+                                arguments.out_path, arguments.tmp_path,
+                                arguments.in_or_out_of_core);
     std::filesystem::remove_all(arguments.tmp_path);
 
     return exit_code;
@@ -40,22 +40,20 @@ int main(int argc, char *argv[]) {
       ofs = &out_stream;
     }
 
-    VLMCKmer kmer{};
+    vlmc::VLMCKmer kmer{};
 
     while (file_stream.peek() != EOF) {
-      try {
+
         iarchive(kmer);
         kmer.output(*ofs);
-      } catch (const cereal::Exception &e) {
-        std::cout << (file_stream.peek() == EOF) << std::endl;
-        std::cout << e.what() << std::endl;
-        return EXIT_FAILURE;
-      }
+
     }
+    out_stream.close();
+
   } else if (arguments.mode == "score") {
-    negative_log_likelihood(arguments.fasta_path, arguments.tmp_path,
-                            arguments.in_path, arguments.in_or_out_of_core,
-                            arguments.max_depth);
+    vlmc::negative_log_likelihood(
+        arguments.fasta_path, arguments.tmp_path, arguments.in_path,
+        arguments.in_or_out_of_core, arguments.max_depth);
   }
 
   std::filesystem::remove_all(arguments.tmp_path);
