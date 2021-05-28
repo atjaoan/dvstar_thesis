@@ -10,7 +10,7 @@ namespace vlmc {
 std::filesystem::path run_kmc(const std::filesystem::path &fasta_path,
                               const int kmer_size,
                               const std::filesystem::path &tmp_path,
-                              const std::string &in_or_out_of_core,
+                              const Core &in_or_out_of_core,
                               const int exclude_infrequent_count = 2) {
   std::string random_name = get_random_name("kmc_");
 
@@ -28,7 +28,7 @@ std::filesystem::path run_kmc(const std::filesystem::path &fasta_path,
   std::ostringstream kmc_run_stream;
   kmc_run_stream << "./kmc -b -ci1"
                  << " -cs4294967295 ";
-  if (in_or_out_of_core == "internal") {
+  if (in_or_out_of_core == Core::in) {
     kmc_run_stream << "-r ";
   }
   kmc_run_stream << "-k" << kmer_size << " ";

@@ -13,8 +13,10 @@
 
 namespace vlmc {
 
+enum Mode { build, score_sequence, dump };
+
 struct cli_arguments {
-  std::string mode{"build"};
+  Mode mode{Mode::build};
   std::filesystem::path fasta_path;
   std::filesystem::path in_path;
   std::filesystem::path tmp_path{"./tmp"};
@@ -22,11 +24,19 @@ struct cli_arguments {
   int min_count = 10;
   int max_depth = 15;
   double threshold = 3.9075;
-  std::string in_or_out_of_core{"internal"};
+  Core in_or_out_of_core{Core::in};
 };
 void add_options(CLI::App &app, cli_arguments &arguments) {
+  std::map<std::string, Mode> mode_map{{"build", Mode::build},
+                                       {"score", Mode::score_sequence},
+                                       {"dump", Mode::dump}};
+
+  std::map<std::string, Core> core_map{{"internal", Core::in},
+                                       {"external", Core::out}};
+
   app.add_option("-m,--mode", arguments.mode,
-                 "Program mode, 'build', 'dump', or 'score'.");
+                 "Program mode, 'build', 'dump', or 'score'.")
+      ->transform(CLI::CheckedTransformer(mode_map, CLI::ignore_case));
 
   app.add_option(
       "-p,--fasta-path", arguments.fasta_path,
@@ -50,18 +60,20 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
                  "Minimum count required for every k-mer in the tree.");
   app.add_option("-k,--threshold", arguments.threshold,
                  "Kullback-Leibler threshold.");
+
   app.add_option("-d,--max-depth", arguments.max_depth,
                  "Maximum depth for included k-mers.");
 
   app.add_option(
-      "-i, --in-or-out-of-core", arguments.in_or_out_of_core,
-      "Specify 'internal' for in-core or 'external for out-of-core memory "
-      "model.  Out of core is slower, but is not memory bound. ");
+         "-i, --in-or-out-of-core", arguments.in_or_out_of_core,
+         "Specify 'internal' for in-core or 'external for out-of-core memory "
+         "model.  Out of core is slower, but is not memory bound. ")
+      ->transform(CLI::CheckedTransformer(core_map, CLI::ignore_case));
 }
 
-std::random_device rd;
+static std::random_device rd;
 
-std::mt19937 gen = std::mt19937{rd()};
+static std::mt19937 gen = std::mt19937{rd()};
 std::string get_random_name(const std::string &start) {
   std::stringstream ss;
   ss << start;
@@ -78,11 +90,10 @@ std::string get_random_name(const std::string &start) {
 
 template <class Comparator>
 std::shared_ptr<KmerContainer<Comparator>>
-parse_kmer_container(const std::string &in_or_out_of_core) {
-  std::cout << in_or_out_of_core << std::endl;
-  if (in_or_out_of_core == "external") {
+parse_kmer_container(const Core &in_or_out_of_core) {
+  if (in_or_out_of_core == Core::out) {
     return std::make_shared<OutOfCoreKmerContainer<Comparator>>();
-  } else if (in_or_out_of_core == "internal") {
+  } else if (in_or_out_of_core == Core::in) {
     return std::make_shared<InCoreKmerContainer<Comparator>>();
   } else {
     throw(std::invalid_argument(

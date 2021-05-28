@@ -31,11 +31,11 @@ void configure_stxxl(const std::filesystem::path &tmp_path) {
   cfg->add_disk(disk1);
 }
 
-int build(const std::filesystem::path &fasta_path, const int max_depth,
+int build_vlmc(const std::filesystem::path &fasta_path, const int max_depth,
           const int min_count, const double threshold,
           const std::filesystem::path &out_path,
           const std::filesystem::path &tmp_path,
-          const std::string &in_or_out_of_core) {
+          const Core &in_or_out_of_core) {
   auto start = std::chrono::steady_clock::now();
 
   const int kmer_size = max_depth + 1;

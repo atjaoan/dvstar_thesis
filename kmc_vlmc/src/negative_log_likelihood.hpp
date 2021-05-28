@@ -196,7 +196,7 @@ double score(KmerContainer<KMerComparator<max_k>> &container,
 double negative_log_likelihood(const std::filesystem::path &fasta_path,
                                const std::filesystem::path &tmp_path,
                                const std::filesystem::path &vlmc_path,
-                               const std::string &in_or_out_of_core,
+                               const Core &in_or_out_of_core,
                                const int actual_kmer_size) {
   auto kmer_container =
       parse_kmer_container<KMerComparator<max_k>>(in_or_out_of_core);
