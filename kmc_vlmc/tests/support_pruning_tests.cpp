@@ -36,7 +36,7 @@ protected:
 TEST_F(SupportPruningTests, ProcessKMerOneDiff) {
   auto kmer = create_kmer("AAAAC");
   kmer.count = 2;
-  counters[5][2] = 2;
+  counters[5][1] = 2;
 
   auto next_kmer = create_kmer("AAAAT");
   next_kmer.count = 5;
@@ -48,15 +48,15 @@ TEST_F(SupportPruningTests, ProcessKMerOneDiff) {
 
   increase_counts(counters, next_kmer);
 
-  EXPECT_EQ(counters[5][4], next_kmer.count);
+  EXPECT_EQ(counters[5][3], next_kmer.count);
 }
 
 TEST_F(SupportPruningTests, ProcessKMerBigDiff) {
   auto kmer = create_kmer("ATTTT");
-  counters[5][4] = 20;
   counters[5][3] = 20;
   counters[5][2] = 20;
   counters[5][1] = 20;
+  counters[5][0] = 20;
 
   auto next_kmer = create_kmer("CAAAA");
   next_kmer.count = 5;
@@ -65,7 +65,7 @@ TEST_F(SupportPruningTests, ProcessKMerBigDiff) {
   local_kmers->for_each([&](auto &kmer_) { EXPECT_EQ(kmer_.count, 20 * 4); });
   increase_counts(counters, next_kmer);
 
-  EXPECT_EQ(counters[5][1], next_kmer.count);
+  EXPECT_EQ(counters[5][0], next_kmer.count);
 }
 
 TEST_F(SupportPruningTests, SortAll4Mers) {

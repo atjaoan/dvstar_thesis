@@ -27,8 +27,8 @@ using vector_type = std::shared_ptr<KmerContainer<>>;
 void output_root(std::vector<uint64> &root_counts, vector_type &container) {
   uint64 count = std::accumulate(root_counts.begin(), root_counts.end(), 0);
   VLMCKmer root{0, count,
-                std::array<uint64, 4>{root_counts[1], root_counts[2],
-                                      root_counts[3], root_counts[4]}};
+                std::array<uint64, 4>{root_counts[0], root_counts[1],
+                                      root_counts[2], root_counts[3]}};
 
   //  root.output(std::cout);
   //  std::lock_guard lock{sorter_mutex};
@@ -39,8 +39,8 @@ void output_node(const VLMCKmer &prev_kmer, int diff_pos, uint64 sum,
                  std::vector<uint64> &next_counts, vector_type &output_kmers) {
   auto prefix_kmer = VLMCKmer::create_prefix_kmer(
       prev_kmer, diff_pos + 1, sum,
-      std::array<uint64, 4>{next_counts[1], next_counts[2], next_counts[3],
-                            next_counts[4]});
+      std::array<uint64, 4>{next_counts[0], next_counts[1], next_counts[2],
+                            next_counts[3]});
 
   //  prefix_kmer.output(std::cout);
   //    std::lock_guard lock{sorter_mutex};
@@ -49,7 +49,7 @@ void output_node(const VLMCKmer &prev_kmer, int diff_pos, uint64 sum,
 
 void increase_counts(KMersPerLevel<uint64> &counters, const VLMCKmer &kmer) {
   uchar char_idx = kmer.char_pos(kmer.length - 1);
-  counters[kmer.length][char_idx + 1] += kmer.count;
+  counters[kmer.length][char_idx] += kmer.count;
 }
 
 void process_kmer(const VLMCKmer &current_kmer, const VLMCKmer &prev_kmer,
@@ -81,7 +81,7 @@ void process_kmer(const VLMCKmer &current_kmer, const VLMCKmer &prev_kmer,
     auto &next_counts = counters[i + 1];
 
     uint64 sum =
-        next_counts[1] + next_counts[2] + next_counts[3] + next_counts[4];
+        next_counts[0] + next_counts[1] + next_counts[2] + next_counts[3];
 
     if (i < prev_kmer.length - 1 && include_node(i + 1, sum + 4)) {
       output_func(prev_kmer, i, sum, next_counts);
@@ -89,11 +89,10 @@ void process_kmer(const VLMCKmer &current_kmer, const VLMCKmer &prev_kmer,
     }
 
     auto char_idx = prev_kmer.char_pos(i);
-    counters[i][char_idx + 1] = sum;
+    counters[i][char_idx] = sum;
 
     // Reset counters for potentially outputted kmer
-    counters[i][0] = 0;
-    next_counts[1] = next_counts[2] = next_counts[3] = next_counts[4] = 0;
+    next_counts[0] = next_counts[1] = next_counts[2] = next_counts[3] = 0;
   }
 }
 
@@ -117,7 +116,7 @@ run_kmer_subset(std::atomic<int> &running_tasks, int actual_kmer_size,
   };
 
   int alphabet_size = 4;
-  KMersPerLevel<uint64> counters{alphabet_size + 1, kmer_size + 1};
+  KMersPerLevel<uint64> counters{alphabet_size, kmer_size + 1};
 
   VLMCKmer prev_kmer{0, 0, {}};
   in_kmers->for_each([&](VLMCKmer &kmer) {
@@ -229,9 +228,8 @@ void sequential_support_pruning(
   VLMCKmer prev_kmer(actual_kmer_size, 0, {});
 
   int alphabet_size = 4;
-  // actual_kmer_size + 2 as 0 is used for the root, and end is used for
-  // next-counts of the longest kmers.
-  KMersPerLevel<uint64> counters{alphabet_size + 1, kmer_size + 1};
+
+  KMersPerLevel<uint64> counters{alphabet_size, kmer_size + 1};
 
   uint64 counter;
 
