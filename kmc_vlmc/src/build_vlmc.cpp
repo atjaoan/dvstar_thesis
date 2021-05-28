@@ -16,12 +16,13 @@ int main(int argc, char *argv[]) {
   }
 
   std::filesystem::create_directories(arguments.tmp_path);
-  configure_stxxl(arguments.tmp_path);
+  vlmc::configure_stxxl(arguments.tmp_path);
 
   if (arguments.mode == "build") {
-    int exit_code= build(arguments.fasta_path, arguments.max_depth, arguments.min_count,
-                 arguments.threshold, arguments.out_path, arguments.tmp_path,
-                 arguments.in_or_out_of_core);
+    int exit_code =
+        build(arguments.fasta_path, arguments.max_depth, arguments.min_count,
+              arguments.threshold, arguments.out_path, arguments.tmp_path,
+              arguments.in_or_out_of_core);
     std::filesystem::remove_all(arguments.tmp_path);
 
     return exit_code;
@@ -58,7 +59,6 @@ int main(int argc, char *argv[]) {
   }
 
   std::filesystem::remove_all(arguments.tmp_path);
-
 
   return EXIT_SUCCESS;
 }

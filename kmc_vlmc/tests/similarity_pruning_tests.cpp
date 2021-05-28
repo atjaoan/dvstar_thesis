@@ -8,13 +8,14 @@
 
 #include "read_helper.hpp"
 
+using namespace vlmc;
+
 class SimilarityPruningTests : public ::testing::Test {
 protected:
   void SetUp() override {
-    kmers_per_level = std::vector<std::array<PstKmer, 4>>(7);
   }
 
-  std::vector<std::array<PstKmer, 4>> kmers_per_level;
+  KMersPerLevel<PstKmer> kmers_per_level{4, 8};
 
   std::function<bool(double)> keep_node = [](double delta) -> bool {
     return delta <= 3.9075;

@@ -2,6 +2,8 @@
 
 #include "../src/kmer.hpp"
 
+using namespace vlmc;
+
 VLMCKmer create_kmer(const std::string &kmer_string) {
   VLMCTranslator kmer{static_cast<int>(kmer_string.size())};
   if (!kmer_string.empty()) {

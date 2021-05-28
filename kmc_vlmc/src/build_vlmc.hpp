@@ -16,6 +16,8 @@
 #include "similarity_pruning.hpp"
 #include "support_pruning.hpp"
 
+namespace vlmc {
+
 void configure_stxxl(const std::filesystem::path &tmp_path) {
   std::string random_name = get_random_name("stxxl_");
   // get uninitialized config singleton
@@ -69,7 +71,7 @@ int build(const std::filesystem::path &fasta_path, const int max_depth,
 
   container->sort();
 
-//  container->for_each([](VLMCKmer &kmer) { kmer.output(std::cout); });
+  //  container->for_each([](VLMCKmer &kmer) { kmer.output(std::cout); });
 
   auto sorting_done = std::chrono::steady_clock::now();
 
@@ -110,3 +112,4 @@ int build(const std::filesystem::path &fasta_path, const int max_depth,
 
   return EXIT_SUCCESS;
 }
+} // namespace vlmc

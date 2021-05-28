@@ -6,64 +6,66 @@
 
 #include "read_helper.hpp"
 
+using namespace vlmc;
+
 class SupportPruningTests : public ::testing::Test {
 protected:
   void SetUp() override {}
 
   int alphabet_size = 4;
 
-  KMersPerLevel<size_t> counters{alphabet_size + 1, 7};
+  KMersPerLevel<uint64> counters{alphabet_size + 1, 7};
 
   std::shared_ptr<KmerContainer<ReverseKMerComparator<31>>> sorter =
       std::make_shared<OutOfCoreKmerContainer<ReverseKMerComparator<31>>>();
-  vector_type local_kmers{};
 
-  const std::function<bool(int, size_t)> include_node =
-      [](int length, size_t count) -> bool { return true; };
+  vector_type local_kmers =
+      std::make_shared<InCoreKmerContainer<ReverseKMerComparator<31>>>();
+
+  const std::function<bool(int, uint64)> include_node =
+      [](int length, uint64 count) -> bool { return true; };
+
+  const std::function<void(const VLMCKmer &, int, uint64,
+                           std::vector<uint64> &)>
+      output_func = [&](const VLMCKmer &prev_kmer, int diff_pos, uint64 sum,
+                        std::vector<uint64> &next_counts) {
+        output_node(prev_kmer, diff_pos, sum, next_counts, local_kmers);
+      };
 };
 
 TEST_F(SupportPruningTests, ProcessKMerOneDiff) {
   auto kmer = create_kmer("AAAAC");
   kmer.count = 2;
-  counters[4][0] = 2;
+  counters[5][2] = 2;
 
   auto next_kmer = create_kmer("AAAAT");
   next_kmer.count = 5;
 
-  process_kmer(next_kmer, kmer, counters, local_kmers, include_node, 1);
-  increase_counts(counters, next_kmer.count);
+  process_kmer(next_kmer, kmer, counters, output_func, include_node, 1);
 
-  EXPECT_EQ(counters[4][2], kmer.count);
+  local_kmers->for_each(
+      [&](auto &kmer_) { EXPECT_EQ(kmer_.count, kmer.count); });
 
-  EXPECT_EQ(counters[0][0], next_kmer.count);
-  EXPECT_EQ(counters[1][0], next_kmer.count);
-  EXPECT_EQ(counters[2][0], next_kmer.count);
-  EXPECT_EQ(counters[3][0], next_kmer.count);
-  EXPECT_EQ(counters[4][0], next_kmer.count);
+  increase_counts(counters, next_kmer);
+
+  EXPECT_EQ(counters[5][4], next_kmer.count);
 }
 
 TEST_F(SupportPruningTests, ProcessKMerBigDiff) {
   auto kmer = create_kmer("ATTTT");
-  counters[0][0] = 20;
-  counters[1][0] = 20;
-  counters[2][0] = 20;
+  counters[5][4] = 20;
+  counters[5][3] = 20;
+  counters[5][2] = 20;
+  counters[5][1] = 20;
 
   auto next_kmer = create_kmer("CAAAA");
   next_kmer.count = 5;
 
-  process_kmer(next_kmer, kmer, counters, local_kmers, include_node, 1);
-  increase_counts(counters, next_kmer.count);
+  process_kmer(next_kmer, kmer, counters, output_func, include_node, 1);
+  local_kmers->for_each([&](auto &kmer_) { EXPECT_EQ(kmer_.count, 20 * 4); });
+  increase_counts(counters, next_kmer);
 
-  EXPECT_EQ(counters[0][1], 20);
-  EXPECT_EQ(counters[1][4], 0);
-  EXPECT_EQ(counters[2][4], 0);
-  EXPECT_EQ(counters[3][4], 0);
-
-  EXPECT_EQ(counters[0][0], next_kmer.count);
-  EXPECT_EQ(counters[1][0], next_kmer.count);
-  EXPECT_EQ(counters[2][0], next_kmer.count);
-  EXPECT_EQ(counters[3][0], next_kmer.count);
-  EXPECT_EQ(counters[4][0], next_kmer.count);
+  EXPECT_EQ(counters[5][1], next_kmer.count);
 }
 
 TEST_F(SupportPruningTests, SortAll4Mers) {
@@ -94,25 +96,20 @@ TEST_F(SupportPruningTests, PrefixSortTest) {
       create_kmer("ACGTA"),
       create_kmer("ACTAG"),
       create_kmer("TTTTA"),
-      create_kmer("TTTTT"),
   };
 
-  std::cout << "input" << std::endl;
   for (int j = 1; j < start_kmers.size(); j++) {
-    process_kmer(start_kmers[j], start_kmers[j - 1], counters, local_kmers,
+    process_kmer(start_kmers[j], start_kmers[j - 1], counters, output_func,
                  include_node, 1);
   }
 
-  for (auto &kmer : local_kmers) {
-    sorter->push(kmer);
-  }
+  local_kmers->for_each([&](auto &kmer) { sorter->push(kmer); });
 
   sorter->sort();
 
   std::vector<std::string> sorted_kmers = {"ACGT", "ACT",  "ACG",
                                            "AC",   "ACTA", "A"};
 
-  std::cout << "output" << std::endl;
   int i = 0;
   sorter->for_each([&](VLMCKmer &kmer) {
     EXPECT_EQ(kmer.to_string(), sorted_kmers[i]);

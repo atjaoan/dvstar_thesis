@@ -5,9 +5,15 @@
 #include <numeric>
 #include <vector>
 
+#include <cereal/archives/binary.hpp>
+#include <cereal/cereal.hpp>
+#include <cereal/types/array.hpp>
+
 #include "kmer.hpp"
 #include "kmer_container.hpp"
 #include "kmers_per_level.hpp"
+
+namespace vlmc {
 
 // Need to keep track of which kmers have children, as those with children
 // can't be removed.
@@ -17,7 +23,7 @@ struct PstKmer {
   bool real_child = false;
 };
 
-std::array<double, 4> get_next_symbol_probabilities(VLMCKmer &node) {
+std::array<double, 4> get_next_symbol_probabilities(const VLMCKmer &node) {
   // pseudo-counts => +4
   double sum = std::accumulate(node.next_symbol_counts.begin(),
                                node.next_symbol_counts.end(), 4.0);
@@ -28,7 +34,7 @@ std::array<double, 4> get_next_symbol_probabilities(VLMCKmer &node) {
           double(node.next_symbol_counts[3] + 1) / sum};
 }
 
-double kl_divergence(VLMCKmer &child, VLMCKmer &parent) {
+double kl_divergence(const VLMCKmer &child, const VLMCKmer &parent) {
   auto child_probs = get_next_symbol_probabilities(child);
   auto parent_probs = get_next_symbol_probabilities(parent);
 
@@ -45,7 +51,7 @@ double kl_divergence(VLMCKmer &child, VLMCKmer &parent) {
   return value;
 }
 
-bool process_parent(VLMCKmer &prev_kmer, VLMCKmer &kmer,
+bool process_parent(const VLMCKmer &prev_kmer, const VLMCKmer &kmer,
                     KMersPerLevel<PstKmer> &kmers_per_level,
                     cereal::BinaryOutputArchive &oarchive,
                     const std::function<bool(double)> &remove_node) {
@@ -86,7 +92,7 @@ bool process_parent(VLMCKmer &prev_kmer, VLMCKmer &kmer,
   return removed_children != n_real_children;
 }
 
-void similarity_prune(VLMCKmer &prev_kmer, VLMCKmer &kmer,
+void similarity_prune(const VLMCKmer &prev_kmer, const VLMCKmer &kmer,
                       KMersPerLevel<PstKmer> &kmers_per_level,
                       cereal::BinaryOutputArchive &oarchive,
                       const std::function<bool(double)> &remove_node) {
@@ -135,3 +141,5 @@ void similarity_pruning(std::shared_ptr<KmerContainer<>> &container,
     prev_kmer = kmer;
   });
 }
+
+} // namespace vlmc

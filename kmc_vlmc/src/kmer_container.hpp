@@ -9,6 +9,8 @@
 
 #include "kmer.hpp"
 
+namespace vlmc {
+
 enum Core { out, in };
 enum Iteration { parallel, sequential };
 
@@ -119,3 +121,4 @@ public:
     std::for_each(container.begin(), container.end(), f);
   }
 };
+} // namespace vlmc

@@ -20,6 +20,8 @@
 #include "kmer_container.hpp"
 #include "kmers_per_level.hpp"
 
+namespace vlmc {
+
 using vector_type = std::shared_ptr<KmerContainer<>>;
 
 void output_root(std::vector<uint64> &root_counts, vector_type &container) {
@@ -82,7 +84,7 @@ void process_kmer(const VLMCKmer &current_kmer, const VLMCKmer &prev_kmer,
         next_counts[1] + next_counts[2] + next_counts[3] + next_counts[4];
 
     if (i < prev_kmer.length - 1 && include_node(i + 1, sum + 4)) {
-      output_func(prev_kmer, diff_pos, sum, next_counts);
+      output_func(prev_kmer, i, sum, next_counts);
       //      output_node(prev_kmer, i, sum, next_counts, output_kmers);
     }
 
@@ -203,9 +205,7 @@ void support_pruning(CKMCFile &kmer_database, vector_type &container,
   for (auto &future : prefix_runs) {
     auto [kmer_, kmers] = future.get();
 
-    kmers->for_each([&](auto &kmer_) {
-      container->push(kmer_);
-    });
+    kmers->for_each([&](auto &kmer_) { container->push(kmer_); });
 
     if (kmer_.length != 0) {
       merge_kmers->push(kmer_);
@@ -216,9 +216,7 @@ void support_pruning(CKMCFile &kmer_database, vector_type &container,
       run_kmer_subset<kmer_size>(running_tasks, actual_kmer_size, merge_kmers,
                                  1, std::ref(container), include_node, true);
 
-  kmers->for_each([&](auto &kmer_) {
-    container->push(kmer_);
-  });
+  kmers->for_each([&](auto &kmer_) { container->push(kmer_); });
 }
 
 template <int kmer_size>
@@ -262,3 +260,5 @@ void sequential_support_pruning(
 
   kmer_database.Close();
 }
+
+} // namespace vlmc

@@ -5,6 +5,8 @@
 
 #include "read_helper.hpp"
 
+using namespace vlmc;
+
 class NegativeLogLikelihoodTests : public ::testing::Test {
 protected:
   void SetUp() override {}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+namespace vlmc {
 
 template <class T> struct KMersPerLevel {
   int size_;
@@ -23,3 +24,4 @@ template <class T> struct KMersPerLevel {
 
   [[nodiscard]] size_t size() const { return levels.size(); }
 };
+} // namespace vlmc

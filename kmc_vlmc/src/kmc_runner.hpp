@@ -5,6 +5,8 @@
 
 #include "cli_helper.hpp"
 
+namespace vlmc {
+
 std::filesystem::path run_kmc(const std::filesystem::path &fasta_path,
                               const int kmer_size,
                               const std::filesystem::path &tmp_path,
@@ -34,6 +36,8 @@ std::filesystem::path run_kmc(const std::filesystem::path &fasta_path,
   kmc_run_stream << kmc_db_name << " " << kmc_tmp;
   std::string kmc_run_command = kmc_run_stream.str();
 
+  std::cout << kmc_run_command << std::endl;
+
   system(kmc_run_command.c_str());
   auto kmc_run_done = std::chrono::steady_clock::now();
 
@@ -62,3 +66,4 @@ std::filesystem::path run_kmc(const std::filesystem::path &fasta_path,
     return kmc_db_name;
   }
 }
+} // namespace vlmc

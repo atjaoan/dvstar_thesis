@@ -8,6 +8,8 @@
 
 #include "read_helper.hpp"
 
+using namespace vlmc;
+
 class RegressionTests : public ::testing::Test {
 protected:
   void SetUp() override {}

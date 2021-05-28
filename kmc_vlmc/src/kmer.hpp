@@ -5,9 +5,11 @@
 #include <array>
 #include <bitset>
 
+#include <cereal/archives/binary.hpp>
 #include <cereal/cereal.hpp>
 #include <cereal/types/array.hpp>
 
+namespace vlmc {
 // For stxxl, this class needs to be POD
 // Otherwise, borrows implementations from KMCs CKmerApi,
 // but disregards the byte alignment.
@@ -31,14 +33,13 @@ struct VLMCKmer {
 
   static constexpr char char_codes[4] = {'A', 'C', 'G', 'T'};
 
-
   static VLMCKmer create_prefix_kmer(const VLMCKmer &kmer, uint32 length,
                                      uint64 count,
-                                     const std::array<uint64, 4> &child_counts, VLMCKmer &out_kmer) {
+                                     const std::array<uint64, 4> &child_counts,
+                                     VLMCKmer &out_kmer) {
     out_kmer.length = length;
     out_kmer.count = count;
     out_kmer.next_symbol_counts = child_counts;
-
 
     out_kmer.kmer_data[0] = 0;
     out_kmer.kmer_data[1] = 0;
@@ -53,16 +54,16 @@ struct VLMCKmer {
 
     uint32 positions_to_remove_from_row = (31 - length_in_row) * 2;
     unsigned long long mask = 0xFFFFFFFFFFFFFFFF
-        << positions_to_remove_from_row;
+                              << positions_to_remove_from_row;
 
     out_kmer.kmer_data[row] = (kmer.kmer_data[row] & mask);
 
     return out_kmer;
   }
 
-  static VLMCKmer create_prefix_kmer(const VLMCKmer &kmer, uint32 length,
-                                     uint64 count,
-                                     const std::array<uint64, 4> &child_counts) {
+  static VLMCKmer
+  create_prefix_kmer(const VLMCKmer &kmer, uint32 length, uint64 count,
+                     const std::array<uint64, 4> &child_counts) {
     VLMCKmer prefix_kmer{length, count, child_counts};
 
     return create_prefix_kmer(kmer, length, count, child_counts, prefix_kmer);
@@ -282,6 +283,10 @@ public:
     new_kmer.kmer_data[0] = 0;
     new_kmer.kmer_data[1] = 0;
 
+    if (this->kmer_length == 0) {
+      return new_kmer;
+    }
+
     if (this->kmer_length < 31 - this->byte_alignment) {
       new_kmer.kmer_data[0] = this->kmer_data[0] << (this->byte_alignment * 2);
 
@@ -289,7 +294,7 @@ public:
     } else if (this->kmer_length > 31 - this->byte_alignment) {
       for (int pos = 0; pos < this->kmer_length; pos++) {
         uint32 row = pos >> 5;
-        uchar val = this->extract2bits(pos);
+        uint64 val = this->extract2bits(pos);
         new_kmer.kmer_data[row] += val << (31 - (pos & 31)) * 2;
       }
 
@@ -308,6 +313,10 @@ public:
 
     new_kmer.kmer_data[0] = 0;
     new_kmer.kmer_data[1] = 0;
+
+    if (this->kmer_length == 0) {
+      return new_kmer;
+    }
 
     if (this->kmer_length < 31 - this->byte_alignment) {
       new_kmer.kmer_data[0] = this->kmer_data[0] << (this->byte_alignment * 2);
@@ -420,3 +429,4 @@ template <int MAX_K> struct KMerReverseKeyExtractor {
     return VLMCKmer(0, 0, vec);
   }
 };
+} // namespace vlmc

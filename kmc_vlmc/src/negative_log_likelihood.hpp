@@ -7,6 +7,7 @@
 #include "kmer_container.hpp"
 #include "kmers_per_level.hpp"
 
+namespace vlmc {
 void load_kmers(const std::filesystem::path &vlmc_path,
                 KmerContainer<KMerComparator<31>> &container) {
   std::ifstream file_stream(vlmc_path, std::ios::binary);
@@ -212,3 +213,4 @@ double negative_log_likelihood(const std::filesystem::path &fasta_path,
   std::cout << "nll: " << score_ << std::endl;
   return score_;
 }
+} // namespace vlmc

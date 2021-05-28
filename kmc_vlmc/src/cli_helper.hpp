@@ -11,6 +11,8 @@
 #include "CLI/Config.hpp"
 #include "CLI/Formatter.hpp"
 
+namespace vlmc {
+
 struct cli_arguments {
   std::string mode{"build"};
   std::filesystem::path fasta_path;
@@ -22,7 +24,6 @@ struct cli_arguments {
   double threshold = 3.9075;
   std::string in_or_out_of_core{"internal"};
 };
-
 void add_options(CLI::App &app, cli_arguments &arguments) {
   app.add_option("-m,--mode", arguments.mode,
                  "Program mode, 'build', 'dump', or 'score'.");
@@ -59,8 +60,8 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
 }
 
 std::random_device rd;
-std::mt19937 gen = std::mt19937{rd()};
 
+std::mt19937 gen = std::mt19937{rd()};
 std::string get_random_name(const std::string &start) {
   std::stringstream ss;
   ss << start;
@@ -88,3 +89,5 @@ parse_kmer_container(const std::string &in_or_out_of_core) {
         "parameter --out-or-in-of-core not 'internal' or 'external'"));
   }
 }
+
+} // namespace vlmc

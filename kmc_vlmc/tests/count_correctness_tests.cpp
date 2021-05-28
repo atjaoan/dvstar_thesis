@@ -10,10 +10,12 @@
 
 #include "read_helper.hpp"
 
+using namespace vlmc;
+
 // TODO: This test checks for all k-mers in the sequence.
 // This is not the same the count of all characters, as this also includes
 // the last k "end"-mers, which give plus 1 to a couple of values, and plus
-// k to the root node.  This needs a clever solution.
+// k to the root node.
 
 class CountCorrectnessTests : public ::testing::Test {
 protected:
@@ -43,7 +45,7 @@ TEST_F(CountCorrectnessTests, CorrectCounts) {
 
   std::string sequence{};
   for (std::string line; std::getline(fasta_stream, line);) {
-    if (line.size() == 0) {
+    if (line.empty()) {
       continue;
     }
     if (line[0] == '>') {
@@ -59,7 +61,7 @@ TEST_F(CountCorrectnessTests, CorrectCounts) {
   std::ifstream run_stream{run_path};
 
   for (std::string line; std::getline(run_stream, line);) {
-    if (line.size() == 0) {
+    if (line.empty()) {
       continue;
     }
 

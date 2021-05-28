@@ -9,6 +9,8 @@
 #include "../src/support_pruning.hpp"
 #include "read_helper.hpp"
 
+using namespace vlmc;
+
 class KmerVLMCBenchmarks : public benchmark::Fixture {
   static void config_stxxl() {
     static bool have_configured = false;

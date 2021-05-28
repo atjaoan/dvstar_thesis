@@ -11,6 +11,8 @@
 
 #include "read_helper.hpp"
 
+using namespace vlmc;
+
 class KmerTests : public ::testing::Test {
 protected:
   void SetUp() override {}
@@ -94,8 +96,8 @@ TEST_F(KmerTests, DifferingPositionPrefix) {
 
 TEST_F(KmerTests, LongDifferingPosition) {
   auto current_kmer =
-      create_kmer("TACTAGCTACGATCATGCATGCATGCATGCAAAAAAATCATCAGT");
-  auto prev_kmer = create_kmer("TACTAGCTACGATCATGCATGCATGCATGCAAAAAAAGTCGTCAG");
+      create_kmer("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCGGGGGGGG");
+  auto prev_kmer = create_kmer("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCTTTTTTTT");
 
   auto diff_pos =
       VLMCKmer::get_first_differing_position(current_kmer, prev_kmer);
