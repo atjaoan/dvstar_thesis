@@ -1,0 +1,10 @@
+build/
+build-debug/
+cmake-build-debug/
+cmake-build-release/
+**.log
+**.errlog
+**.kmc_pre
+**.kmc_suf
+
+*.sif
