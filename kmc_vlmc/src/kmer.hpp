@@ -18,7 +18,7 @@ struct VLMCKmer {
   VLMCKmer(uint32 length_, uint64 count_,
            std::array<uint64, 4> next_symbol_counts_)
       : length(length_), count(count_), next_symbol_counts(next_symbol_counts_),
-        divergence(-1.0), kmer_data() {
+        divergence(-1.0), kmer_data(), is_terminal(false) {
     this->n_rows = (length_ / 32.0) + 1; // std::ceil, but no float conversion
   }
 
@@ -30,6 +30,7 @@ struct VLMCKmer {
   double divergence;
   uint32 length;
   uint32 n_rows;
+  bool is_terminal;
 
   static constexpr char char_codes[4] = {'A', 'C', 'G', 'T'};
 
@@ -44,7 +45,6 @@ struct VLMCKmer {
     for (int i = 0; i < 8; i++) {
       out_kmer.kmer_data[i] = 0;
     }
-
 
     uint32 row = length >> 5;
 
@@ -73,7 +73,8 @@ struct VLMCKmer {
 
   // This method lets cereal know which data members to serialize
   template <class Archive> void serialize(Archive &archive) {
-    archive(kmer_data, length, n_rows, count, next_symbol_counts, divergence);
+    archive(kmer_data, length, n_rows, count, next_symbol_counts, divergence,
+            is_terminal);
   }
 
   /**
@@ -268,7 +269,8 @@ struct VLMCKmer {
     for (auto &c : this->next_symbol_counts) {
       stream << c << " ";
     }
-    stream << divergence << std::endl;
+    stream << divergence << " ";
+    stream << this->is_terminal << std::endl;
   }
 };
 
@@ -287,7 +289,7 @@ public:
 
   VLMCKmer construct_vlmc_kmer(VLMCKmer &new_kmer) {
     // To make sure the VLMCKmer class stays a POD, we're only allowing k-mers
-    // up to 64 or so.  Should be fine.
+    // up to 256 or so.  Should be fine.
 
     for (int i = 0; i < 8; i++) {
       new_kmer.kmer_data[i] = 0;

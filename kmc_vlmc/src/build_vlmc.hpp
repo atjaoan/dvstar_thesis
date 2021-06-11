@@ -31,22 +31,17 @@ void configure_stxxl(const std::filesystem::path &tmp_path) {
   cfg->add_disk(disk1);
 }
 
-int build_vlmc(const std::filesystem::path &fasta_path, const int max_depth,
-          const int min_count, const double threshold,
-          const std::filesystem::path &out_path,
-          const std::filesystem::path &tmp_path,
-          const Core &in_or_out_of_core) {
+int build_vlmc_from_kmc_db(const std::filesystem::path &fasta_path,
+                           const int max_depth, const int min_count,
+                           const double threshold,
+                           const std::filesystem::path &out_path,
+                           const std::filesystem::path &tmp_path,
+                           const Core &in_or_out_of_core,
+                           const std::filesystem::path &kmc_db_path) {
   auto start = std::chrono::steady_clock::now();
 
-  const int kmer_size = max_depth + 1;
-
-  auto kmc_db_name =
-      run_kmc(fasta_path, kmer_size, tmp_path, in_or_out_of_core, 2);
-
-  auto kmc_done = std::chrono::steady_clock::now();
-
   CKMCFile kmer_database;
-  auto status = kmer_database.OpenForListing(kmc_db_name);
+  auto status = kmer_database.OpenForListing(kmc_db_path);
 
   if (!status) {
     std::cout << "opening file not successful" << std::endl;
@@ -61,8 +56,8 @@ int build_vlmc(const std::filesystem::path &fasta_path, const int max_depth,
       parse_kmer_container<ReverseKMerComparator<max_k>>(in_or_out_of_core);
 
   auto support_pruning_start = std::chrono::steady_clock::now();
-  sequential_support_pruning<max_k>(kmer_database, container, kmer_size,
-                                 include_node);
+  sequential_support_pruning<max_k>(kmer_database, container, max_depth + 1,
+                                    include_node);
   auto support_pruning_done = std::chrono::steady_clock::now();
 
   kmer_database.Close();
@@ -91,23 +86,48 @@ int build_vlmc(const std::filesystem::path &fasta_path, const int max_depth,
     file_stream.close();
   }
 
-  std::chrono::duration<double> total_seconds = similarity_pruning_done - start;
-  std::cout << "Total time: " << total_seconds.count() << "s\n";
+  if (false) {
+    std::chrono::duration<double> total_seconds =
+        similarity_pruning_done - start;
+    std::cout << "Total time: " << total_seconds.count() << "s\n";
 
-  std::chrono::duration<double> kmc_seconds = kmc_done - start;
-  std::cout << "KMC time: " << kmc_seconds.count() << "s\n";
+    std::chrono::duration<double> support_seconds =
+        support_pruning_done - support_pruning_start;
+    std::cout << "Support pruning time: " << support_seconds.count() << "s\n";
 
-  std::chrono::duration<double> support_seconds =
-      support_pruning_done - support_pruning_start;
-  std::cout << "Support pruning time: " << support_seconds.count() << "s\n";
-  std::chrono::duration<double> sort_seconds = sorting_done - sorting_start;
-  std::cout << "Sorting time: " << sort_seconds.count() << "s\n";
+    std::chrono::duration<double> sort_seconds = sorting_done - sorting_start;
+    std::cout << "Sorting time: " << sort_seconds.count() << "s\n";
 
-  std::chrono::duration<double> similarity_seconds =
-      similarity_pruning_done - sorting_done;
-  std::cout << "Similarity pruning time: " << similarity_seconds.count()
-            << "s\n";
+    std::chrono::duration<double> similarity_seconds =
+        similarity_pruning_done - sorting_done;
+    std::cout << "Similarity pruning time: " << similarity_seconds.count()
+              << "s\n";
+  }
 
   return EXIT_SUCCESS;
+}
+
+int build_vlmc(const std::filesystem::path &fasta_path, const int max_depth,
+               const int min_count, const double threshold,
+               const std::filesystem::path &out_path,
+               const std::filesystem::path &tmp_path,
+               const Core &in_or_out_of_core) {
+  auto start = std::chrono::steady_clock::now();
+
+  const int kmer_size = max_depth + 1;
+
+  auto kmc_db_path =
+      run_kmc(fasta_path, kmer_size, tmp_path, in_or_out_of_core, 2);
+
+  auto kmc_done = std::chrono::steady_clock::now();
+
+  if (false) {
+    std::chrono::duration<double> kmc_seconds = kmc_done - start;
+    std::cout << "KMC time: " << kmc_seconds.count() << "s\n";
+  }
+
+  return build_vlmc_from_kmc_db(fasta_path, max_depth, min_count, threshold,
+                                out_path, tmp_path, in_or_out_of_core,
+                                kmc_db_path);
 }
 } // namespace vlmc

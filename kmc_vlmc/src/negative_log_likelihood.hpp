@@ -193,24 +193,33 @@ double score(KmerContainer<KMerComparator<max_k>> &container,
   return -log_likelihood / double(sequence_length);
 }
 
-double negative_log_likelihood(const std::filesystem::path &fasta_path,
-                               const std::filesystem::path &tmp_path,
-                               const std::filesystem::path &vlmc_path,
-                               const Core &in_or_out_of_core,
-                               const int actual_kmer_size) {
+double negative_log_likelihood_from_kmc_db(
+    const std::filesystem::path &fasta_path,
+    const std::filesystem::path &tmp_path,
+    const std::filesystem::path &vlmc_path, const Core &in_or_out_of_core,
+    const int actual_kmer_size, const std::filesystem::path &kmc_db_path) {
   auto kmer_container =
       parse_kmer_container<KMerComparator<max_k>>(in_or_out_of_core);
   load_kmers(vlmc_path, *kmer_container);
 
   kmer_container->sort();
 
-  kmer_container->for_each([](VLMCKmer &kmer) { kmer.output(std::cout); });
+  double score_ = score(*kmer_container, kmc_db_path, actual_kmer_size);
+  std::cout << "nll: " << score_ << std::endl;
+  return score_;
+}
+
+double negative_log_likelihood(const std::filesystem::path &fasta_path,
+                               const std::filesystem::path &tmp_path,
+                               const std::filesystem::path &vlmc_path,
+                               const Core &in_or_out_of_core,
+                               const int actual_kmer_size) {
 
   auto kmc_db_name =
       run_kmc(fasta_path, actual_kmer_size + 1, tmp_path, in_or_out_of_core, 1);
 
-  double score_ = score(*kmer_container, kmc_db_name, actual_kmer_size);
-  std::cout << "nll: " << score_ << std::endl;
-  return score_;
+  return negative_log_likelihood_from_kmc_db(fasta_path, tmp_path, vlmc_path,
+                                             in_or_out_of_core,
+                                             actual_kmer_size, kmc_db_name);
 }
 } // namespace vlmc

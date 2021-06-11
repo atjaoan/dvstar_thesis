@@ -1,6 +1,8 @@
 #include <kmc_file.h>
 
 #include "build_vlmc.hpp"
+#include "bic.hpp"
+#include "negative_log_likelihood.hpp"
 
 int main(int argc, char *argv[]) {
   CLI::App app{"Variable-length Markov chain construction construction using "
@@ -58,6 +60,11 @@ int main(int argc, char *argv[]) {
     vlmc::negative_log_likelihood(
         arguments.fasta_path, arguments.tmp_path, arguments.in_path,
         arguments.in_or_out_of_core, arguments.max_depth);
+  } else if (arguments.mode == vlmc::Mode::bic) {
+
+    vlmc::find_best_parameters_bic(
+        arguments.fasta_path, arguments.max_depth, arguments.min_count,
+        arguments.out_path, arguments.tmp_path, arguments.in_or_out_of_core);
   }
 
   std::filesystem::remove_all(arguments.tmp_path);

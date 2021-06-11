@@ -13,7 +13,7 @@
 
 namespace vlmc {
 
-enum Mode { build, score_sequence, dump };
+enum Mode { build, score_sequence, dump, bic };
 
 struct cli_arguments {
   Mode mode{Mode::build};
@@ -29,7 +29,8 @@ struct cli_arguments {
 void add_options(CLI::App &app, cli_arguments &arguments) {
   std::map<std::string, Mode> mode_map{{"build", Mode::build},
                                        {"score", Mode::score_sequence},
-                                       {"dump", Mode::dump}};
+                                       {"dump", Mode::dump},
+                                       {"bic", Mode::bic}};
 
   std::map<std::string, Core> core_map{{"internal", Core::in},
                                        {"external", Core::out}};
