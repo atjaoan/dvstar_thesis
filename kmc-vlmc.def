@@ -1,0 +1,38 @@
+Bootstrap: docker
+From: debian:buster
+
+%files
+    ../kmc/KMC3.linux/kmc /kmc/kmc
+	kmc_vlmc /kmc-vlmc/kmc_vlmc
+	KMC /kmc-vlmc/KMC
+	stxxl /kmc-vlmc/stxxl
+	CLI11 /kmc-vlmc/CLI11
+	cereal /kmc-vlmc/cereal
+	CMakeLists.txt /kmc-vlmc/CMakeLists.txt
+
+%post
+	apt-get update -y && apt-get install -y cmake build-essential g++ git gcc libtbb-dev libgomp1
+	echo 'deb http://deb.debian.org/debian testing main' >> /etc/apt/sources.list
+    apt update -y
+    apt install -y gcc g++
+
+	mkdir -p /kmc-vlmc/build
+	cd /kmc-vlmc/build/
+
+	cmake -DCMAKE_BUILD_TYPE=Release ..
+	make
+
+	cp /kmc/kmc .
+
+%environment
+	export PATH="/kmc-vlmc/build/kmc_vlmc/:$PATH"
+
+%test
+	cd /kmc-vlmc/build/kmc_vlmc/tests
+	echo "Running tests"
+	#./kmer_tests
+
+%runscript
+    cd /kmc-vlmc/build/
+	/kmc-vlmc/build/build_vlmc $*
+
