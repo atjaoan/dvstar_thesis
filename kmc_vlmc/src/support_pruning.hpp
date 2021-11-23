@@ -83,7 +83,7 @@ void process_kmer(const VLMCKmer &current_kmer, const VLMCKmer &prev_kmer,
     uint64 sum =
         next_counts[0] + next_counts[1] + next_counts[2] + next_counts[3];
 
-    if (i < prev_kmer.length - 1 && include_node(i + 1, sum + 4)) {
+    if (i < prev_kmer.length - 1 && include_node(i + 1, sum)) {
       output_func(prev_kmer, i, sum, next_counts);
       //      output_node(prev_kmer, i, sum, next_counts, output_kmers);
     }

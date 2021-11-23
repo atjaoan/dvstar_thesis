@@ -42,7 +42,8 @@ int build_vlmc_from_kmc_db(const std::filesystem::path &fasta_path,
                            const std::filesystem::path &out_path,
                            const std::filesystem::path &tmp_path,
                            const Core &in_or_out_of_core,
-                           const std::filesystem::path &kmc_db_path) {
+                           const std::filesystem::path &kmc_db_path,
+                           const double pseudo_count_amount = 1.0) {
   auto start = std::chrono::steady_clock::now();
 
   CKMCFile kmer_database;
@@ -85,7 +86,8 @@ int build_vlmc_from_kmc_db(const std::filesystem::path &fasta_path,
 
     auto keep_node = [&](double delta) -> bool { return delta <= threshold; };
 
-    similarity_pruning<max_k>(container, oarchive, keep_node);
+    similarity_pruning<max_k>(container, oarchive, keep_node, pseudo_count_amount);
+
   }
   auto similarity_pruning_done = std::chrono::steady_clock::now();
 
@@ -118,7 +120,8 @@ int build_vlmc(const std::filesystem::path &fasta_path, const int max_depth,
                const int min_count, const double threshold,
                const std::filesystem::path &out_path,
                const std::filesystem::path &tmp_path,
-               const Core &in_or_out_of_core) {
+               const Core &in_or_out_of_core,
+               const double pseudo_count_amount = 1.0) {
   auto start = std::chrono::steady_clock::now();
 
   const int kmer_size = max_depth + 1;

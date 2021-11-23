@@ -24,6 +24,7 @@ struct cli_arguments {
   int min_count = 10;
   int max_depth = 15;
   double threshold = 3.9075;
+  double pseudo_count_amount = 1.0;
   Core in_or_out_of_core{Core::in};
 };
 void add_options(CLI::App &app, cli_arguments &arguments) {
@@ -64,6 +65,9 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
 
   app.add_option("-d,--max-depth", arguments.max_depth,
                  "Maximum depth for included k-mers.");
+
+  app.add_option("-a,--pseudo-count-amount", arguments.pseudo_count_amount,
+                 "Size of pseudo count for probability estimation. See e.g. https://en.wikipedia.org/wiki/Additive_smoothing .");
 
   app.add_option(
          "-i, --in-or-out-of-core", arguments.in_or_out_of_core,
