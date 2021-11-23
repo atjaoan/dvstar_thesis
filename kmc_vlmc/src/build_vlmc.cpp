@@ -1,6 +1,5 @@
-#include <kmc_file.h>
-
 #include "build_vlmc.hpp"
+
 #include "bic.hpp"
 #include "negative_log_likelihood.hpp"
 
@@ -17,6 +16,8 @@ int main(int argc, char *argv[]) {
     return app.exit(e);
   }
 
+  bool tmp_path_existed_before = std::filesystem::exists(arguments.tmp_path);
+
   std::filesystem::create_directories(arguments.tmp_path);
   vlmc::configure_stxxl(arguments.tmp_path);
 
@@ -24,8 +25,11 @@ int main(int argc, char *argv[]) {
     int exit_code = vlmc::build_vlmc(arguments.fasta_path, arguments.max_depth,
                                      arguments.min_count, arguments.threshold,
                                      arguments.out_path, arguments.tmp_path,
-                                     arguments.in_or_out_of_core);
-    std::filesystem::remove_all(arguments.tmp_path);
+                                     arguments.in_or_out_of_core, arguments.pseudo_count_amount);
+
+    if (!tmp_path_existed_before) {
+      std::filesystem::remove_all(arguments.tmp_path);
+    }
 
     return exit_code;
 
@@ -67,7 +71,9 @@ int main(int argc, char *argv[]) {
         arguments.out_path, arguments.tmp_path, arguments.in_or_out_of_core);
   }
 
-  std::filesystem::remove_all(arguments.tmp_path);
+  if (!tmp_path_existed_before) {
+    std::filesystem::remove_all(arguments.tmp_path);
+  }
 
   return EXIT_SUCCESS;
 }
