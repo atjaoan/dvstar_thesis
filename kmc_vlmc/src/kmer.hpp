@@ -3,7 +3,8 @@
 #include <kmc_file.h>
 
 #include <array>
-#include <bitset>
+#include <functional>
+#include <unordered_map>
 
 #include <cereal/archives/binary.hpp>
 #include <cereal/cereal.hpp>
@@ -13,24 +14,30 @@ namespace vlmc {
 // For stxxl, this class needs to be POD
 // Otherwise, borrows implementations from KMCs CKmerApi,
 // but disregards the byte alignment.
+
+static const std::unordered_map<char, uchar> code_codes{
+    {'A', 0}, {'C', 1}, {'G', 2}, {'T', 3}};
+
 struct VLMCKmer {
   VLMCKmer() = default;
   VLMCKmer(uint32 length_, uint64 count_,
            std::array<uint64, 4> next_symbol_counts_)
       : length(length_), count(count_), next_symbol_counts(next_symbol_counts_),
-        divergence(-1.0), kmer_data(), is_terminal(false) {
+        divergence(-1.0), kmer_data(), is_terminal(false), has_children(false), to_be_removed(false) {
     this->n_rows = (length_ / 32.0) + 1; // std::ceil, but no float conversion
   }
 
   ~VLMCKmer() = default;
 
-  std::array<uint64, 8> kmer_data;
+  std::array<uint64, 4> kmer_data;
   uint64 count;
   std::array<uint64, 4> next_symbol_counts;
   double divergence;
   uint32 length;
   uint32 n_rows;
   bool is_terminal;
+  bool has_children;
+  bool to_be_removed;
 
   static constexpr char char_codes[4] = {'A', 'C', 'G', 'T'};
 
@@ -42,7 +49,7 @@ struct VLMCKmer {
     out_kmer.count = count;
     out_kmer.next_symbol_counts = child_counts;
 
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 4; i++) {
       out_kmer.kmer_data[i] = 0;
     }
 
@@ -69,6 +76,44 @@ struct VLMCKmer {
     VLMCKmer prefix_kmer{length, count, child_counts};
 
     return create_prefix_kmer(kmer, length, count, child_counts, prefix_kmer);
+  }
+
+  static VLMCKmer create_suffix_kmer(const VLMCKmer &kmer, VLMCKmer &out_kmer) {
+    out_kmer.length = kmer.length - 1;
+
+    for (int i = 0; i < 4; i++) {
+      out_kmer.kmer_data[i] = 0;
+    }
+
+    uint32 row = out_kmer.length >> 5;
+
+    out_kmer.kmer_data[0] = kmer.kmer_data[0] << 2; // remove first char
+    for (int i = 1; i < row; i++) {
+      unsigned long long remove_mask = 0xC000000000000000;
+      unsigned long long move_data = kmer.kmer_data[i] & remove_mask;
+      out_kmer.kmer_data[i] = kmer.kmer_data[i] << 2;
+      out_kmer.kmer_data[i - 1] = kmer.kmer_data[i - 1] | (move_data >> 62);
+    }
+
+    return out_kmer;
+  }
+
+  static VLMCKmer replace_first_char(const VLMCKmer &kmer,
+                                          uchar replace_with,
+                                          VLMCKmer &out_kmer) {
+    out_kmer.length = kmer.length;
+
+    for (int i = 0; i < 4; i++) {
+      out_kmer.kmer_data[i] = kmer.kmer_data[i];
+    }
+
+    unsigned long long remove_mask = 0x3FFFFFFFFFFFFFFF;
+    unsigned long long new_data = replace_with;
+    new_data <<= 62;
+
+    out_kmer.kmer_data[0] = (out_kmer.kmer_data[0] & remove_mask) | new_data;
+
+    return out_kmer;
   }
 
   // This method lets cereal know which data members to serialize
@@ -218,6 +263,22 @@ struct VLMCKmer {
     return kmer.count < this->count;
   };
 
+  inline bool operator==(const VLMCKmer &kmer) const {
+    if (kmer.length != length) {
+      return false;
+    }
+
+    for (int i = 0; i < length; i++) {
+      auto this_2_bits = this->extract2bits(i);
+      auto kmer_2_bits = kmer.extract2bits(i);
+      if (this_2_bits != kmer_2_bits) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   [[nodiscard]] std::string to_string() const {
     std::string out_string(this->length, ' ');
 
@@ -291,7 +352,7 @@ public:
     // To make sure the VLMCKmer class stays a POD, we're only allowing k-mers
     // up to 256 or so.  Should be fine.
 
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 4; i++) {
       new_kmer.kmer_data[i] = 0;
     }
 
