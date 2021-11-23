@@ -133,8 +133,11 @@ int build_vlmc(const std::filesystem::path &fasta_path, const int max_depth,
     std::cout << "KMC time: " << kmc_seconds.count() << "s\n";
   }
 
-  return build_vlmc_from_kmc_db(fasta_path, max_depth, min_count, threshold,
+  auto status = build_vlmc_from_kmc_db(fasta_path, max_depth, min_count, threshold,
                                 out_path, tmp_path, in_or_out_of_core,
-                                kmc_db_path);
+                                kmc_db_path, pseudo_count_amount);
+  remove_kmc_files(kmc_db_path);
+
+  return status;
 }
 } // namespace vlmc
