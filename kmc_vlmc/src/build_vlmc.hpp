@@ -9,12 +9,17 @@
 #include <cereal/archives/binary.hpp>
 #include <cereal/cereal.hpp>
 
+#include <kmc_file.h>
+
 #include "cli_helper.hpp"
 #include "kmc_runner.hpp"
 #include "kmer_container.hpp"
 #include "negative_log_likelihood.hpp"
 #include "similarity_pruning.hpp"
 #include "support_pruning.hpp"
+
+
+bool LOGGING = true;
 
 namespace vlmc {
 
@@ -68,8 +73,10 @@ int build_vlmc_from_kmc_db(const std::filesystem::path &fasta_path,
 
   auto sorting_done = std::chrono::steady_clock::now();
 
-  std::filesystem::path path = std::filesystem::path(fasta_path).stem();
-  path += ".txt";
+  auto out_path_directory = out_path.parent_path();
+  if (!out_path_directory.empty()) {
+    std::filesystem::create_directories(out_path_directory);
+  }
 
   std::ofstream file_stream(out_path, std::ios::binary);
   auto similarity_pruning_start = std::chrono::steady_clock::now();
@@ -86,11 +93,7 @@ int build_vlmc_from_kmc_db(const std::filesystem::path &fasta_path,
     file_stream.close();
   }
 
-  if (false) {
-    std::chrono::duration<double> total_seconds =
-        similarity_pruning_done - start;
-    std::cout << "Total time: " << total_seconds.count() << "s\n";
-
+  if (LOGGING) {
     std::chrono::duration<double> support_seconds =
         support_pruning_done - support_pruning_start;
     std::cout << "Support pruning time: " << support_seconds.count() << "s\n";
@@ -102,6 +105,10 @@ int build_vlmc_from_kmc_db(const std::filesystem::path &fasta_path,
         similarity_pruning_done - sorting_done;
     std::cout << "Similarity pruning time: " << similarity_seconds.count()
               << "s\n";
+
+    std::chrono::duration<double> total_seconds =
+        similarity_pruning_done - start;
+    std::cout << "VLMC steps total time: " << total_seconds.count() << "s\n";
   }
 
   return EXIT_SUCCESS;
@@ -121,7 +128,7 @@ int build_vlmc(const std::filesystem::path &fasta_path, const int max_depth,
 
   auto kmc_done = std::chrono::steady_clock::now();
 
-  if (false) {
+  if (LOGGING) {
     std::chrono::duration<double> kmc_seconds = kmc_done - start;
     std::cout << "KMC time: " << kmc_seconds.count() << "s\n";
   }
