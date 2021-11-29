@@ -3,6 +3,7 @@
 #include <execution>
 #include <functional>
 #include <memory>
+#include <unordered_map>
 
 #include <stxxl/sort>
 #include <stxxl/sorter>
@@ -11,25 +12,28 @@
 
 namespace vlmc {
 
-enum Core { out, in };
+enum Core { out, in, hash };
 enum Iteration { parallel, sequential };
 
 constexpr int max_k = 255;
 
 template <class Comparator = ReverseKMerComparator<max_k>> class KmerContainer {
-  static_assert(std::is_base_of<VirtualKMerComparator<max_k>, Comparator>::value,
-                "Invalid comparator template");
+  static_assert(
+      std::is_base_of<VirtualKMerComparator<max_k>, Comparator>::value,
+      "Invalid comparator template");
 
 public:
   KmerContainer() = default;
   ~KmerContainer() = default;
 
+  VLMCKmer null_kmer{};
   [[nodiscard]] virtual size_t size() const { return 0; };
   virtual void push(const VLMCKmer &kmer){};
   virtual void push(VLMCKmer &kmer){};
   virtual void sort(){};
   virtual void clear(){};
   virtual void for_each(const std::function<void(VLMCKmer &kmer)> &){};
+  virtual VLMCKmer &get(const VLMCKmer &kmer) { return null_kmer; };
 };
 
 template <class Comparator = ReverseKMerComparator<max_k>>
@@ -62,6 +66,40 @@ public:
   void for_each(const std::function<void(VLMCKmer &kmer)> &f) override {
     std::for_each(container.begin(), container.end(), f);
   }
+};
+
+template <class Comparator = ReverseKMerComparator<max_k>>
+class HashMapKmerContainer : public KmerContainer<Comparator> {
+  std::unordered_map<VLMCKmer, VLMCKmer> container{};
+
+public:
+  HashMapKmerContainer() = default;
+  explicit HashMapKmerContainer(Iteration iteration_) : iteration(iteration_){};
+  ~HashMapKmerContainer() = default;
+
+  Iteration iteration = Iteration::parallel;
+
+  [[nodiscard]] size_t size() const override { return container.size(); }
+
+  void push(const VLMCKmer &kmer) override { container[kmer] = kmer; }
+  void push(VLMCKmer &kmer) override { container[kmer] = kmer; }
+
+  void sort() override{};
+
+  void clear() override { container.clear(); };
+
+  void for_each(const std::function<void(VLMCKmer &kmer)> &f) override {
+    std::vector<std::string> keys{};
+    for (auto &[k, v] : container) {
+      f(container[k]);
+    }
+  }
+
+  bool contains(const VLMCKmer &kmer) {
+    return container.find(kmer) != container.end();
+  }
+
+  VLMCKmer &get(const VLMCKmer &kmer) { return container[kmer]; }
 };
 
 template <class Comparator = ReverseKMerComparator<max_k>>

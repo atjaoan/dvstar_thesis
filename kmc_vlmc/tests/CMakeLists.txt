@@ -84,5 +84,7 @@ test_case(similarity_pruning_tests.cpp)
 test_case(count_correctness_tests.cpp)
 test_case(regression_tests.cpp)
 test_case(negative_log_likelihood_tests.cpp)
+test_case(method_regression.cpp)
 
 benchmark_case(benchmarks.cpp)
+benchmark_case(method_benchmarks.cpp)

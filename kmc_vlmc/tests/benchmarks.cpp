@@ -305,7 +305,7 @@ BENCHMARK_F(KmerVLMCBenchmarks, SupportPruningOutOfCore)
   for (auto _ : state) {
     support_pruning<12>(
         kmer_database, sorter, 12,
-        [](int length, size_t count) -> bool { return true; }, "external");
+        [](int length, size_t count) -> bool { return true; }, Core::out);
 
     state.PauseTiming();
     kmer_database.RestartListing();
@@ -321,7 +321,7 @@ BENCHMARK_F(KmerVLMCBenchmarks, SupportPruningInCore)
   for (auto _ : state) {
     support_pruning<12>(
         kmer_database, sorter, 12,
-        [](int length, size_t count) -> bool { return true; }, "internal");
+        [](int length, size_t count) -> bool { return true; }, Core::in);
 
     state.PauseTiming();
     kmer_database.RestartListing();

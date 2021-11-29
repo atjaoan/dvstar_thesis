@@ -23,8 +23,12 @@ struct VLMCKmer {
   VLMCKmer(uint32 length_, uint64 count_,
            std::array<uint64, 4> next_symbol_counts_)
       : length(length_), count(count_), next_symbol_counts(next_symbol_counts_),
-        divergence(-1.0), kmer_data(), is_terminal(false), has_children(false), to_be_removed(false) {
+        divergence(-1.0), kmer_data(), is_terminal(false), has_children(false),
+        to_be_removed(true) {
     this->n_rows = (length_ / 32.0) + 1; // std::ceil, but no float conversion
+    if (length_ == 0) {
+      this->n_rows = 0;
+    }
   }
 
   ~VLMCKmer() = default;
@@ -37,7 +41,7 @@ struct VLMCKmer {
   uint32 n_rows;
   bool is_terminal;
   bool has_children;
-  bool to_be_removed;
+  bool to_be_removed = true;
 
   static constexpr char char_codes[4] = {'A', 'C', 'G', 'T'};
 
@@ -80,15 +84,20 @@ struct VLMCKmer {
 
   static VLMCKmer create_suffix_kmer(const VLMCKmer &kmer, VLMCKmer &out_kmer) {
     out_kmer.length = kmer.length - 1;
-
-    for (int i = 0; i < 4; i++) {
-      out_kmer.kmer_data[i] = 0;
+    if (out_kmer.length == 0) {
+      out_kmer.n_rows = 0;
+      for (int i = 0; i < 4; i++) {
+        out_kmer.kmer_data[i] = 0;
+      }
+      return out_kmer;
     }
 
     uint32 row = out_kmer.length >> 5;
+    out_kmer.n_rows = row + 1;
 
     out_kmer.kmer_data[0] = kmer.kmer_data[0] << 2; // remove first char
     for (int i = 1; i < row; i++) {
+      // Move char from this row to the previous row.
       unsigned long long remove_mask = 0xC000000000000000;
       unsigned long long move_data = kmer.kmer_data[i] & remove_mask;
       out_kmer.kmer_data[i] = kmer.kmer_data[i] << 2;
@@ -98,9 +107,8 @@ struct VLMCKmer {
     return out_kmer;
   }
 
-  static VLMCKmer replace_first_char(const VLMCKmer &kmer,
-                                          uchar replace_with,
-                                          VLMCKmer &out_kmer) {
+  static VLMCKmer replace_first_char(const VLMCKmer &kmer, uchar replace_with,
+                                     VLMCKmer &out_kmer) {
     out_kmer.length = kmer.length;
 
     for (int i = 0; i < 4; i++) {
@@ -331,7 +339,8 @@ struct VLMCKmer {
       stream << c << " ";
     }
     stream << divergence << " ";
-    stream << this->is_terminal << std::endl;
+    stream << this->is_terminal << " ";
+    stream << this->to_be_removed << std::endl;
   }
 };
 
@@ -472,3 +481,31 @@ template <int MAX_K> struct KMerReverseKeyExtractor {
   }
 };
 } // namespace vlmc
+
+namespace std {
+template <typename T> void hash_combine(size_t &seed, T const &v) {
+  seed ^= std::hash<T>{}(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
+
+template <> struct hash<vlmc::VLMCKmer> {
+  std::size_t operator()(vlmc::VLMCKmer const &kmer) const noexcept {
+    std::size_t seed = 0.0;
+    for (int i = 0; i < kmer.n_rows; i++) {
+      if (i == kmer.n_rows - 1) {
+        uint32 length_in_row = (kmer.length - 1) & 31;
+
+        uint32 positions_to_remove_from_row = (31 - length_in_row) * 2;
+        unsigned long long mask = 0xFFFFFFFFFFFFFFFF
+                                  << positions_to_remove_from_row;
+
+        hash_combine(seed, kmer.kmer_data[i] & mask);
+        hash_combine(seed, kmer.length);
+      } else {
+        hash_combine(seed, kmer.kmer_data[i]);
+      }
+    }
+
+    return seed;
+  }
+};
+} // namespace std

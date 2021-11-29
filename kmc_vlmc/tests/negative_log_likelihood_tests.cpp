@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "../src/build_vlmc.hpp"
-#include "../src/negative_log_likelihood.hpp."
+#include "../src/negative_log_likelihood.hpp"
 
 #include "read_helper.hpp"
 
@@ -33,9 +33,9 @@ TEST_F(NegativeLogLikelihoodTests, Correct) {
   generate_fasta(temp_fasta_1);
   generate_fasta(temp_fasta_2);
 
-  build(temp_fasta_1, 2, 1, 3.9075, out, temp, "internal");
+  build_vlmc(temp_fasta_1, 2, 1, 3.9075, out, temp, Core::in);
 
-  double nll = negative_log_likelihood(temp_fasta_2, temp, out, "internal", 2);
+  double nll = negative_log_likelihood(temp_fasta_2, temp, out, Core::in, 2);
 
   EXPECT_EQ(0.0, nll);
 }

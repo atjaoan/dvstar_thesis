@@ -24,10 +24,13 @@ struct PstKmer {
   bool is_terminal = true;
 };
 
-std::array<double, 4> get_next_symbol_probabilities(const VLMCKmer &node, const double pseudo_count_amount) {
+std::array<double, 4>
+get_next_symbol_probabilities(const VLMCKmer &node,
+                              const double pseudo_count_amount) {
   // pseudo-counts => +4
-  double sum = std::accumulate(node.next_symbol_counts.begin(),
-                               node.next_symbol_counts.end(), pseudo_count_amount * 4);
+  double sum =
+      std::accumulate(node.next_symbol_counts.begin(),
+                      node.next_symbol_counts.end(), pseudo_count_amount * 4);
 
   return {double(node.next_symbol_counts[0] + pseudo_count_amount) / sum,
           double(node.next_symbol_counts[1] + pseudo_count_amount) / sum,
@@ -35,9 +38,11 @@ std::array<double, 4> get_next_symbol_probabilities(const VLMCKmer &node, const 
           double(node.next_symbol_counts[3] + pseudo_count_amount) / sum};
 }
 
-double kl_divergence(const VLMCKmer &child, const VLMCKmer &parent, const double pseudo_count_amount) {
+double kl_divergence(const VLMCKmer &child, const VLMCKmer &parent,
+                     const double pseudo_count_amount) {
   auto child_probs = get_next_symbol_probabilities(child, pseudo_count_amount);
-  auto parent_probs = get_next_symbol_probabilities(parent, pseudo_count_amount);
+  auto parent_probs =
+      get_next_symbol_probabilities(parent, pseudo_count_amount);
 
   double value = 0.0;
 
@@ -53,11 +58,12 @@ double kl_divergence(const VLMCKmer &child, const VLMCKmer &parent, const double
 }
 
 std::tuple<bool, bool>
-process_parent(const VLMCKmer &prev_kmer, const VLMCKmer &kmer, const double pseudo_count_amount,
+process_parent(const VLMCKmer &prev_kmer, const VLMCKmer &kmer,
+               const double pseudo_count_amount,
                KMersPerLevel<PstKmer> &kmers_per_level,
                cereal::BinaryOutputArchive &oarchive,
                const std::function<bool(double)> &remove_node) {
-  auto &children = kmers_per_level[prev_kmer.length];
+  auto &children = kmers_per_level[kmer.length + 1];
 
   int removed_children = 0;
   int n_real_children = 0;
@@ -80,8 +86,6 @@ process_parent(const VLMCKmer &prev_kmer, const VLMCKmer &kmer, const double pse
 
     if (remove_node(divergence)) {
       removed_children++;
-      //      child.divergence = divergence;
-      //      child.output(stream);
     } else {
       child.divergence = divergence;
       child.is_terminal = is_terminal;
@@ -97,7 +101,8 @@ process_parent(const VLMCKmer &prev_kmer, const VLMCKmer &kmer, const double pse
           n_real_children - removed_children != 4};
 }
 
-void similarity_prune(const VLMCKmer &prev_kmer, const VLMCKmer &kmer, const double pseudo_count_amount,
+void similarity_prune(const VLMCKmer &prev_kmer, const VLMCKmer &kmer,
+                      const double pseudo_count_amount,
                       KMersPerLevel<PstKmer> &kmers_per_level,
                       cereal::BinaryOutputArchive &oarchive,
                       const std::function<bool(double)> &remove_node) {
@@ -107,7 +112,8 @@ void similarity_prune(const VLMCKmer &prev_kmer, const VLMCKmer &kmer, const dou
   if (prev_kmer.length > kmer.length) {
     // Has different length, kmer must be parent of the previous nodes
     auto [has_children_, is_terminal_] =
-        process_parent(prev_kmer, kmer, pseudo_count_amount, kmers_per_level, oarchive, remove_node);
+        process_parent(prev_kmer, kmer, pseudo_count_amount, kmers_per_level,
+                       oarchive, remove_node);
     has_children = has_children_;
     is_terminal = is_terminal_;
   } else {
@@ -130,7 +136,8 @@ void similarity_prune(const VLMCKmer &prev_kmer, const VLMCKmer &kmer, const dou
 template <int kmer_size>
 void similarity_pruning(std::shared_ptr<KmerContainer<>> &container,
                         cereal::BinaryOutputArchive &oarchive,
-                        const std::function<bool(double)> &remove_node, const double pseudo_count_amount) {
+                        const std::function<bool(double)> &remove_node,
+                        const double pseudo_count_amount) {
 
   KMersPerLevel<PstKmer> kmers_per_level{4, kmer_size + 1};
 
@@ -146,9 +153,61 @@ void similarity_pruning(std::shared_ptr<KmerContainer<>> &container,
   // TGTTTTTT
 
   container->for_each([&](VLMCKmer &kmer) {
-    similarity_prune(prev_kmer, kmer, pseudo_count_amount, kmers_per_level, oarchive, remove_node);
+    similarity_prune(prev_kmer, kmer, pseudo_count_amount, kmers_per_level,
+                     oarchive, remove_node);
 
     prev_kmer = kmer;
+  });
+}
+
+template <int kmer_size>
+void similarity_pruning_hash(std::shared_ptr<KmerContainer<>> &container,
+                             cereal::BinaryOutputArchive &oarchive,
+                             const std::function<bool(double)> &remove_node,
+                             const double pseudo_count_amount) {
+
+  KMersPerLevel<PstKmer> kmers_per_level{4, kmer_size + 1};
+
+  VLMCKmer fake_parent_kmer{kmer_size, 0, {}};
+
+  bool found_one = false;
+
+  container->for_each([&](VLMCKmer &kmer) {
+    if (kmer.length != 0) {
+      VLMCKmer::create_suffix_kmer(kmer, fake_parent_kmer);
+      auto &parent_kmer = container->get(fake_parent_kmer);
+      auto divergence = kl_divergence(kmer, parent_kmer, pseudo_count_amount);
+
+      kmer.divergence = divergence;
+
+      if (!kmer.has_children && remove_node(divergence)) {
+        kmer.to_be_removed = true;
+      } else {
+        parent_kmer.has_children = true;
+        parent_kmer.to_be_removed = false;
+        kmer.is_terminal = true;
+        kmer.to_be_removed = false;
+
+        for (int i = parent_kmer.length - 1; i > 0; i--) {
+          VLMCKmer::create_suffix_kmer(fake_parent_kmer, fake_parent_kmer);
+          auto &grandparent_kmer = container->get(fake_parent_kmer);
+
+          grandparent_kmer.has_children = true;
+          grandparent_kmer.to_be_removed = false;
+        }
+      }
+    }
+  });
+
+  container->for_each([&](VLMCKmer &kmer) {
+    if (kmer.length == 0) {
+      oarchive(kmer);
+    } else {
+      int substr_pos = 0;
+      if (!kmer.to_be_removed || kmer.has_children) {
+        oarchive(kmer);
+      }
+    }
   });
 }
 

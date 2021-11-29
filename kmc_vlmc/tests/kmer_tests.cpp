@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <bitset>
+
 #include "../src/kmer.hpp"
 
 #include <kmc_file.h>
@@ -300,4 +302,36 @@ TEST_F(KmerTests, GetPrefix) {
   EXPECT_EQ(4, ca_prefix_index);
   EXPECT_EQ(9, gc_prefix_index);
   EXPECT_EQ(36, gca_prefix_index);
+}
+
+TEST_F(KmerTests, GetSuffixKmer) {
+  auto aaa_kmer = create_kmer("AAA");
+  VLMCKmer prev_kmer = create_kmer("TG");
+  VLMCKmer::create_suffix_kmer(aaa_kmer, prev_kmer);
+  EXPECT_EQ(prev_kmer.to_string(), "AA");
+
+  auto tagct_kmer = create_kmer("TAGCT");
+  VLMCKmer::create_suffix_kmer(tagct_kmer, prev_kmer);
+  EXPECT_EQ(prev_kmer.to_string(), "AGCT");
+}
+
+TEST_F(KmerTests, KmerHash) {
+  auto agct_kmer = create_kmer("AGCT");
+  auto agcta_kmer = create_kmer("AGCTA");
+
+  auto tagct_kmer = create_kmer("TAGCT");
+
+  VLMCKmer suffix_kmer = create_kmer("TG");
+  VLMCKmer::create_suffix_kmer(tagct_kmer, suffix_kmer);
+  EXPECT_EQ(suffix_kmer.to_string(), "AGCT");
+
+  EXPECT_NE(std::hash<VLMCKmer>()(agct_kmer), std::hash<VLMCKmer>()(agcta_kmer));
+  EXPECT_NE(std::hash<VLMCKmer>()(agct_kmer), std::hash<VLMCKmer>()(tagct_kmer));
+  EXPECT_EQ(std::hash<VLMCKmer>()(agct_kmer), std::hash<VLMCKmer>()(suffix_kmer));
+
+  VLMCKmer ccccaggt_kmer = create_kmer("CCCCAGGT");
+  VLMCKmer cccaggt_kmer = create_kmer("CCCAGGT");
+  VLMCKmer t_kmer = create_kmer("CCCCAGGT");
+  VLMCKmer::create_suffix_kmer(ccccaggt_kmer, t_kmer);
+  EXPECT_EQ(cccaggt_kmer, t_kmer);
 }

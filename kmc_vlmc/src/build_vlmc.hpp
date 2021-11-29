@@ -86,8 +86,13 @@ int build_vlmc_from_kmc_db(const std::filesystem::path &fasta_path,
 
     auto keep_node = [&](double delta) -> bool { return delta <= threshold; };
 
-    similarity_pruning<max_k>(container, oarchive, keep_node, pseudo_count_amount);
-
+    if (in_or_out_of_core == Core::hash) {
+      similarity_pruning_hash<max_k>(container, oarchive, keep_node,
+                                     pseudo_count_amount);
+    } else {
+      similarity_pruning<max_k>(container, oarchive, keep_node,
+                                pseudo_count_amount);
+    }
   }
   auto similarity_pruning_done = std::chrono::steady_clock::now();
 
@@ -136,9 +141,9 @@ int build_vlmc(const std::filesystem::path &fasta_path, const int max_depth,
     std::cout << "KMC time: " << kmc_seconds.count() << "s\n";
   }
 
-  auto status = build_vlmc_from_kmc_db(fasta_path, max_depth, min_count, threshold,
-                                out_path, tmp_path, in_or_out_of_core,
-                                kmc_db_path, pseudo_count_amount);
+  auto status = build_vlmc_from_kmc_db(
+      fasta_path, max_depth, min_count, threshold, out_path, tmp_path,
+      in_or_out_of_core, kmc_db_path, pseudo_count_amount);
   remove_kmc_files(kmc_db_path);
 
   return status;

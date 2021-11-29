@@ -25,8 +25,8 @@ std::filesystem::path run_kmc(const std::filesystem::path &fasta_path,
       tmp_path / (random_name + "_res_sorted");
   std::filesystem::path kmc_db_sorted_path_with_suffix =
       tmp_path / (random_name + "_res_sorted.kmc_suf");
-  std::filesystem::path kmc_tmp = tmp_path / (random_name + "_tmp");
 
+  std::filesystem::path kmc_tmp = tmp_path / (random_name + "_tmp");
   std::filesystem::create_directories(kmc_tmp);
 
   auto kmc_run = std::chrono::steady_clock::now();

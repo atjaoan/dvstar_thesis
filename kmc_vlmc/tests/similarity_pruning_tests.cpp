@@ -41,7 +41,7 @@ TEST_F(SimilarityPruningTests, KullbackLiebler) {
       (child_probs[3] * std::log(child_probs[3] / parent_probs[3]));
   expected_kl *= 3.0;
 
-  double real_kl = kl_divergence(child, parent);
+  double real_kl = kl_divergence(child, parent, 1.0);
 
   EXPECT_EQ(expected_kl, real_kl);
 }
@@ -53,7 +53,7 @@ TEST_F(SimilarityPruningTests, SimilarityPruneSameLevel) {
   std::ofstream file_stream("test_tmp.bin", std::ios::binary);
   cereal::BinaryOutputArchive oarchive(file_stream);
 
-  similarity_prune(prev_kmer, kmer, kmers_per_level, oarchive, keep_node);
+  similarity_prune(prev_kmer, kmer, 1.0, kmers_per_level, oarchive, keep_node);
 
   ASSERT_TRUE(kmers_per_level[6][0].real_child);
   EXPECT_EQ(kmers_per_level[6][0].kmer.to_string(), "ATTTTT");
@@ -91,8 +91,8 @@ TEST_F(SimilarityPruningTests, SimilarityPruneParent) {
     std::ofstream file_stream("test_tmp.bin", std::ios::binary);
     cereal::BinaryOutputArchive oarchive(file_stream);
 
-    bool has_children =
-        process_parent(a_kmer, kmer, kmers_per_level, oarchive, keep_node);
+    auto [has_children, is_terminal] =
+        process_parent(a_kmer, kmer,1.0, kmers_per_level, oarchive, keep_node);
 
     EXPECT_TRUE(has_children);
   }

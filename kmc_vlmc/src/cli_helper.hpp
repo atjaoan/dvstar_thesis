@@ -33,8 +33,8 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
                                        {"dump", Mode::dump},
                                        {"bic", Mode::bic}};
 
-  std::map<std::string, Core> core_map{{"internal", Core::in},
-                                       {"external", Core::out}};
+  std::map<std::string, Core> core_map{
+      {"internal", Core::in}, {"external", Core::out}, {"hash", Core::hash}};
 
   app.add_option("-m,--mode", arguments.mode,
                  "Program mode, 'build', 'dump', or 'score'.")
@@ -100,6 +100,8 @@ parse_kmer_container(const Core &in_or_out_of_core) {
     return std::make_shared<OutOfCoreKmerContainer<Comparator>>();
   } else if (in_or_out_of_core == Core::in) {
     return std::make_shared<InCoreKmerContainer<Comparator>>();
+  } else if (in_or_out_of_core == Core::hash) {
+    return std::make_shared<HashMapKmerContainer<Comparator>>();
   } else {
     throw(std::invalid_argument(
         "parameter --out-or-in-of-core not 'internal' or 'external'"));

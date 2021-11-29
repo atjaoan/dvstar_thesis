@@ -32,6 +32,7 @@ void output_root(std::vector<uint64> &root_counts, vector_type &container) {
 
   //  root.output(std::cout);
   //  std::lock_guard lock{sorter_mutex};
+
   container->push(root);
 }
 
@@ -41,10 +42,9 @@ void output_node(const VLMCKmer &prev_kmer, int diff_pos, uint64 sum,
       prev_kmer, diff_pos + 1, sum,
       std::array<uint64, 4>{next_counts[0], next_counts[1], next_counts[2],
                             next_counts[3]});
-
   //  prefix_kmer.output(std::cout);
   //    std::lock_guard lock{sorter_mutex};
-  output_kmers->push(prefix_kmer);
+  output_kmers->push(std::move(prefix_kmer));
 }
 
 void increase_counts(KMersPerLevel<uint64> &counters, const VLMCKmer &kmer) {
@@ -148,7 +148,7 @@ template <int kmer_size>
 void support_pruning(CKMCFile &kmer_database, vector_type &container,
                      int actual_kmer_size,
                      const std::function<bool(int, size_t)> &include_node,
-                     const std::string &in_or_out_of_core) {
+                     const Core &in_or_out_of_core) {
   VLMCTranslator kmer_api(actual_kmer_size);
   uint64 counter;
 
@@ -160,7 +160,7 @@ void support_pruning(CKMCFile &kmer_database, vector_type &container,
   std::vector<std::shared_ptr<KmerContainer<KMerComparator<max_k>>>> tasks(
       n_tasks);
   for (int i = 0; i < n_tasks; i++) {
-    if (in_or_out_of_core == "internal") {
+    if (in_or_out_of_core == Core::in) {
       tasks[i] = std::make_shared<InCoreKmerContainer<KMerComparator<max_k>>>(
           Iteration::sequential);
     } else {
@@ -204,7 +204,7 @@ void support_pruning(CKMCFile &kmer_database, vector_type &container,
   for (auto &future : prefix_runs) {
     auto [kmer_, kmers] = future.get();
 
-    kmers->for_each([&](auto &kmer_) { container->push(kmer_); });
+    kmers->for_each([&](auto &kmer__) { container->push(kmer__); });
 
     if (kmer_.length != 0) {
       merge_kmers->push(kmer_);
@@ -215,7 +215,7 @@ void support_pruning(CKMCFile &kmer_database, vector_type &container,
       run_kmer_subset<kmer_size>(running_tasks, actual_kmer_size, merge_kmers,
                                  1, std::ref(container), include_node, true);
 
-  kmers->for_each([&](auto &kmer_) { container->push(kmer_); });
+  kmers->for_each([&](auto &kmer__) { container->push(kmer__); });
 }
 
 template <int kmer_size>
