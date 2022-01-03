@@ -13,3 +13,6 @@
 [submodule "cereal"]
 	path = cereal
 	url = git@github.com:USCiLab/cereal.git
+[submodule "robin-hood-hashing"]
+	path = robin-hood-hashing
+	url = https://github.com/martinus/robin-hood-hashing.git

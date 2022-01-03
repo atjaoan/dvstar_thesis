@@ -4,6 +4,7 @@
 #include <functional>
 #include <memory>
 #include <unordered_map>
+#include <robin_hood.h>
 
 #include <stxxl/sort>
 #include <stxxl/sorter>
@@ -70,7 +71,7 @@ public:
 
 template <class Comparator = ReverseKMerComparator<max_k>>
 class HashMapKmerContainer : public KmerContainer<Comparator> {
-  std::unordered_map<VLMCKmer, VLMCKmer> container{};
+  robin_hood::unordered_map<VLMCKmer, VLMCKmer> container{};
 
 public:
   HashMapKmerContainer() = default;
