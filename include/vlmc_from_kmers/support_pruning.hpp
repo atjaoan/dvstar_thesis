@@ -75,7 +75,6 @@ void process_kmer(const VLMCKmer &current_kmer, const VLMCKmer &prev_kmer,
 
   // Output kmers, longest to shortest to get counts right
   for (int i = prev_kmer.length - 1; i >= diff_pos; i--) {
-    // For pseudo-counts, add 4 to counter
     // And the length has to be at least one shorter than the prev_kmer
     // to allow variable k iterations
     auto &next_counts = counters[i + 1];

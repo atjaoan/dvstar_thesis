@@ -1,7 +1,5 @@
-#include "build_vlmc.hpp"
-
-#include "bic.hpp"
-#include "negative_log_likelihood.hpp"
+#include "vlmc_from_kmers/build_vlmc.hpp"
+#include "vlmc_from_kmers/bic.hpp"
 
 int main(int argc, char *argv[]) {
   CLI::App app{"Variable-length Markov chain construction construction using "
@@ -71,9 +69,9 @@ int main(int argc, char *argv[]) {
         arguments.out_path, arguments.tmp_path, arguments.in_or_out_of_core);
   }
 
-  if (!tmp_path_existed_before) {
-    std::filesystem::remove_all(arguments.tmp_path);
-  }
+  //if (!tmp_path_existed_before) {
+  //  std::filesystem::remove_all(arguments.tmp_path);
+  //}
 
   return EXIT_SUCCESS;
 }

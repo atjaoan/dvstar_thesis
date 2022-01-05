@@ -18,7 +18,6 @@
 #include "similarity_pruning.hpp"
 #include "support_pruning.hpp"
 
-
 bool LOGGING = true;
 
 namespace vlmc {

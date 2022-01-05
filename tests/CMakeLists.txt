@@ -40,9 +40,9 @@ dependency(googletest)
 dependency(benchmark)
 
 if (NOT KMC_Libraries)
-    add_library(kmc_file SHARED ../../KMC/kmc_api/kmc_file.cpp)
-    add_library(kmer_api SHARED ../../KMC/kmc_api/kmer_api.cpp)
-    add_library(mmer SHARED ../../KMC/kmc_api/mmer.cpp)
+    add_library(kmc_file SHARED ../KMC/kmc_api/kmc_file.cpp)
+    add_library(kmer_api SHARED ../KMC/kmc_api/kmer_api.cpp)
+    add_library(mmer SHARED ../KMC/kmc_api/mmer.cpp)
 endif ()
 
 # The gtest/gtest_main targets carry header search path

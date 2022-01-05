@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "../src/kmer.hpp"
-#include "../src/similarity_pruning.hpp"
+#include "vlmc_from_kmers/kmer.hpp"
+#include "vlmc_from_kmers/similarity_pruning.hpp"
 
 #include <cereal/archives/binary.hpp>
 #include <kmc_file.h>

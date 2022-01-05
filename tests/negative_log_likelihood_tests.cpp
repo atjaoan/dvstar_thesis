@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "../src/build_vlmc.hpp"
-#include "../src/negative_log_likelihood.hpp"
+#include "vlmc_from_kmers/build_vlmc.hpp"
+#include "vlmc_from_kmers/negative_log_likelihood.hpp"
 
 #include "read_helper.hpp"
 

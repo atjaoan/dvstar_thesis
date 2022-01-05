@@ -2,7 +2,7 @@
 
 #include <bitset>
 
-#include "../src/kmer.hpp"
+#include "vlmc_from_kmers/kmer.hpp"
 
 #include <kmc_file.h>
 

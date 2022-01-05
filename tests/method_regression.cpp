@@ -8,7 +8,7 @@
 
 #include <kmc_file.h>
 
-#include "../src/build_vlmc.hpp"
+#include "vlmc_from_kmers/build_vlmc.hpp"
 #include "read_helper.hpp"
 
 using namespace vlmc;

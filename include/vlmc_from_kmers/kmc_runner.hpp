@@ -39,7 +39,7 @@ std::filesystem::path run_kmc(const std::filesystem::path &fasta_path,
   }
   kmc_run_stream << "-k" << kmer_size << " ";
   if (fasta_path.extension() == ".fastq") {
-    kmc_run_stream << "-fq " << fasta_path << " ";
+    kmc_run_stream << "-fm " << fasta_path << " ";
   } else {
     kmc_run_stream << "-fm " << fasta_path << " ";
   }

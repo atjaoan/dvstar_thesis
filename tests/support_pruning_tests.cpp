@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "../src/support_pruning.hpp"
+#include "vlmc_from_kmers/support_pruning.hpp"
 
 #include <kmc_file.h>
 

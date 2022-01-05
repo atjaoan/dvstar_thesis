@@ -1,8 +1,9 @@
 Bootstrap: docker
-From: debian:buster
+From: debian:bullseye
 
 %files
     ../kmc/KMC3.linux/kmc /kmc/kmc
+    ../kmc/KMC3.linux/kmc_tools /kmc/kmc_tools
 	kmc_vlmc /kmc-vlmc/kmc_vlmc
 	KMC /kmc-vlmc/KMC
 	stxxl /kmc-vlmc/stxxl
@@ -19,10 +20,13 @@ From: debian:buster
 	mkdir -p /kmc-vlmc/build
 	cd /kmc-vlmc/build/
 
+	mkdir -p /kmc-vlmc/build/fasta /kmc-vlmc/build/tmp /kmc-vlmc/build/results
+
 	cmake -DCMAKE_BUILD_TYPE=Release ..
 	make
 
 	cp /kmc/kmc .
+	cp /kmc/kmc_tools .
 
 %environment
 	export PATH="/kmc-vlmc/build/kmc_vlmc/:$PATH"
@@ -35,4 +39,3 @@ From: debian:buster
 %runscript
     cd /kmc-vlmc/build/
 	/kmc-vlmc/build/build_vlmc $*
-

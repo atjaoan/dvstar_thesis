@@ -4,9 +4,9 @@
 
 #include <kmc_file.h>
 
-#include "../src/build_vlmc.hpp"
-#include "../src/kmer.hpp"
-#include "../src/support_pruning.hpp"
+#include "vlmc_from_kmers/build_vlmc.hpp"
+#include "vlmc_from_kmers/kmer.hpp"
+#include "vlmc_from_kmers/support_pruning.hpp"
 #include "read_helper.hpp"
 
 class MethodBenchmarks : public benchmark::Fixture {

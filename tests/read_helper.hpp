@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../src/kmer.hpp"
+#include "vlmc_from_kmers/kmer.hpp"
 
 using namespace vlmc;
 
