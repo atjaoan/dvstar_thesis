@@ -2,6 +2,8 @@ cmake_minimum_required (VERSION 3.4...3.12)
 
 project (CountVLMC CXX)
 
+option(CountVLMC_COMPILE_TESTS "To compile tests, specify -DCountVLMC_COMPILE_TESTS=ON")
+
 set(MAIN_PROJECT OFF)
 if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(MAIN_PROJECT ON)
@@ -39,9 +41,15 @@ set(SKIP_PERFORMANCE_COMPARISON ON)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/submodules/cereal)
 
 # Add include paths
-set(CountVLMC_INCLUDE_DIRS ${STXXL_INCLUDE_DIRS} "${CMAKE_SOURCE_DIR}/submodules/stxxl/include" "${CMAKE_SOURCE_DIR}/submodules/robin-hood-hashing/src/include" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/submodules/KMC/kmc_api")
+set(INCLUDE_DIRS ${STXXL_INCLUDE_DIRS} "${PROJECT_SOURCE_DIR}/submodules/stxxl/include" "${PROJECT_SOURCE_DIR}/submodules/robin-hood-hashing/src/include" "${PROJECT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/submodules/KMC/kmc_api")
 
-include_directories("${CountVLMC_INCLUDE_DIRS}")
+include_directories("${INCLUDE_DIRS}")
+
+
+if(NOT MAIN_PROJECT)
+    set(CountVLMC_INCLUDE_DIRS ${INCLUDE_DIRS} PARENT_SCOPE)
+endif()
+
 
 set(CountVLMC_LIBRARIES ${STXXL_LIBRARIES} tbb kmc_file kmer_api mmer CLI11::CLI11 cereal::cereal)
 
