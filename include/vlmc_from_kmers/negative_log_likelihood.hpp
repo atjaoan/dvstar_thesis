@@ -216,7 +216,7 @@ double negative_log_likelihood(const std::filesystem::path &fasta_path,
                                const int actual_kmer_size) {
 
   auto kmc_db_name =
-      run_kmc(fasta_path, actual_kmer_size + 1, tmp_path, in_or_out_of_core, 1);
+      run_kmc(fasta_path, actual_kmer_size + 1, tmp_path, in_or_out_of_core);
 
   return negative_log_likelihood_from_kmc_db(fasta_path, tmp_path, vlmc_path,
                                              in_or_out_of_core,

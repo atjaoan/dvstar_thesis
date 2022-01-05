@@ -69,7 +69,7 @@ std::tuple<int, int, double> find_best_parameters_bic(
     const int kmer_size = max_depth + 1;
 
     auto kmc_db_path =
-        run_kmc(fasta_path, kmer_size, tmp_path, in_or_out_of_core, 2);
+        run_kmc(fasta_path, kmer_size, tmp_path, in_or_out_of_core);
 
     for (auto min_count : min_counts) {
       for (auto threshold : thresholds) {

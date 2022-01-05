@@ -16,8 +16,7 @@ void remove_kmc_files(const std::filesystem::path &kmc_path) {
 std::filesystem::path run_kmc(const std::filesystem::path &fasta_path,
                               const int kmer_size,
                               const std::filesystem::path &tmp_path,
-                              const Core &in_or_out_of_core,
-                              const int exclude_infrequent_count = 2) {
+                              const Core &in_or_out_of_core) {
   std::string random_name = get_random_name("kmc_");
 
   std::filesystem::path kmc_db_path = tmp_path / (random_name + "_res");
