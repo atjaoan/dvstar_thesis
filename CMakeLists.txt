@@ -37,11 +37,8 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/submodules/CLI11)
 
 set(SKIP_PERFORMANCE_COMPARISON ON)
 
-# Cereal for serialisation
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/submodules/cereal)
-
 # Add include paths
-set(INCLUDE_DIRS ${STXXL_INCLUDE_DIRS} "${PROJECT_SOURCE_DIR}/submodules/stxxl/include" "${PROJECT_SOURCE_DIR}/submodules/robin-hood-hashing/src/include" "${PROJECT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/submodules/KMC/kmc_api")
+set(INCLUDE_DIRS ${STXXL_INCLUDE_DIRS} "${PROJECT_SOURCE_DIR}/submodules/stxxl/include" "${PROJECT_SOURCE_DIR}/submodules/robin-hood-hashing/src/include" "${PROJECT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/submodules/KMC/kmc_api" "${CMAKE_CURRENT_SOURCE_DIR}/submodules/cereal/include")
 
 include_directories("${INCLUDE_DIRS}")
 
@@ -51,7 +48,7 @@ if(NOT MAIN_PROJECT)
 endif()
 
 
-set(CountVLMC_LIBRARIES ${STXXL_LIBRARIES} tbb kmc_file kmer_api mmer CLI11::CLI11 cereal::cereal)
+set(CountVLMC_LIBRARIES ${STXXL_LIBRARIES} tbb kmc_file kmer_api mmer CLI11::CLI11)
 
 add_library(CountVLMC INTERFACE)
 add_library(CountVLMC::CountVLMC ALIAS CountVLMC)
