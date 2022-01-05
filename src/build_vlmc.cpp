@@ -32,32 +32,7 @@ int main(int argc, char *argv[]) {
     return exit_code;
 
   } else if (arguments.mode == vlmc::Mode::dump) {
-    std::ifstream file_stream(arguments.in_path, std::ios::binary);
-    cereal::BinaryInputArchive iarchive(file_stream);
-
-    std::ostream *ofs = &std::cout;
-    std::ofstream out_stream(arguments.out_path);
-
-    if (arguments.out_path.empty()) {
-      ofs = &std::cout;
-    } else {
-      ofs = &out_stream;
-    }
-
-    vlmc::VLMCKmer kmer{};
-
-    while (file_stream.peek() != EOF) {
-      try {
-        iarchive(kmer);
-        kmer.output(*ofs);
-      } catch (const cereal::Exception &e) {
-        std::cout << (file_stream.peek() == EOF) << std::endl;
-        std::cout << e.what() << std::endl;
-        return EXIT_FAILURE;
-      }
-    }
-    out_stream.close();
-
+    return vlmc::dump_path(arguments.in_path, arguments.out_path);
   } else if (arguments.mode == vlmc::Mode::score_sequence) {
     vlmc::negative_log_likelihood(
         arguments.fasta_path, arguments.tmp_path, arguments.in_path,

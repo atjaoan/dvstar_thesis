@@ -147,4 +147,32 @@ int build_vlmc(const std::filesystem::path &fasta_path, const int max_depth,
 
   return status;
 }
+
+int dump_path(std::filesystem::path in_path, std::filesystem::path out_path) {
+  std::ifstream file_stream(in_path, std::ios::binary);
+  cereal::BinaryInputArchive iarchive(file_stream);
+
+  std::ostream *ofs = &std::cout;
+  std::ofstream out_stream(out_path);
+
+  if (out_path.empty()) {
+    ofs = &std::cout;
+  } else {
+    ofs = &out_stream;
+  }
+
+  vlmc::VLMCKmer kmer{};
+
+  while (file_stream.peek() != EOF) {
+    try {
+      iarchive(kmer);
+      kmer.output(*ofs);
+    } catch (const cereal::Exception &e) {
+      std::cout << (file_stream.peek() == EOF) << std::endl;
+      std::cout << e.what() << std::endl;
+      return EXIT_FAILURE;
+    }
+  }
+  out_stream.close();
+}
 } // namespace vlmc
