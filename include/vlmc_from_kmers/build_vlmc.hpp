@@ -174,5 +174,8 @@ int dump_path(std::filesystem::path in_path, std::filesystem::path out_path) {
     }
   }
   out_stream.close();
+
+  return EXIT_SUCCESS;
 }
+
 } // namespace vlmc
