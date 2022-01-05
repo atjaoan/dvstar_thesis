@@ -4,12 +4,14 @@ From: debian:bullseye
 %files
     ../kmc/KMC3.linux/kmc /kmc/kmc
     ../kmc/KMC3.linux/kmc_tools /kmc/kmc_tools
-	kmc_vlmc /kmc-vlmc/kmc_vlmc
-	KMC /kmc-vlmc/KMC
-	stxxl /kmc-vlmc/stxxl
-	CLI11 /kmc-vlmc/CLI11
-	cereal /kmc-vlmc/cereal
-	CMakeLists.txt /kmc-vlmc/CMakeLists.txt
+
+	src /vlmc-from-kmers/src
+	tests /vlmc-from-kmers/tests
+	include /vlmc-from-kmers/include
+
+	submodules /vlmc-from-kmers/submodules
+
+	CMakeLists.txt /vlmc-from-kmers/CMakeLists.txt
 
 %post
 	apt-get update -y && apt-get install -y cmake build-essential g++ git gcc libtbb-dev libgomp1
@@ -17,10 +19,10 @@ From: debian:bullseye
     apt update -y
     apt install -y gcc g++
 
-	mkdir -p /kmc-vlmc/build
-	cd /kmc-vlmc/build/
+	mkdir -p /vlmc-from-kmers/build
+	cd /vlmc-from-kmers/build/
 
-	mkdir -p /kmc-vlmc/build/fasta /kmc-vlmc/build/tmp /kmc-vlmc/build/results
+	mkdir -p /vlmc-from-kmers/build/fasta /vlmc-from-kmers/build/tmp /vlmc-from-kmers/build/results
 
 	cmake -DCMAKE_BUILD_TYPE=Release ..
 	make
@@ -29,13 +31,13 @@ From: debian:bullseye
 	cp /kmc/kmc_tools .
 
 %environment
-	export PATH="/kmc-vlmc/build/kmc_vlmc/:$PATH"
+	export PATH="/vlmc-from-kmers/build/:$PATH"
 
 %test
-	cd /kmc-vlmc/build/kmc_vlmc/tests
+	cd /vlmc-from-kmers/build/tests
 	echo "Running tests"
 	#./kmer_tests
 
 %runscript
-    cd /kmc-vlmc/build/
-	/kmc-vlmc/build/build_vlmc $*
+    cd /vlmc-from-kmers/build/
+	/vlmc-from-kmers/build/build_vlmc $*
