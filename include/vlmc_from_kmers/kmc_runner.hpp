@@ -13,6 +13,24 @@ void remove_kmc_files(const std::filesystem::path &kmc_path) {
   std::filesystem::remove(path_copy.replace_extension(".kmc_pre"));
 }
 
+std::string find_kmc() {
+  std::filesystem::path local_path{"./kmc"};
+  if (std::filesystem::exists(local_path)) {
+    return local_path.string();
+  } else {
+    return "kmc";
+  }
+}
+
+std::string find_kmc_tools() {
+  std::filesystem::path local_path{"./kmc_tools"};
+  if (std::filesystem::exists(local_path)) {
+    return local_path.string();
+  } else {
+    return "kmc_tools";
+  }
+}
+
 std::filesystem::path run_kmc(const std::filesystem::path &fasta_path,
                               const int kmer_size,
                               const std::filesystem::path &tmp_path,
@@ -31,8 +49,9 @@ std::filesystem::path run_kmc(const std::filesystem::path &fasta_path,
   auto kmc_run = std::chrono::steady_clock::now();
 
   std::ostringstream kmc_run_stream;
-  kmc_run_stream << "./kmc -b -ci1"
-                 << " -cs4294967295 ";
+  kmc_run_stream << find_kmc();
+  kmc_run_stream << " -b -ci1 -cs4294967295";
+
   if (in_or_out_of_core == Core::in) {
     kmc_run_stream << "-r ";
   }
@@ -53,7 +72,8 @@ std::filesystem::path run_kmc(const std::filesystem::path &fasta_path,
   auto kmc_sort = std::chrono::steady_clock::now();
 
   std::ostringstream kmc_sort_stream;
-  kmc_sort_stream << "./kmc_tools transform ";
+  kmc_sort_stream << find_kmc_tools();
+  kmc_sort_stream << " transform ";
   kmc_sort_stream << kmc_db_path;
   kmc_sort_stream << " sort ";
   kmc_sort_stream << kmc_db_sorted_path;
