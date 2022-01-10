@@ -81,7 +81,7 @@ It needs the `plotly` and `typer` python packages to run, which can be installed
 python visualiser.py NC_022098.1.bintree
 ```
 
-Produces an interactive visualisation (should open in your browser) as well as a pdf and png file in the "images" directory.
+Produces an interactive visualisation (should open in your browser) as well as a pdf and png file in the `images` directory.
 
 ## Headers
 If, for some reason, you wanted to include the code in some other project, this directory can be included with CMAKE as 

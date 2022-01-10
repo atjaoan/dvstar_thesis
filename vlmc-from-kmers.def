@@ -5,39 +5,42 @@ From: debian:bullseye
     ../kmc/KMC3.linux/kmc /kmc/kmc
     ../kmc/KMC3.linux/kmc_tools /kmc/kmc_tools
 
-	src /vlmc-from-kmers/src
-	tests /vlmc-from-kmers/tests
-	include /vlmc-from-kmers/include
+    visualiser.py /vlmc-from-kmers/visualiser.py
+    src /vlmc-from-kmers/src
+    tests /vlmc-from-kmers/tests
+    include /vlmc-from-kmers/include
 
-	submodules /vlmc-from-kmers/submodules
+    submodules /vlmc-from-kmers/submodules
 
-	CMakeLists.txt /vlmc-from-kmers/CMakeLists.txt
+    CMakeLists.txt /vlmc-from-kmers/CMakeLists.txt
 
 %post
-	apt-get update -y && apt-get install -y cmake build-essential g++ git gcc libtbb-dev libgomp1
-	echo 'deb http://deb.debian.org/debian testing main' >> /etc/apt/sources.list
+    apt-get update -y && apt-get install -y cmake build-essential g++ git gcc libtbb-dev libgomp1
+    echo 'deb http://deb.debian.org/debian testing main' >> /etc/apt/sources.list
     apt update -y
     apt install -y gcc g++
 
-	mkdir -p /vlmc-from-kmers/build
-	cd /vlmc-from-kmers/build/
+    mkdir -p /vlmc-from-kmers/build
+    cd /vlmc-from-kmers/build/
 
-	mkdir -p /vlmc-from-kmers/build/fasta /vlmc-from-kmers/build/tmp /vlmc-from-kmers/build/results
+    mkdir -p /vlmc-from-kmers/build/fasta /vlmc-from-kmers/build/tmp /vlmc-from-kmers/build/results
 
-	cmake -DCMAKE_BUILD_TYPE=Release ..
-	make
+    cmake -DCMAKE_BUILD_TYPE=Release ..
+    make
 
-	cp /kmc/kmc .
-	cp /kmc/kmc_tools .
+    cp ../visualiser.py .
+
+    cp /kmc/kmc .
+    cp /kmc/kmc_tools .
 
 %environment
-	export PATH="/vlmc-from-kmers/build/:$PATH"
+    export PATH="/vlmc-from-kmers/build/:$PATH"
 
 %test
-	cd /vlmc-from-kmers/build/tests
-	echo "Running tests"
-	#./kmer_tests
+    cd /vlmc-from-kmers/build/tests
+    echo "Running tests"
+	./kmer_tests
 
 %runscript
     cd /vlmc-from-kmers/build/
-	/vlmc-from-kmers/build/build_vlmc $*
+    /vlmc-from-kmers/build/build_vlmc $*
