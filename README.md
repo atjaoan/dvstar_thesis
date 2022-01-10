@@ -64,13 +64,24 @@ Options:
 For example, to construct a VLMC, run:
 
 ```shell
-./build_vlmc --fasta-path NC_022098.1.fasta --threshold 3.9075 --max-depth 15 --min-count 100 --out-path NC_022098.1.bintree --temp-path tmp
+./build_vlmc --fasta-path NC_022098.1.fasta --threshold 3.9075 --max-depth 4 --min-count 100 --out-path NC_022098.1.bintree --temp-path tmp
 ```
 
 To view the contents of the VLMC, run:
 ```shell
 ./build_vlmc --mode dump --in-path NC_022098.1.bintree
 ```
+
+## Visualisation
+
+To produce a graphical representation of the VLMCs, see the [`visualiser.py`](visualiser.py) script.
+It needs the `plotly` and `typer` python packages to run, which can be installed e.g. through `pip install --user plotly typer`.
+
+```shell
+python visualiser.py NC_022098.1.bintree
+```
+
+Produces an interactive visualisation (should open in your browser) as well as a pdf and png file in the "images" directory.
 
 ## Headers
 If, for some reason, you wanted to include the code in some other project, this directory can be included with CMAKE as 
