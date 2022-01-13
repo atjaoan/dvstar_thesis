@@ -25,7 +25,7 @@ From: debian:bullseye
 
     mkdir -p /vlmc-from-kmers/build/fasta /vlmc-from-kmers/build/tmp /vlmc-from-kmers/build/results
 
-    cmake -DCMAKE_BUILD_TYPE=Release ..
+    cmake -DCMAKE_BUILD_TYPE=Release -DCountVLMC_COMPILE_TESTS=ON ..
     make
 
     cp ../visualiser.py .
