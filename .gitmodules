@@ -1,15 +1,15 @@
 [submodule "KMC"]
 	path = submodules/KMC
-	url = git@github.com:refresh-bio/KMC.git
+	url = https://github.com/refresh-bio/KMC.git
 [submodule "stxxl"]
 	path = submodules/stxxl
-	url = http://github.com/stxxl/stxxl.git
+	url = https://github.com/stxxl/stxxl.git
 [submodule "CLI11"]
 	path = submodules/CLI11
-	url = git@github.com:CLIUtils/CLI11.git
+	url = https://github.com/CLIUtils/CLI11.git
 [submodule "cereal"]
 	path = submodules/cereal
-	url = git@github.com:USCiLab/cereal.git
+	url = https://github.com/USCiLab/cereal.git
 [submodule "robin-hood-hashing"]
 	path = submodules/robin-hood-hashing
 	url = https://github.com/martinus/robin-hood-hashing.git
