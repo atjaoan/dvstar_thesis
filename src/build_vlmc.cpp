@@ -1,5 +1,6 @@
 #include "vlmc_from_kmers/build_vlmc.hpp"
 #include "vlmc_from_kmers/bic.hpp"
+#include "vlmc_from_kmers/dvstar.hpp"
 
 int main(int argc, char *argv[]) {
   CLI::App app{"Variable-length Markov chain construction construction using "
@@ -49,6 +50,10 @@ int main(int argc, char *argv[]) {
     vlmc::find_best_parameters_bic(
         arguments.fasta_path, arguments.max_depth, arguments.min_count,
         arguments.out_path, arguments.tmp_path, arguments.in_or_out_of_core);
+  } else if (arguments.mode == vlmc::Mode::dvstar_dissimliarity) {
+    double dissimilarity =
+        vlmc::dvstar(arguments.in_path, arguments.to_path, 0);
+    std::cout << dissimilarity << std::endl;
   }
 
   //if (!tmp_path_existed_before) {

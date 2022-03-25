@@ -76,7 +76,6 @@ process_parent(const VLMCKmer &kmer, const double pseudo_count_amount,
       // Can't remove nodes with children.
       child.divergence = -1.0;
       child.is_terminal = is_terminal;
-      //      child.output(std::cout);
       oarchive(child);
       continue;
     }
@@ -88,7 +87,6 @@ process_parent(const VLMCKmer &kmer, const double pseudo_count_amount,
     } else {
       child.divergence = divergence;
       child.is_terminal = is_terminal;
-      //      child.output(std::cout);
       oarchive(child);
     }
   }
