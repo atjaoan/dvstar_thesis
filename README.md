@@ -39,16 +39,17 @@ __Note that kmc3 needs to be installed separately, and be in the current working
 This provides an executable `build_vlmc`, which can be used as follows:
 
 ```shell
-./build_vlmc --help
+% ./build_vlmc --help
 Variable-length Markov chain construction construction using k-mer counter.
 Usage: ./build_vlmc [OPTIONS]
 
 Options:
   -h,--help                   Print this help message and exit
-  -m,--mode ENUM:value in {build->0,dump->2,score->1,bic->3} OR {0,2,1,3}
-                              Program mode, 'build', 'dump', or 'score'.
+  -m,--mode ENUM:value in {bic->3,build->0,build-from-kmc-db->4,dump->2,dvstar->5,score->1} OR {3,0,4,2,5,1}
+                              Program mode, 'build', 'build-from-kmc-db', 'dump', 'score', or 'dvstar'.  For build-from-kmc-db, the kmc db needs to include all k-mers (not in canonical form), with no minimum count cutoff.  The length of the k-mers needs to be set to 1 more than the maximum depth of the VLMC.  The kmc db also has to be sorted.
   -p,--fasta-path TEXT        Path to fasta file.  Required for 'build' and 'score' modes.
-  --in-path TEXT              Path to saved tree file.  Required for 'dump' and 'score' modes.
+  --in-path TEXT              Path to saved tree file or kmc db file.  Required for 'build-from-kmc-db', 'dump', 'score', and 'dvstar' modes.  For 'build-from-kmc-db', the kmc db file needs to be supplied without the file extension.
+  --to-path TEXT              Path to saved tree file.  Required for 'dvstar' mode.
   -o,--out-path TEXT          Path to output file.  The VLMCs are stored as binary, and can be read by the 'dump' or 'score' modes.  Required for 'build' and 'dump' modes.
   -t,--temp-path TEXT         Path to temporary folder for the external memory algorithms.  For good performance, this needs to be on a local machine.  For sorting, at least 2GB will be allocated to this path.  Defaults to ./tmp
   -c,--min-count INT          Minimum count required for every k-mer in the tree.
@@ -70,6 +71,11 @@ For example, to construct a VLMC, run:
 To view the contents of the VLMC, run:
 ```shell
 ./build_vlmc --mode dump --in-path NC_022098.1.bintree
+```
+
+To compute the dvstar similarity between two VLMCs:
+```shell
+./build_vlmc --mode dvstar --in-path NC_022098.1.bintree --to-path NC_022098.1.bintree
 ```
 
 ## Visualisation
