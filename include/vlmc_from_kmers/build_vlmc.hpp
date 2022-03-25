@@ -35,13 +35,11 @@ void configure_stxxl(const std::filesystem::path &tmp_path) {
   cfg->add_disk(disk1);
 }
 
-int build_vlmc_from_kmc_db(const std::filesystem::path &fasta_path,
+int build_vlmc_from_kmc_db(const std::filesystem::path &kmc_db_path,
                            const int max_depth, const int min_count,
                            const double threshold,
                            const std::filesystem::path &out_path,
-                           const std::filesystem::path &tmp_path,
                            const Core &in_or_out_of_core,
-                           const std::filesystem::path &kmc_db_path,
                            const double pseudo_count_amount = 1.0) {
   auto start = std::chrono::steady_clock::now();
 
@@ -49,7 +47,7 @@ int build_vlmc_from_kmc_db(const std::filesystem::path &fasta_path,
   auto status = kmer_database.OpenForListing(kmc_db_path);
 
   if (!status) {
-    std::cout << "opening file not successful" << std::endl;
+    std::cout << "Opening kmc db not successful.  Try removing the file extension." << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -140,9 +138,9 @@ int build_vlmc(const std::filesystem::path &fasta_path, const int max_depth,
     std::cout << "KMC time: " << kmc_seconds.count() << "s\n";
   }
 
-  auto status = build_vlmc_from_kmc_db(
-      fasta_path, max_depth, min_count, threshold, out_path, tmp_path,
-      in_or_out_of_core, kmc_db_path, pseudo_count_amount);
+  auto status = build_vlmc_from_kmc_db(kmc_db_path, max_depth, min_count,
+                                       threshold, out_path,
+                                       in_or_out_of_core, pseudo_count_amount);
   remove_kmc_files(kmc_db_path);
 
   return status;

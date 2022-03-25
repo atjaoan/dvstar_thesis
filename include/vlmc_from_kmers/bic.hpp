@@ -73,9 +73,9 @@ std::tuple<int, int, double> find_best_parameters_bic(
 
     for (auto min_count : min_counts) {
       for (auto threshold : thresholds) {
-        vlmc::build_vlmc_from_kmc_db(fasta_path, max_depth, min_count,
-                                     threshold, tree_path, tmp_path,
-                                     in_or_out_of_core, kmc_db_path);
+        vlmc::build_vlmc_from_kmc_db(kmc_db_path, max_depth, min_count,
+                                     threshold, tree_path,
+                                     in_or_out_of_core);
 
         auto [n_terminal, sequence_size] = count_terminal_nodes(tree_path);
 

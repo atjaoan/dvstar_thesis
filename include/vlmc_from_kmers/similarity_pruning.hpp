@@ -32,10 +32,10 @@ get_next_symbol_probabilities(const VLMCKmer &node,
       std::accumulate(node.next_symbol_counts.begin(),
                       node.next_symbol_counts.end(), pseudo_count_amount * 4);
 
-  return {double(node.next_symbol_counts[0] + pseudo_count_amount) / sum,
-          double(node.next_symbol_counts[1] + pseudo_count_amount) / sum,
-          double(node.next_symbol_counts[2] + pseudo_count_amount) / sum,
-          double(node.next_symbol_counts[3] + pseudo_count_amount) / sum};
+  return {(double(node.next_symbol_counts[0]) + pseudo_count_amount) / sum,
+          (double(node.next_symbol_counts[1]) + pseudo_count_amount) / sum,
+          (double(node.next_symbol_counts[2]) + pseudo_count_amount) / sum,
+          (double(node.next_symbol_counts[3]) + pseudo_count_amount) / sum};
 }
 
 double kl_divergence(const VLMCKmer &child, const VLMCKmer &parent,
@@ -58,8 +58,7 @@ double kl_divergence(const VLMCKmer &child, const VLMCKmer &parent,
 }
 
 std::tuple<bool, bool>
-process_parent(const VLMCKmer &prev_kmer, const VLMCKmer &kmer,
-               const double pseudo_count_amount,
+process_parent(const VLMCKmer &kmer, const double pseudo_count_amount,
                KMersPerLevel<PstKmer> &kmers_per_level,
                cereal::BinaryOutputArchive &oarchive,
                const std::function<bool(double)> &remove_node) {
@@ -111,9 +110,8 @@ void similarity_prune(const VLMCKmer &prev_kmer, const VLMCKmer &kmer,
 
   if (prev_kmer.length > kmer.length) {
     // Has different length, kmer must be parent of the previous nodes
-    auto [has_children_, is_terminal_] =
-        process_parent(prev_kmer, kmer, pseudo_count_amount, kmers_per_level,
-                       oarchive, remove_node);
+    auto [has_children_, is_terminal_] = process_parent(
+        kmer, pseudo_count_amount, kmers_per_level, oarchive, remove_node);
     has_children = has_children_;
     is_terminal = is_terminal_;
   } else {
@@ -127,7 +125,10 @@ void similarity_prune(const VLMCKmer &prev_kmer, const VLMCKmer &kmer,
     // Root node, should be the last node, and always outputted.
     oarchive(kmer);
   } else {
-    auto start_char_pos = kmer.char_pos(0);
+    // 3 - char_pos which ensures the ordering of the outputted k-mers remain
+    // in lexicographically descending order.
+    // Only important for post-processing for e.g. dvstar.
+    auto start_char_pos = 3 - kmer.char_pos(0);
     kmers_per_level[kmer.length][start_char_pos] = {kmer, has_children, true,
                                                     is_terminal};
   }

@@ -17,6 +17,8 @@ namespace vlmc {
 
 static const std::unordered_map<char, uchar> code_codes{
     {'A', 0}, {'C', 1}, {'G', 2}, {'T', 3}};
+static constexpr char char_codes[4] = {'A', 'C', 'G', 'T'};
+
 
 struct VLMCKmer {
   VLMCKmer() = default;
@@ -41,9 +43,7 @@ struct VLMCKmer {
   uint32 n_rows;
   bool is_terminal;
   bool has_children;
-  bool to_be_removed = true;
-
-  static constexpr char char_codes[4] = {'A', 'C', 'G', 'T'};
+  bool to_be_removed;
 
   static VLMCKmer create_prefix_kmer(const VLMCKmer &kmer, uint32 length,
                                      uint64 count,
@@ -255,7 +255,7 @@ struct VLMCKmer {
   }
 
   inline bool operator<(const VLMCKmer &kmer) const {
-    int min_length = std::min(kmer.length, length);
+    auto min_length = std::min(kmer.length, length);
 
     for (int i = 0; i < min_length; i++) {
       auto this_2_bits = this->extract2bits(i);
@@ -288,6 +288,9 @@ struct VLMCKmer {
   };
 
   [[nodiscard]] std::string to_string() const {
+    if (this->length <= 0) {
+      return "";
+    }
     std::string out_string(this->length, ' ');
 
     uchar *byte_ptr;
@@ -407,7 +410,7 @@ struct KMerComparator : public VirtualKMerComparator<MAX_K> {
   }
   [[nodiscard]] VLMCKmer min_value() const override {
     std::array<uint64, 4> vec{};
-    return VLMCKmer(0, 0, vec);
+    return {0, 0, vec};
   }
   [[nodiscard]] VLMCKmer max_value() const override {
     VLMCKmer max_kmer(MAX_K, (size_t)-1, {});
@@ -432,7 +435,7 @@ struct ReverseKMerComparator : public VirtualKMerComparator<MAX_K> {
   }
   [[nodiscard]] VLMCKmer max_value() const override {
     std::array<uint64, 4> vec{};
-    return VLMCKmer(0, 0, vec);
+    return {0, 0, vec};
   }
 };
 
