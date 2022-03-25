@@ -16,12 +16,12 @@ To compile the program, please first download all submodules:
 git submodule update --init --recursive
 ```
 
-### Container solution / Singularity
-We provide a [singularity container](https://sylabs.io/singularity).  The definition file may need to be modified to 
+### Container solution / apptainer (previously singularity)
+We provide a [apptainer container](https://apptainer.org/).  The definition file may need to be modified to
 include the path to kmc, see the fifth and sixth line. The container is built by running:   
 
 ```shell script
-sudo singularity build vlmc-from-kmers.sif vlmc-from-kmers.def
+sudo apptainer build vlmc-from-kmers.sif vlmc-from-kmers.def
 ```
 
 ### Manually
