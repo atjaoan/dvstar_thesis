@@ -3,7 +3,7 @@ This repository contains the code for constructing a variable-length Markov chai
 sorted list of _k_-mers.  This enables VLMCs to be constructed on even very large genomes, as well as collections
 of sequences.
 
-This repository deals only with the task of constructing the VLMC, for scoring of sequences, or similarities between
+This repository deals mainly with the task of constructing the VLMC, for scoring of sequences, or most similarities between
 two VLMCs, please see the [pst-classifier-seqan repository](https://github.com/Schlieplab/PstClassifierSeqan).
 
 ## Publication
@@ -17,7 +17,7 @@ git submodule update --init --recursive
 ```
 
 ### Container solution / apptainer (previously singularity)
-We provide a [apptainer container](https://apptainer.org/).  The definition file may need to be modified to
+We provide an [apptainer container](https://apptainer.org/).  The definition file may need to be modified to
 include the path to kmc, see the fifth and sixth line. The container is built by running:   
 
 ```shell script
@@ -76,6 +76,16 @@ To view the contents of the VLMC, run:
 To compute the dvstar similarity between two VLMCs:
 ```shell
 ./build_vlmc --mode dvstar --in-path NC_022098.1.bintree --to-path NC_022098.1.bintree
+```
+
+To build a VLMC directly from a KMC db, ensure that the kmc parameters `-ci1` and `-cs4294967295`(or other large number) are used.  Also ensure that the `-k` parameter is set to 1 larger than the max depth parameter given to `build_vlmc`.
+```shell
+./build_vlmc --mode build-from-kmc-db --in-path kmc_db --out-path kmc_db.bintree --max-depth 4 --min-count 100
+```
+
+This approach also allows you to add new sequences/reads to an existing kmc db and then rerun the vlmc construction. This can save computation time, especially when dealing with large sequence collections.  The kmc command to run to add the result of two kmc dbs would be:
+```shell
+./kmc_tools simple kmc_db1 kmc_db2 union new_db_path -ocsum
 ```
 
 ## Visualisation
