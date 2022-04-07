@@ -47,7 +47,7 @@ int build_vlmc_from_kmc_db(const std::filesystem::path &kmc_db_path,
   auto status = kmer_database.OpenForListing(kmc_db_path);
 
   if (!status) {
-    std::cout << "Opening kmc db not successful.  Try removing the file extension." << std::endl;
+    std::cerr << "ERROR: Opening kmc db not successful.  Try removing the file extension." << std::endl;
     return EXIT_FAILURE;
   }
 

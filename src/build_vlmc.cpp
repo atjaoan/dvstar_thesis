@@ -17,10 +17,16 @@ int main(int argc, char *argv[]) {
 
   bool tmp_path_existed_before = std::filesystem::exists(arguments.tmp_path);
 
-  std::filesystem::create_directories(arguments.tmp_path);
+  if (arguments.in_or_out_of_core == vlmc::Core::out) {
+      std::filesystem::create_directories(arguments.tmp_path);
+  }
   vlmc::configure_stxxl(arguments.tmp_path);
 
   if (arguments.mode == vlmc::Mode::build) {
+    if (arguments.out_path.empty() || arguments.fasta_path.empty()) {
+        std::cerr << "Error: Both a --fasta-path and an --out-path need to be given." << std::endl;
+        return EXIT_FAILURE;
+    }
     int exit_code = vlmc::build_vlmc(
         arguments.fasta_path, arguments.max_depth, arguments.min_count,
         arguments.threshold, arguments.out_path, arguments.tmp_path,
