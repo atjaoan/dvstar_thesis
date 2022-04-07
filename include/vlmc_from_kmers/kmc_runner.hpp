@@ -64,9 +64,10 @@ std::filesystem::path run_kmc(const std::filesystem::path &fasta_path,
   kmc_run_stream << kmc_db_path << " " << kmc_tmp;
   std::string kmc_run_command = kmc_run_stream.str();
 
-  std::cout << kmc_run_command << std::endl;
-
-  system(kmc_run_command.c_str());
+  auto kmc_run_code = system(kmc_run_command.c_str());
+  if (kmc_run_code != 0) {
+      throw std::runtime_error("kmc command " + kmc_run_command + " failed.");
+  }
   auto kmc_run_done = std::chrono::steady_clock::now();
 
   auto kmc_sort = std::chrono::steady_clock::now();
@@ -79,9 +80,11 @@ std::filesystem::path run_kmc(const std::filesystem::path &fasta_path,
   kmc_sort_stream << kmc_db_sorted_path;
   std::string kmc_sort_command = kmc_sort_stream.str();
 
-  system(kmc_sort_command.c_str()); // TODO is it possible / permitted under GPL
+  auto kmc_sort_code = system(kmc_sort_command.c_str()); // TODO is it possible / permitted under GPL
                                     // v3 to compile kmc into our binary?
-
+  if (kmc_sort_code != 0) {
+      throw std::runtime_error("kmc_tools command " + kmc_sort_command + " failed.");
+  }
   auto kmc_sort_done = std::chrono::steady_clock::now();
 
   std::chrono::duration<double> kmc_run_seconds = kmc_run_done - kmc_run;
