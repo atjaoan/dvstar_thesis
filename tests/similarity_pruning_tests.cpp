@@ -55,8 +55,8 @@ TEST_F(SimilarityPruningTests, SimilarityPruneSameLevel) {
 
   similarity_prune(prev_kmer, kmer, 1.0, kmers_per_level, oarchive, keep_node);
 
-  ASSERT_TRUE(kmers_per_level[6][0].real_child);
-  EXPECT_EQ(kmers_per_level[6][0].kmer.to_string(), "ATTTTT");
+  ASSERT_TRUE(kmers_per_level[6][3].real_child);
+  EXPECT_EQ(kmers_per_level[6][3].kmer.to_string(), "ATTTTT");
 }
 
 TEST_F(SimilarityPruningTests, SimilarityPruneParent) {
@@ -92,7 +92,7 @@ TEST_F(SimilarityPruningTests, SimilarityPruneParent) {
     cereal::BinaryOutputArchive oarchive(file_stream);
 
     auto [has_children, is_terminal] =
-        process_parent(a_kmer, kmer,1.0, kmers_per_level, oarchive, keep_node);
+        process_parent(kmer,1.0, kmers_per_level, oarchive, keep_node);
 
     EXPECT_TRUE(has_children);
   }
