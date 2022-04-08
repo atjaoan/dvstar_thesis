@@ -180,6 +180,29 @@ TEST_F(KmerTests, ReverseSortTest) {
   EXPECT_TRUE(from_kmer.reverse_less_than(to_kmer));
 }
 
+
+TEST_F(KmerTests, ReverseSortTest2) {
+  auto from_kmer = create_kmer("GTTTTT");
+  auto to_kmer = create_kmer("TTTTT");
+
+  EXPECT_TRUE(from_kmer.reverse_less_than(to_kmer));
+}
+
+TEST_F(KmerTests, ReverseSortTest4) {
+  auto from_kmer = create_kmer("GTTTTT");
+  auto to_kmer = create_kmer("TTTTT");
+
+  EXPECT_FALSE(to_kmer.reverse_less_than(from_kmer));
+}
+
+
+TEST_F(KmerTests, ReverseSortTest3) {
+  auto from_kmer = create_kmer("TTTTTT");
+  auto to_kmer = create_kmer("TTTTT");
+
+  EXPECT_TRUE(from_kmer.reverse_less_than(to_kmer));
+}
+
 TEST_F(KmerTests, ReverseSortTestZero) {
   auto from_kmer = create_kmer("TTTTTTTTTT");
   auto to_kmer = create_kmer("");
@@ -218,20 +241,20 @@ TEST_F(KmerTests, ReverseComparator) {
 }
 
 TEST_F(KmerTests, ReverseSortTestSimilarEnds) {
-  auto kmer_t = create_kmer("TTTTTTTTTT");
-  auto kmer_a = create_kmer("TTTTTTTTTA");
-  auto a_kmer = create_kmer("ATTTTTTTTT");
+  auto kmer_t = create_kmer("CTTTTT");
+  auto kmer_a = create_kmer("TTTTT");
+  auto a_kmer = create_kmer("GTTTTT");
 
   std::vector<VLMCKmer> kmers{kmer_a, kmer_t, a_kmer};
-  std::sort(kmers.begin(), kmers.end(), ReverseKMerComparator<12>());
+  std::sort(kmers.begin(), kmers.end(), ReverseKMerComparator<255>());
 
   std::string first = kmers[0].to_string();
   std::string second = kmers[1].to_string();
   std::string third = kmers[2].to_string();
 
-  EXPECT_EQ(first, "TTTTTTTTTT");
-  EXPECT_EQ(second, "ATTTTTTTTT");
-  EXPECT_EQ(third, "TTTTTTTTTA");
+  EXPECT_EQ(first, "GTTTTT");
+  EXPECT_EQ(second, "CTTTTT");
+  EXPECT_EQ(third, "TTTTT");
 }
 
 TEST_F(KmerTests, ReverseKey2) {
