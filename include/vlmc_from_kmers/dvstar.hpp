@@ -4,6 +4,7 @@
 
 #include "kmer_container.hpp"
 #include "similarity_pruning.hpp"
+#include "context_archive.hpp"
 
 namespace vlmc::details {
 
@@ -31,13 +32,6 @@ get_components(const VLMCKmer &left, const VLMCKmer &left_background,
               right_probs[1] / std::sqrt(right_probs_background[1]),
               right_probs[2] / std::sqrt(right_probs_background[2]),
               right_probs[3] / std::sqrt(right_probs_background[3])}};
-}
-
-bool has_next(std::ifstream &file_stream) { return file_stream.peek() != EOF; }
-
-VLMCKmer &next(cereal::BinaryInputArchive &iarchive, VLMCKmer &kmer) {
-  iarchive(kmer);
-  return kmer;
 }
 
 VLMCKmer &find_background(std::ifstream &fs,
@@ -98,15 +92,10 @@ void advance(std::ifstream &fs, cereal::BinaryInputArchive &archive,
 
 namespace vlmc {
 std::vector<VLMCKmer> get_sorted_kmers(const std::filesystem::path &path) {
-  std::ifstream fs(path, std::ios::binary);
-  cereal::BinaryInputArchive archive(fs);
-
   std::vector<VLMCKmer> kmers{};
-  VLMCKmer kmer{};
-  while (details::has_next(fs)) {
-    details::next(archive, kmer);
+  iterate_archive(path, [&](const VLMCKmer& kmer) {
     kmers.push_back(kmer);
-  }
+  });
 
   std::sort(std::execution::par_unseq, kmers.begin(), kmers.end(),
             ReverseKMerComparator<255>());

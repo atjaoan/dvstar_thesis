@@ -129,7 +129,7 @@ parse_kmer_container(const Core &in_or_out_of_core) {
     return std::make_shared<HashMapKmerContainer<Comparator>>();
   } else {
     throw(std::invalid_argument(
-        "parameter --out-or-in-of-core not 'internal' or 'external'"));
+        "parameter --out-or-in-of-core not 'internal', 'hash' or 'external'"));
   }
 }
 
