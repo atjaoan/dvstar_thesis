@@ -12,12 +12,12 @@
 #include <kmc_file.h>
 
 #include "cli_helper.hpp"
+#include "context_archive.hpp"
 #include "kmc_runner.hpp"
 #include "kmer_container.hpp"
 #include "negative_log_likelihood.hpp"
 #include "similarity_pruning.hpp"
 #include "support_pruning.hpp"
-#include "context_archive.hpp"
 
 bool LOGGING = true;
 
@@ -36,6 +36,31 @@ void configure_stxxl(const std::filesystem::path &tmp_path) {
   cfg->add_disk(disk1);
 }
 
+void similarity_pruning_steps(std::shared_ptr<KmerContainer<>> &container,
+                              const Core &in_or_out_of_core,
+                              const std::filesystem::path &out_path,
+                              const double threshold,
+                              const double pseudo_count_amount) {
+  std::ofstream file_stream(out_path, std::ios::binary);
+  auto similarity_pruning_start = std::chrono::steady_clock::now();
+  {
+    cereal::BinaryOutputArchive oarchive(file_stream);
+
+    auto keep_node = [&](double delta) -> bool { return delta <= threshold; };
+
+    if (in_or_out_of_core == Core::hash) {
+      similarity_pruning_hash<max_k>(container, oarchive, keep_node,
+                                     pseudo_count_amount);
+    } else {
+      similarity_pruning<max_k>(container, oarchive, keep_node,
+                                pseudo_count_amount);
+    }
+  }
+  if (!out_path.empty()) {
+    file_stream.close();
+  }
+}
+
 int build_vlmc_from_kmc_db(const std::filesystem::path &kmc_db_path,
                            const int max_depth, const int min_count,
                            const double threshold,
@@ -48,7 +73,9 @@ int build_vlmc_from_kmc_db(const std::filesystem::path &kmc_db_path,
   auto status = kmer_database.OpenForListing(kmc_db_path);
 
   if (!status) {
-    std::cerr << "ERROR: Opening kmc db not successful.  Try removing the file extension." << std::endl;
+    std::cerr << "ERROR: Opening kmc db not successful.  Try removing the file "
+                 "extension."
+              << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -77,26 +104,11 @@ int build_vlmc_from_kmc_db(const std::filesystem::path &kmc_db_path,
     std::filesystem::create_directories(out_path_directory);
   }
 
-  std::ofstream file_stream(out_path, std::ios::binary);
   auto similarity_pruning_start = std::chrono::steady_clock::now();
-  {
-    cereal::BinaryOutputArchive oarchive(file_stream);
 
-    auto keep_node = [&](double delta) -> bool { return delta <= threshold; };
-
-    if (in_or_out_of_core == Core::hash) {
-      similarity_pruning_hash<max_k>(container, oarchive, keep_node,
-                                     pseudo_count_amount);
-    } else {
-      similarity_pruning<max_k>(container, oarchive, keep_node,
-                                pseudo_count_amount);
-    }
-  }
+  similarity_pruning_steps(container, in_or_out_of_core, out_path, threshold,
+                           pseudo_count_amount);
   auto similarity_pruning_done = std::chrono::steady_clock::now();
-
-  if (!out_path.empty()) {
-    file_stream.close();
-  }
 
   if (LOGGING) {
     std::chrono::duration<double> support_seconds =
@@ -139,15 +151,16 @@ int build_vlmc(const std::filesystem::path &fasta_path, const int max_depth,
     std::cout << "KMC time: " << kmc_seconds.count() << "s\n";
   }
 
-  auto status = build_vlmc_from_kmc_db(kmc_db_path, max_depth, min_count,
-                                       threshold, out_path,
-                                       in_or_out_of_core, pseudo_count_amount);
+  auto status =
+      build_vlmc_from_kmc_db(kmc_db_path, max_depth, min_count, threshold,
+                             out_path, in_or_out_of_core, pseudo_count_amount);
   remove_kmc_files(kmc_db_path);
 
   return status;
 }
 
-int dump_path(const std::filesystem::path& in_path, const std::filesystem::path& out_path) {
+int dump_path(const std::filesystem::path &in_path,
+              const std::filesystem::path &out_path) {
   std::ifstream file_stream(in_path, std::ios::binary);
   cereal::BinaryInputArchive iarchive(file_stream);
 
@@ -160,14 +173,31 @@ int dump_path(const std::filesystem::path& in_path, const std::filesystem::path&
     ofs = &out_stream;
   }
 
-  vlmc::iterate_archive(in_path, [&](const VLMCKmer& kmer) {
-    kmer.output(*ofs);
-  });
+  vlmc::iterate_archive(in_path,
+                        [&](const VLMCKmer &kmer) { kmer.output(*ofs); });
 
   out_stream.close();
 
   return EXIT_SUCCESS;
 }
 
+int reprune_vlmc(const std::filesystem::path &in_path,
+                 const std::filesystem::path &out_path,
+                 const Core &in_or_out_of_core, const double new_threshold,
+                 const double pseudo_count_amount = 1.0) {
+
+  auto container =
+      parse_kmer_container<ReverseKMerComparator<max_k>>(in_or_out_of_core);
+
+  vlmc::iterate_archive(in_path,
+                        [&](const VLMCKmer &kmer) { container->push(kmer); });
+
+  container->sort();
+
+  similarity_pruning_steps(container, in_or_out_of_core, out_path,
+                           new_threshold, pseudo_count_amount);
+
+  return EXIT_SUCCESS;
+}
 
 } // namespace vlmc

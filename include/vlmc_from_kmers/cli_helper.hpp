@@ -19,7 +19,8 @@ enum Mode {
   dump,
   bic,
   build_from_kmc_db,
-  dvstar_dissimliarity
+  dvstar_dissimliarity,
+  reprune
 };
 
 struct cli_arguments {
@@ -42,7 +43,7 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
       {"dump", Mode::dump},
       {"bic", Mode::bic},
       {"build-from-kmc-db", Mode::build_from_kmc_db},
-      {"dvstar", Mode::dvstar_dissimliarity}};
+      {"dvstar", Mode::dvstar_dissimliarity}, {"reprune", Mode::reprune}};
 
   std::map<std::string, Core> core_map{
       {"internal", Core::in}, {"external", Core::out}, {"hash", Core::hash}};

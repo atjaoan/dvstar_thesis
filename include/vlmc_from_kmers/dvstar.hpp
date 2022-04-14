@@ -2,9 +2,9 @@
 
 #include <filesystem>
 
+#include "context_archive.hpp"
 #include "kmer_container.hpp"
 #include "similarity_pruning.hpp"
-#include "context_archive.hpp"
 
 namespace vlmc::details {
 
