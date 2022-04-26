@@ -354,7 +354,7 @@ public:
 
   VLMCKmer construct_vlmc_kmer() {
     // To make sure the VLMCKmer class stays a POD, we're only allowing k-mers
-    // up to 64 or so.  Should be fine.
+    // up to 128 or so.  Should be fine.
     VLMCKmer new_kmer{this->kmer_length, 0, {}};
 
     return construct_vlmc_kmer(new_kmer);
@@ -362,11 +362,12 @@ public:
 
   VLMCKmer construct_vlmc_kmer(VLMCKmer &new_kmer) {
     // To make sure the VLMCKmer class stays a POD, we're only allowing k-mers
-    // up to 256 or so.  Should be fine.
+    // up to 128 or so.  Should be fine.
 
     for (int i = 0; i < 4; i++) {
       new_kmer.kmer_data[i] = 0;
     }
+    new_kmer.length = this->kmer_length;
 
     if (this->kmer_length == 0) {
       return new_kmer;

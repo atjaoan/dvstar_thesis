@@ -12,6 +12,7 @@
 #include "kmer.hpp"
 #include "kmer_container.hpp"
 #include "kmers_per_level.hpp"
+#include "estimators.hpp"
 
 namespace vlmc {
 
@@ -24,44 +25,11 @@ struct PstKmer {
   bool is_terminal = true;
 };
 
-std::array<double, 4>
-get_next_symbol_probabilities(const VLMCKmer &node,
-                              const double pseudo_count_amount) {
-  // pseudo-counts => +4
-  double sum =
-      std::accumulate(node.next_symbol_counts.begin(),
-                      node.next_symbol_counts.end(), pseudo_count_amount * 4);
-
-  return {(double(node.next_symbol_counts[0]) + pseudo_count_amount) / sum,
-          (double(node.next_symbol_counts[1]) + pseudo_count_amount) / sum,
-          (double(node.next_symbol_counts[2]) + pseudo_count_amount) / sum,
-          (double(node.next_symbol_counts[3]) + pseudo_count_amount) / sum};
-}
-
-double kl_divergence(const VLMCKmer &child, const VLMCKmer &parent,
-                     const double pseudo_count_amount) {
-  auto child_probs = get_next_symbol_probabilities(child, pseudo_count_amount);
-  auto parent_probs =
-      get_next_symbol_probabilities(parent, pseudo_count_amount);
-
-  double value = 0.0;
-
-  for (int i = 0; i < 4; i++) {
-    double child_prob = child_probs[i];
-    double parent_prob = parent_probs[i];
-    value += child_prob * std::log(child_prob / parent_prob);
-  }
-
-  value *= child.count;
-
-  return value;
-}
-
 std::tuple<bool, bool>
-process_parent(const VLMCKmer &kmer, const double pseudo_count_amount,
+process_parent(const VLMCKmer &kmer,
                KMersPerLevel<PstKmer> &kmers_per_level,
                cereal::BinaryOutputArchive &oarchive,
-               const std::function<bool(double)> &remove_node) {
+               const estimator_f &remove_node) {
   auto &children = kmers_per_level[kmer.length + 1];
 
   int removed_children = 0;
@@ -80,9 +48,9 @@ process_parent(const VLMCKmer &kmer, const double pseudo_count_amount,
       continue;
     }
 
-    auto divergence = kl_divergence(child, kmer, pseudo_count_amount);
+    auto [remove_child, divergence] = remove_node(child, kmer);
 
-    if (remove_node(divergence)) {
+    if (remove_child) {
       removed_children++;
     } else {
       child.divergence = divergence;
@@ -99,17 +67,16 @@ process_parent(const VLMCKmer &kmer, const double pseudo_count_amount,
 }
 
 void similarity_prune(const VLMCKmer &prev_kmer, const VLMCKmer &kmer,
-                      const double pseudo_count_amount,
                       KMersPerLevel<PstKmer> &kmers_per_level,
                       cereal::BinaryOutputArchive &oarchive,
-                      const std::function<bool(double)> &remove_node) {
+                      const estimator_f &remove_node) {
   bool has_children = true;
   bool is_terminal = true;
 
   if (prev_kmer.length > kmer.length) {
     // Has different length, kmer must be parent of the previous nodes
     auto [has_children_, is_terminal_] = process_parent(
-        kmer, pseudo_count_amount, kmers_per_level, oarchive, remove_node);
+        kmer, kmers_per_level, oarchive, remove_node);
     has_children = has_children_;
     is_terminal = is_terminal_;
   } else {
@@ -135,8 +102,7 @@ void similarity_prune(const VLMCKmer &prev_kmer, const VLMCKmer &kmer,
 template <int kmer_size>
 void similarity_pruning(std::shared_ptr<KmerContainer<>> &container,
                         cereal::BinaryOutputArchive &oarchive,
-                        const std::function<bool(double)> &remove_node,
-                        const double pseudo_count_amount) {
+                        const estimator_f &remove_node) {
 
   KMersPerLevel<PstKmer> kmers_per_level{4, kmer_size + 1};
 
@@ -152,7 +118,7 @@ void similarity_pruning(std::shared_ptr<KmerContainer<>> &container,
   // TGTTTTTT
 
   container->for_each([&](VLMCKmer &kmer) {
-    similarity_prune(prev_kmer, kmer, pseudo_count_amount, kmers_per_level,
+    similarity_prune(prev_kmer, kmer, kmers_per_level,
                      oarchive, remove_node);
 
     prev_kmer = kmer;
@@ -162,8 +128,7 @@ void similarity_pruning(std::shared_ptr<KmerContainer<>> &container,
 template <int kmer_size>
 void similarity_pruning_hash(std::shared_ptr<KmerContainer<>> &container,
                              cereal::BinaryOutputArchive &oarchive,
-                             const std::function<bool(double)> &remove_node,
-                             const double pseudo_count_amount) {
+                             const estimator_f &remove_node) {
 
   KMersPerLevel<PstKmer> kmers_per_level{4, kmer_size + 1};
 
@@ -175,11 +140,11 @@ void similarity_pruning_hash(std::shared_ptr<KmerContainer<>> &container,
     if (kmer.length != 0) {
       VLMCKmer::create_suffix_kmer(kmer, fake_parent_kmer);
       auto &parent_kmer = container->get(fake_parent_kmer);
-      auto divergence = kl_divergence(kmer, parent_kmer, pseudo_count_amount);
+      auto [remove_child, divergence] = remove_node(kmer, parent_kmer);
 
       kmer.divergence = divergence;
 
-      if (!kmer.has_children && remove_node(divergence)) {
+      if (!kmer.has_children && remove_child) {
         kmer.to_be_removed = true;
       } else {
         parent_kmer.has_children = true;

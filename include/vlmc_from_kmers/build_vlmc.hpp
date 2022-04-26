@@ -18,6 +18,7 @@
 #include "negative_log_likelihood.hpp"
 #include "similarity_pruning.hpp"
 #include "support_pruning.hpp"
+#include "estimators.hpp"
 
 bool LOGGING = true;
 
@@ -46,14 +47,12 @@ void similarity_pruning_steps(std::shared_ptr<KmerContainer<>> &container,
   {
     cereal::BinaryOutputArchive oarchive(file_stream);
 
-    auto keep_node = [&](double delta) -> bool { return delta <= threshold; };
+    auto remove_node = kl_estimator(threshold, pseudo_count_amount);
 
     if (in_or_out_of_core == Core::hash) {
-      similarity_pruning_hash<max_k>(container, oarchive, keep_node,
-                                     pseudo_count_amount);
+      similarity_pruning_hash<max_k>(container, oarchive, remove_node);
     } else {
-      similarity_pruning<max_k>(container, oarchive, keep_node,
-                                pseudo_count_amount);
+      similarity_pruning<max_k>(container, oarchive, remove_node);
     }
   }
   if (!out_path.empty()) {
