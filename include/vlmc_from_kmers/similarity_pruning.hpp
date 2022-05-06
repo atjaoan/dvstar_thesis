@@ -9,10 +9,10 @@
 #include <cereal/cereal.hpp>
 #include <cereal/types/array.hpp>
 
+#include "estimators.hpp"
 #include "kmer.hpp"
 #include "kmer_container.hpp"
 #include "kmers_per_level.hpp"
-#include "estimators.hpp"
 
 namespace vlmc {
 
@@ -25,15 +25,15 @@ struct PstKmer {
   bool is_terminal = true;
 };
 
-std::tuple<bool, bool>
-process_parent(const VLMCKmer &kmer,
-               KMersPerLevel<PstKmer> &kmers_per_level,
-               cereal::BinaryOutputArchive &oarchive,
-               const estimator_f &remove_node) {
+std::tuple<bool, bool> process_parent(const VLMCKmer &kmer,
+                                      KMersPerLevel<PstKmer> &kmers_per_level,
+                                      cereal::BinaryOutputArchive &oarchive,
+                                      const estimator_f &remove_node) {
   auto &children = kmers_per_level[kmer.length + 1];
 
   int removed_children = 0;
   int n_real_children = 0;
+
   for (auto &[child, has_children, real_child, is_terminal] : children) {
     if (!real_child) {
       continue;
@@ -45,17 +45,16 @@ process_parent(const VLMCKmer &kmer,
       child.divergence = -1.0;
       child.is_terminal = is_terminal;
       oarchive(child);
-      continue;
-    }
-
-    auto [remove_child, divergence] = remove_node(child, kmer);
-
-    if (remove_child) {
-      removed_children++;
     } else {
-      child.divergence = divergence;
-      child.is_terminal = is_terminal;
-      oarchive(child);
+      auto [remove_child, divergence] = remove_node(child, kmer);
+
+      if (remove_child) {
+        removed_children++;
+      } else {
+        child.divergence = divergence;
+        child.is_terminal = is_terminal;
+        oarchive(child);
+      }
     }
   }
 
@@ -75,8 +74,8 @@ void similarity_prune(const VLMCKmer &prev_kmer, const VLMCKmer &kmer,
 
   if (prev_kmer.length > kmer.length) {
     // Has different length, kmer must be parent of the previous nodes
-    auto [has_children_, is_terminal_] = process_parent(
-        kmer, kmers_per_level, oarchive, remove_node);
+    auto [has_children_, is_terminal_] =
+        process_parent(kmer, kmers_per_level, oarchive, remove_node);
     has_children = has_children_;
     is_terminal = is_terminal_;
   } else {
@@ -118,8 +117,7 @@ void similarity_pruning(std::shared_ptr<KmerContainer<>> &container,
   // TGTTTTTT
 
   container->for_each([&](VLMCKmer &kmer) {
-    similarity_prune(prev_kmer, kmer, kmers_per_level,
-                     oarchive, remove_node);
+    similarity_prune(prev_kmer, kmer, kmers_per_level, oarchive, remove_node);
 
     prev_kmer = kmer;
   });

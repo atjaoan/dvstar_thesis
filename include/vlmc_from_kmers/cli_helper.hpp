@@ -28,9 +28,12 @@ enum Dissimilarity {
   penalized_dvstar_dissimliarity,
 };
 
+enum Estimator { kullback_leibler, peres_shields };
+
 struct cli_arguments {
   Mode mode{Mode::build};
   Dissimilarity dissimilarity{Dissimilarity::dvstar_dissimliarity};
+  Estimator estimator{Estimator::kullback_leibler};
   std::filesystem::path fasta_path;
   std::filesystem::path in_path;
   std::filesystem::path to_path;
@@ -54,8 +57,12 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
 
   std::map<std::string, Dissimilarity> dissimilarity_map{
       {"dvstar", Dissimilarity::dvstar_dissimliarity},
-      {"penalized-dvstar",
-       Dissimilarity::penalized_dvstar_dissimliarity},
+      {"penalized-dvstar", Dissimilarity::penalized_dvstar_dissimliarity},
+  };
+
+  std::map<std::string, Estimator> estimator_map{
+      {"kullback-leibler", Estimator::kullback_leibler},
+      {"peres-shields", Estimator::peres_shields},
   };
 
   std::map<std::string, Core> core_map{
@@ -75,6 +82,11 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
                  "Dissimilarity type, either 'dvstar',  or 'penalized-dvstar'.")
       ->transform(CLI::CheckedTransformer(dissimilarity_map, CLI::ignore_case));
 
+  app.add_option("--estimator", arguments.estimator,
+                 "Estimator for the pruning of the VLMC, either "
+                 "'kullback-leibler',  or 'peres-shields'.")
+      ->transform(CLI::CheckedTransformer(estimator_map, CLI::ignore_case));
+
   app.add_option(
       "-p,--fasta-path", arguments.fasta_path,
       "Path to fasta file.  Required for 'build' and 'score' modes.");
@@ -86,8 +98,9 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
       "'build-from-kmc-db', the kmc db file needs to be supplied "
       "without the file extension.");
 
-  app.add_option("--to-path", arguments.to_path,
-                 "Path to saved tree file.  Required for 'dissimilarity' mode.");
+  app.add_option(
+      "--to-path", arguments.to_path,
+      "Path to saved tree file.  Required for 'dissimilarity' mode.");
 
   app.add_option("-o,--out-path", arguments.out_path,
                  "Path to output file.  The VLMCs are stored as binary, and "

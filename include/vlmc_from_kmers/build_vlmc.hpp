@@ -57,12 +57,12 @@ void similarity_pruning_steps(std::shared_ptr<KmerContainer<>> &container,
   }
 }
 
-int build_vlmc_from_kmc_db(const std::filesystem::path &kmc_db_path,
-                           const int max_depth, const int min_count,
-                           const double threshold,
-                           const std::filesystem::path &out_path,
-                           const Core &in_or_out_of_core,
-                           const double pseudo_count_amount = 1.0) {
+int build_vlmc_from_kmc_db(
+    const std::filesystem::path &kmc_db_path, const int max_depth,
+    const int min_count, const double threshold,
+    const std::filesystem::path &out_path, const Core &in_or_out_of_core,
+    const double pseudo_count_amount = 1.0,
+    const Estimator estimator = Estimator::kullback_leibler) {
   auto start = std::chrono::steady_clock::now();
 
   CKMCFile kmer_database;
@@ -104,12 +104,14 @@ int build_vlmc_from_kmc_db(const std::filesystem::path &kmc_db_path,
 
   auto similarity_pruning_start = std::chrono::steady_clock::now();
 
-  auto kl_remove_node = kl_estimator(threshold, pseudo_count_amount);
-  auto ps_remove_node =
-      peres_shield_estimator(sequence_length, pseudo_count_amount);
+  estimator_f remove_node;
+  if (estimator == Estimator::kullback_leibler) {
+    remove_node = kl_estimator(threshold, pseudo_count_amount);
+  } else {
+    remove_node = peres_shield_estimator(sequence_length, pseudo_count_amount);
+  }
 
-  similarity_pruning_steps(container, in_or_out_of_core, out_path,
-                           kl_remove_node);
+  similarity_pruning_steps(container, in_or_out_of_core, out_path, remove_node);
   auto similarity_pruning_done = std::chrono::steady_clock::now();
 
   if (LOGGING) {
@@ -138,7 +140,8 @@ int build_vlmc(const std::filesystem::path &fasta_path, const int max_depth,
                const std::filesystem::path &out_path,
                const std::filesystem::path &tmp_path,
                const Core &in_or_out_of_core,
-               const double pseudo_count_amount = 1.0) {
+               const double pseudo_count_amount = 1.0,
+               const Estimator estimator = Estimator::kullback_leibler) {
   auto start = std::chrono::steady_clock::now();
 
   const int kmer_size = max_depth + 1;
@@ -153,9 +156,9 @@ int build_vlmc(const std::filesystem::path &fasta_path, const int max_depth,
     std::cout << "KMC time: " << kmc_seconds.count() << "s\n";
   }
 
-  auto status =
-      build_vlmc_from_kmc_db(kmc_db_path, max_depth, min_count, threshold,
-                             out_path, in_or_out_of_core, pseudo_count_amount);
+  auto status = build_vlmc_from_kmc_db(kmc_db_path, max_depth, min_count,
+                                       threshold, out_path, in_or_out_of_core,
+                                       pseudo_count_amount, estimator);
   remove_kmc_files(kmc_db_path);
 
   return status;
