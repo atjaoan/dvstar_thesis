@@ -13,12 +13,12 @@
 
 #include "cli_helper.hpp"
 #include "context_archive.hpp"
+#include "estimators.hpp"
 #include "kmc_runner.hpp"
 #include "kmer_container.hpp"
 #include "negative_log_likelihood.hpp"
 #include "similarity_pruning.hpp"
 #include "support_pruning.hpp"
-#include "estimators.hpp"
 
 bool LOGGING = true;
 
@@ -40,14 +40,11 @@ void configure_stxxl(const std::filesystem::path &tmp_path) {
 void similarity_pruning_steps(std::shared_ptr<KmerContainer<>> &container,
                               const Core &in_or_out_of_core,
                               const std::filesystem::path &out_path,
-                              const double threshold,
-                              const double pseudo_count_amount) {
+                              const estimator_f &remove_node) {
   std::ofstream file_stream(out_path, std::ios::binary);
   auto similarity_pruning_start = std::chrono::steady_clock::now();
   {
     cereal::BinaryOutputArchive oarchive(file_stream);
-
-    auto remove_node = kl_estimator(threshold, pseudo_count_amount);
 
     if (in_or_out_of_core == Core::hash) {
       similarity_pruning_hash<max_k>(container, oarchive, remove_node);
@@ -86,13 +83,15 @@ int build_vlmc_from_kmc_db(const std::filesystem::path &kmc_db_path,
       parse_kmer_container<ReverseKMerComparator<max_k>>(in_or_out_of_core);
 
   auto support_pruning_start = std::chrono::steady_clock::now();
-  sequential_support_pruning<max_k>(kmer_database, container, max_depth + 1,
-                                    include_node);
+  auto root = sequential_support_pruning<max_k>(kmer_database, container,
+                                                max_depth + 1, include_node);
   auto support_pruning_done = std::chrono::steady_clock::now();
 
   kmer_database.Close();
 
   auto sorting_start = std::chrono::steady_clock::now();
+
+  double sequence_length = root.count;
 
   container->sort();
 
@@ -105,8 +104,12 @@ int build_vlmc_from_kmc_db(const std::filesystem::path &kmc_db_path,
 
   auto similarity_pruning_start = std::chrono::steady_clock::now();
 
-  similarity_pruning_steps(container, in_or_out_of_core, out_path, threshold,
-                           pseudo_count_amount);
+  auto kl_remove_node = kl_estimator(threshold, pseudo_count_amount);
+  auto ps_remove_node =
+      peres_shield_estimator(sequence_length, pseudo_count_amount);
+
+  similarity_pruning_steps(container, in_or_out_of_core, out_path,
+                           kl_remove_node);
   auto similarity_pruning_done = std::chrono::steady_clock::now();
 
   if (LOGGING) {
@@ -188,13 +191,21 @@ int reprune_vlmc(const std::filesystem::path &in_path,
   auto container =
       parse_kmer_container<ReverseKMerComparator<max_k>>(in_or_out_of_core);
 
-  vlmc::iterate_archive(in_path,
-                        [&](const VLMCKmer &kmer) { container->push(kmer); });
+  VLMCKmer root{};
+  vlmc::iterate_archive(in_path, [&](const VLMCKmer &kmer) {
+    if (kmer.length == 0) {
+      root = kmer;
+    }
+    container->push(kmer);
+  });
 
   container->sort();
 
+  auto kl_remove_node = kl_estimator(new_threshold, pseudo_count_amount);
+  auto ps_remove_node = peres_shield_estimator(root.count, pseudo_count_amount);
+
   similarity_pruning_steps(container, in_or_out_of_core, out_path,
-                           new_threshold, pseudo_count_amount);
+                           kl_remove_node);
 
   return EXIT_SUCCESS;
 }

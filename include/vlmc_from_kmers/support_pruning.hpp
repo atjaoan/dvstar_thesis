@@ -24,7 +24,7 @@ namespace vlmc {
 
 using vector_type = std::shared_ptr<KmerContainer<>>;
 
-void output_root(std::vector<uint64> &root_counts, vector_type &container) {
+VLMCKmer output_root(std::vector<uint64> &root_counts, vector_type &container) {
   uint64 count = std::accumulate(root_counts.begin(), root_counts.end(), 0);
   VLMCKmer root{0, count,
                 std::array<uint64, 4>{root_counts[0], root_counts[1],
@@ -34,6 +34,7 @@ void output_root(std::vector<uint64> &root_counts, vector_type &container) {
   //  std::lock_guard lock{sorter_mutex};
 
   container->push(root);
+  return root;
 }
 
 void output_node(const VLMCKmer &prev_kmer, int diff_pos, uint64 sum,
@@ -218,7 +219,7 @@ void support_pruning(CKMCFile &kmer_database, vector_type &container,
 }
 
 template <int kmer_size>
-void sequential_support_pruning(
+VLMCKmer sequential_support_pruning(
     CKMCFile &kmer_database, vector_type &container, int actual_kmer_size,
     const std::function<bool(int, size_t)> &include_node) {
 
@@ -253,9 +254,10 @@ void sequential_support_pruning(
 
   VLMCKmer epsilon(0, 0, {});
   process_kmer(epsilon, prev_kmer, counters, output_func, include_node, 1);
-  output_root(counters[0], container);
+  auto root = output_root(counters[0], container);
 
   kmer_database.Close();
+  return root;
 }
 
 } // namespace vlmc
