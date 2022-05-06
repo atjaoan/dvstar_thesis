@@ -88,14 +88,29 @@ void advance(std::ifstream &fs, cereal::BinaryInputArchive &archive,
     iterating = false;
   }
 }
+
+double transform_to_distance(double dot_product, double left_norm,
+                             double right_norm) {
+  left_norm = std::sqrt(left_norm);
+  right_norm = std::sqrt(right_norm);
+
+  if (left_norm == 0 || right_norm == 0) {
+    return 1.0;
+  } else {
+    double Dvstar = dot_product / (left_norm * right_norm);
+
+    double dvstar = 0.5 * (1 - Dvstar);
+
+    double angular_distance = 2 * std::acos(Dvstar) / M_PI;
+    return angular_distance;
+  }
+}
 } // namespace vlmc::details
 
 namespace vlmc {
 std::vector<VLMCKmer> get_sorted_kmers(const std::filesystem::path &path) {
   std::vector<VLMCKmer> kmers{};
-  iterate_archive(path, [&](const VLMCKmer& kmer) {
-    kmers.push_back(kmer);
-  });
+  iterate_archive(path, [&](const VLMCKmer &kmer) { kmers.push_back(kmer); });
 
   std::sort(std::execution::par_unseq, kmers.begin(), kmers.end(),
             ReverseKMerComparator<255>());
@@ -110,7 +125,9 @@ std::vector<VLMCKmer> get_sorted_kmers(const std::filesystem::path &path) {
  */
 void iterate_shared_kmers_sorted(
     std::vector<VLMCKmer> &left_kmers, std::vector<VLMCKmer> &right_kmers,
-    const std::function<void(const VLMCKmer &left, const VLMCKmer &right)> &f) {
+    const std::function<void(const VLMCKmer &left, const VLMCKmer &right)> &f,
+    const std::function<void(const VLMCKmer &left, const VLMCKmer &right)>
+        &f_not_shared) {
   uint left_i = 0;
   uint right_i = 0;
 
@@ -122,8 +139,10 @@ void iterate_shared_kmers_sorted(
       left_i++;
       right_i++;
     } else if (left_kmer.reverse_less_than(right_kmer)) {
+      f_not_shared(left_kmer, right_kmer);
       left_i++;
     } else {
+      f_not_shared(right_kmer, left_kmer);
       right_i++;
     }
   }
@@ -139,11 +158,13 @@ void iterate_shared_kmers_sorted(
 void iterate_shared_kmers_sorted(
     const std::filesystem::path &left_path,
     const std::filesystem::path &right_path,
-    const std::function<void(const VLMCKmer &left, const VLMCKmer &right)> &f) {
+    const std::function<void(const VLMCKmer &left, const VLMCKmer &right)> &f,
+    const std::function<void(const VLMCKmer &left, const VLMCKmer &right)>
+        &f_not_shared) {
 
   auto left_kmers = get_sorted_kmers(left_path);
   auto right_kmers = get_sorted_kmers(right_path);
-  iterate_shared_kmers_sorted(left_kmers, right_kmers, f);
+  iterate_shared_kmers_sorted(left_kmers, right_kmers, f, f_not_shared);
 }
 
 /**
@@ -275,19 +296,10 @@ double dvstar(std::vector<VLMCKmer> &left_kmers,
           left_norm += std::pow(left_comp[i], 2.0);
           right_norm += std::pow(right_comp[i], 2.0);
         }
-      });
+      },
+      [](auto l, auto r) {});
 
-  left_norm = std::sqrt(left_norm);
-  right_norm = std::sqrt(right_norm);
-
-  if (left_norm == 0 || right_norm == 0) {
-    return 1.0;
-  } else {
-    double Dvstar = dot_product / (left_norm * right_norm);
-
-    double dvstar = 0.5 * (1 - Dvstar);
-    return dvstar;
-  }
+  return details::transform_to_distance(dot_product, left_norm, right_norm);
 }
 
 /**
@@ -299,15 +311,19 @@ double dvstar(std::vector<VLMCKmer> &left_kmers,
  * GC-adjusted, 1 to dinucleotide-adjusted etc.
  * @return the dvstar dissimilarity between the two VLMCs
  */
-double dvstar(const std::filesystem::path &left_path,
-              const std::filesystem::path &right_path,
-              int background_order = 0) {
+std::tuple<double, double>
+dvstar(const std::filesystem::path &left_path,
+       const std::filesystem::path &right_path,
+       const std::function<void(const VLMCKmer &left, const VLMCKmer &right)>
+           &f_not_shared,
+       int background_order = 0) {
   std::ifstream left_fs_background(left_path, std::ios::binary);
   std::ifstream right_fs_background(right_path, std::ios::binary);
 
   double dot_product = 0.0;
   double left_norm = 0.0;
   double right_norm = 0.0;
+  double n_shared_kmers = 0.0;
 
   {
     cereal::BinaryInputArchive left_archive_background(left_fs_background);
@@ -319,7 +335,7 @@ double dvstar(const std::filesystem::path &left_path,
 
     if (!details::has_next(left_fs_background) ||
         !details::has_next(right_fs_background)) {
-      return 1.0;
+      return {1.0, 0.0};
     }
 
     details::next(left_archive_background, left_kmer_background);
@@ -331,6 +347,7 @@ double dvstar(const std::filesystem::path &left_path,
           if (left_kmer.length <= background_order) {
             return;
           }
+          n_shared_kmers++;
           details::find_background(left_fs_background, left_archive_background,
                                    left_kmer, left_kmer_background,
                                    background_order);
@@ -347,23 +364,61 @@ double dvstar(const std::filesystem::path &left_path,
             left_norm += std::pow(left_comp[i], 2.0);
             right_norm += std::pow(right_comp[i], 2.0);
           }
-        });
+        },
+        f_not_shared);
   }
 
   left_fs_background.close();
   left_fs_background.close();
 
-  left_norm = std::sqrt(left_norm);
-  right_norm = std::sqrt(right_norm);
+  return {details::transform_to_distance(dot_product, left_norm, right_norm),
+          n_shared_kmers};
+}
 
-  if (left_norm == 0 || right_norm == 0) {
-    return 1.0;
-  } else {
-    double Dvstar = dot_product / (left_norm * right_norm);
+/**
+ * Calculate the dvstar metric between the two VLMCs from the two given paths.
+ * Background order determines how long the background is.
+ * @param left_path Path to a .bintree file.
+ * @param right_path Path to a .bintree file.
+ * @param background_order Background order of the measure, 0 corresponds to
+ * GC-adjusted, 1 to dinucleotide-adjusted etc.
+ * @return the dvstar dissimilarity between the two VLMCs
+ */
+double dvstar(const std::filesystem::path &left_path,
+              const std::filesystem::path &right_path,
+              int background_order = 0) {
+  auto [diss, _n_shared] = dvstar(
+      left_path, right_path, [](auto l, auto r) {}, background_order);
+  return diss;
+}
 
-    double dvstar = 0.5 * (1 - Dvstar);
-    return dvstar;
-  }
+/**
+ * Calculate the penalized dvstar metric between the two VLMCs from the two
+ * given paths. THe penalizsation refers to the added dissimilarity based on how
+ * many of the contexts are missing from the models. Background order determines
+ * how long the background is.
+ * @param left_path Path to a .bintree file.
+ * @param right_path Path to a .bintree file.
+ * @param background_order Background order of the measure, 0 corresponds to
+ * GC-adjusted, 1 to dinucleotide-adjusted etc.
+ * @return the dvstar dissimilarity between the two VLMCs
+ */
+double dvstar_missing_penalized(const std::filesystem::path &left_path,
+                                const std::filesystem::path &right_path,
+                                int background_order = 0) {
+  double missing_contexts = 0;
+  double total_contexts = 0;
+  auto [dvstar_dist, n_shared] = dvstar(
+      left_path, right_path,
+      [&](auto l, auto r) {
+        missing_contexts++;
+        total_contexts++;
+      },
+      background_order);
+
+  double missing_frac = missing_contexts / (total_contexts + n_shared);
+  // Ensure the scale is from 0-1 with equal weight on missing as dvstar.
+  return dvstar_dist * 0.75 + missing_frac * 0.25;
 }
 
 } // namespace vlmc

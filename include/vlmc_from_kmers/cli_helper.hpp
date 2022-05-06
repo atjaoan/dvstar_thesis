@@ -19,12 +19,18 @@ enum Mode {
   dump,
   bic,
   build_from_kmc_db,
-  dvstar_dissimliarity,
+  dissimilarity,
   reprune
+};
+
+enum Dissimilarity {
+  dvstar_dissimliarity,
+  penalized_dvstar_dissimliarity,
 };
 
 struct cli_arguments {
   Mode mode{Mode::build};
+  Dissimilarity dissimilarity{Dissimilarity::dvstar_dissimliarity};
   std::filesystem::path fasta_path;
   std::filesystem::path in_path;
   std::filesystem::path to_path;
@@ -43,20 +49,31 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
       {"dump", Mode::dump},
       {"bic", Mode::bic},
       {"build-from-kmc-db", Mode::build_from_kmc_db},
-      {"dvstar", Mode::dvstar_dissimliarity}, {"reprune", Mode::reprune}};
+      {"dissimilarity", Mode::dissimilarity},
+      {"reprune", Mode::reprune}};
+
+  std::map<std::string, Dissimilarity> dissimilarity_map{
+      {"dvstar", Dissimilarity::dvstar_dissimliarity},
+      {"penalized-dvstar",
+       Dissimilarity::penalized_dvstar_dissimliarity},
+  };
 
   std::map<std::string, Core> core_map{
       {"internal", Core::in}, {"external", Core::out}, {"hash", Core::hash}};
 
   app.add_option(
          "-m,--mode", arguments.mode,
-         "Program mode, 'build', 'build-from-kmc-db', 'dump', 'score', or "
-         "'dvstar'.  For "
+         "Program mode, 'build', 'build-from-kmc-db', 'dump', 'score', "
+         "'reprune', or 'dissimilarity'.  For "
          "build-from-kmc-db, the kmc db needs to include all k-mers (not in "
          "canonical form), with no minimum count cutoff.  The length of the "
          "k-mers needs to be set to 1 more than the maximum depth of the VLMC. "
          " The kmc db also has to be sorted.")
       ->transform(CLI::CheckedTransformer(mode_map, CLI::ignore_case));
+
+  app.add_option("--dissimilarity", arguments.dissimilarity,
+                 "Dissimilarity type, either 'dvstar',  or 'penalized-dvstar'.")
+      ->transform(CLI::CheckedTransformer(dissimilarity_map, CLI::ignore_case));
 
   app.add_option(
       "-p,--fasta-path", arguments.fasta_path,
@@ -65,12 +82,12 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
   app.add_option(
       "--in-path", arguments.in_path,
       "Path to saved tree file or kmc db file.  Required for "
-      "'build-from-kmc-db', 'dump', 'score', and 'dvstar' modes.  For "
+      "'build-from-kmc-db', 'dump', 'score', and 'dissimilarity' modes.  For "
       "'build-from-kmc-db', the kmc db file needs to be supplied "
       "without the file extension.");
 
   app.add_option("--to-path", arguments.to_path,
-                 "Path to saved tree file.  Required for 'dvstar' mode.");
+                 "Path to saved tree file.  Required for 'dissimilarity' mode.");
 
   app.add_option("-o,--out-path", arguments.out_path,
                  "Path to output file.  The VLMCs are stored as binary, and "
