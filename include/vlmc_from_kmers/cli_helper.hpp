@@ -6,6 +6,7 @@
 #include <string>
 
 #include "kmer_container.hpp"
+#include "sequencing_adjustment.hpp"
 
 #include "CLI/App.hpp"
 #include "CLI/Config.hpp"
@@ -44,6 +45,7 @@ struct cli_arguments {
   double threshold = 3.9075;
   double pseudo_count_amount = 1.0;
   Core in_or_out_of_core{Core::in};
+  SequencingParameters sequencing_parameters{false};
 };
 void add_options(CLI::App &app, cli_arguments &arguments) {
   std::map<std::string, Mode> mode_map{
@@ -130,6 +132,22 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
          "Specify 'internal' for in-core or 'external for out-of-core memory "
          "model.  Out of core is slower, but is not memory bound. ")
       ->transform(CLI::CheckedTransformer(core_map, CLI::ignore_case));
+
+  app.add_flag(
+      "--adjust-for-sequencing-errors",
+      arguments.sequencing_parameters.adjust_for_sequencing_errors,
+      "Give this flag to adjust the estimator parameters and min counts for "
+      "the sequencing depth and error rates of the a read-dataset. See "
+      "--sequencing-depth and --sequencing-error-rate for parameters.");
+  app.add_option("--sequencing-depth", arguments.sequencing_parameters.depth,
+                 "If --adjust-for-sequencing-errors is given, this parameter "
+                 "is used to alter the estimator parameters to reflect that "
+                 "many k-mers will be --sequencing-depth times more frequent.");
+  app.add_option("--sequencing-error-rate",
+                 arguments.sequencing_parameters.error_rate,
+                 "If --adjust-for-sequencing-errors is given, this parameter "
+                 "is used to alter to estimate the number of k-mers that will "
+                 "be missing due to sequencing errors.");
 }
 
 static std::random_device rd;

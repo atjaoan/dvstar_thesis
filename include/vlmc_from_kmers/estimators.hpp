@@ -4,6 +4,7 @@
 #include <numeric>
 
 #include "kmer.hpp"
+#include "sequencing_adjustment.hpp"
 
 namespace vlmc {
 
@@ -69,20 +70,31 @@ double peres_shields_delta(const VLMCKmer &child, const VLMCKmer &parent,
   return fluctuation;
 }
 
-estimator_f kl_estimator(double threshold, const double pseudo_count_amount) {
+estimator_f kl_estimator(double threshold,
+                         const double pseudo_count_amount = 1.0,
+                         const SequencingParameters sequencing_parameters =
+                             SequencingParameters{false}) {
   auto fun = [&, threshold, pseudo_count_amount](
                  const VLMCKmer &child,
                  const VLMCKmer &parent) -> std::tuple<bool, double> {
     auto divergence = kl_divergence(child, parent, pseudo_count_amount);
 
-    return {divergence < threshold, divergence};
+    if (sequencing_parameters.adjust_for_sequencing_errors) {
+      auto adjusted_threshold =
+          threshold * adjusted_value(sequencing_parameters, child.length);
+
+      return {divergence < adjusted_threshold, divergence};
+    } else {
+      return {divergence < threshold, divergence};
+    }
   };
   return fun;
 }
 
-
-estimator_f peres_shield_estimator(double sequence_length,
-                                   const double pseudo_count_amount) {
+estimator_f peres_shield_estimator(
+    double sequence_length, const double pseudo_count_amount,
+    const SequencingParameters sequencing_parameters = SequencingParameters{
+        false}) {
   double threshold = std::pow(sequence_length, 3.0 / 4.0);
 
   auto fun = [&, threshold, pseudo_count_amount](
@@ -90,7 +102,14 @@ estimator_f peres_shield_estimator(double sequence_length,
                  const VLMCKmer &parent) -> std::tuple<bool, double> {
     auto fluctuation = peres_shields_delta(child, parent, pseudo_count_amount);
 
-    return {fluctuation < threshold, fluctuation};
+    if (sequencing_parameters.adjust_for_sequencing_errors) {
+      auto adjusted_threshold =
+          threshold * adjusted_value(sequencing_parameters, child.length);
+
+      return {fluctuation < adjusted_threshold, fluctuation};
+    } else {
+      return {fluctuation < threshold, fluctuation};
+    }
   };
   return fun;
 }
