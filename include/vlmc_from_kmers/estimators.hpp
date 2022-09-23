@@ -69,11 +69,7 @@ double peres_shields_delta(const VLMCKmer &child, const VLMCKmer &parent,
   return fluctuation;
 }
 
-
-estimator_f kl_estimator(double sequence_length,
-                                   const double pseudo_count_amount) {
-  double threshold = std::pow(sequence_length, 3.0 / 4.0);
-
+estimator_f kl_estimator(double threshold, const double pseudo_count_amount) {
   auto fun = [&, threshold, pseudo_count_amount](
                  const VLMCKmer &child,
                  const VLMCKmer &parent) -> std::tuple<bool, double> {
