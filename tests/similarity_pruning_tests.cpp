@@ -12,14 +12,11 @@ using namespace vlmc;
 
 class SimilarityPruningTests : public ::testing::Test {
 protected:
-  void SetUp() override {
-  }
+  void SetUp() override {}
 
   KMersPerLevel<PstKmer> kmers_per_level{4, 8};
 
-  std::function<bool(double)> keep_node = [](double delta) -> bool {
-    return delta <= 3.9075;
-  };
+  estimator_f keep_node = kl_estimator(3.9075);
 };
 
 TEST_F(SimilarityPruningTests, KullbackLiebler) {
@@ -53,7 +50,7 @@ TEST_F(SimilarityPruningTests, SimilarityPruneSameLevel) {
   std::ofstream file_stream("test_tmp.bin", std::ios::binary);
   cereal::BinaryOutputArchive oarchive(file_stream);
 
-  similarity_prune(prev_kmer, kmer, 1.0, kmers_per_level, oarchive, keep_node);
+  similarity_prune(prev_kmer, kmer, kmers_per_level, oarchive, keep_node);
 
   ASSERT_TRUE(kmers_per_level[6][3].real_child);
   EXPECT_EQ(kmers_per_level[6][3].kmer.to_string(), "ATTTTT");
@@ -92,7 +89,7 @@ TEST_F(SimilarityPruningTests, SimilarityPruneParent) {
     cereal::BinaryOutputArchive oarchive(file_stream);
 
     auto [has_children, is_terminal] =
-        process_parent(kmer,1.0, kmers_per_level, oarchive, keep_node);
+        process_parent(kmer, kmers_per_level, oarchive, keep_node);
 
     EXPECT_TRUE(has_children);
   }

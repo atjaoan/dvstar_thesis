@@ -39,7 +39,7 @@ From: debian:bullseye
 %test
     cd /vlmc-from-kmers/build/tests
     echo "Running tests"
-	./kmer_tests
+	#./kmer_tests
 
 %runscript
     cd /vlmc-from-kmers/build/
