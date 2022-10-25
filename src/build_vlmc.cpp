@@ -3,8 +3,8 @@
 #include "vlmc_from_kmers/dvstar.hpp"
 
 int main(int argc, char *argv[]) {
-  CLI::App app{"Variable-length Markov chain construction construction using "
-               "k-mer counter."};
+  CLI::App app{"Construction and comparisons of variable-length Markov chains with the aid of "
+               "a k-mer counter."};
 
   vlmc::cli_arguments arguments{};
   add_options(app, arguments);

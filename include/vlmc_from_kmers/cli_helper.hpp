@@ -40,8 +40,8 @@ struct cli_arguments {
   std::filesystem::path to_path;
   std::filesystem::path tmp_path{"./tmp"};
   std::filesystem::path out_path{};
-  int min_count = 10;
-  int max_depth = 15;
+  int min_count = 2;
+  int max_depth = 9;
   double threshold = 3.9075;
   double pseudo_count_amount = 1.0;
   Core in_or_out_of_core{Core::in};
@@ -121,7 +121,7 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
                  "Kullback-Leibler threshold.");
 
   app.add_option("-d,--max-depth", arguments.max_depth,
-                 "Maximum depth for included k-mers.");
+                 "Maximum depth/length for included k-mers.");
 
   app.add_option("-a,--pseudo-count-amount", arguments.pseudo_count_amount,
                  "Size of pseudo count for probability estimation. See e.g. "
@@ -129,7 +129,7 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
 
   app.add_option(
          "-i, --in-or-out-of-core", arguments.in_or_out_of_core,
-         "Specify 'internal' for in-core or 'external for out-of-core memory "
+         "Specify 'internal' for in-core or 'external' for out-of-core memory "
          "model.  Out of core is slower, but is not memory bound. ")
       ->transform(CLI::CheckedTransformer(core_map, CLI::ignore_case));
 
@@ -137,7 +137,7 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
       "--adjust-for-sequencing-errors",
       arguments.sequencing_parameters.adjust_for_sequencing_errors,
       "Give this flag to adjust the estimator parameters and min counts for "
-      "the sequencing depth and error rates of the a read-dataset. See "
+      "the sequencing depth and error rates of a sequencing dataset. See "
       "--sequencing-depth and --sequencing-error-rate for parameters.");
   app.add_option("--sequencing-depth", arguments.sequencing_parameters.depth,
                  "If --adjust-for-sequencing-errors is given, this parameter "

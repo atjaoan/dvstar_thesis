@@ -60,9 +60,9 @@ target_include_directories(CountVLMC INTERFACE
         $<INSTALL_INTERFACE:include/>)
 
 if(MAIN_PROJECT)
-    add_executable(build_vlmc src/build_vlmc.cpp)
-    target_link_libraries(build_vlmc Threads::Threads)
-    target_link_libraries(build_vlmc ${CountVLMC_LIBRARIES})
+    add_executable(dvstar src/build_vlmc.cpp include/vlmc_from_kmers/context_archive.hpp include/vlmc_from_kmers/estimators.hpp include/vlmc_from_kmers/sequencing_adjustment.hpp)
+    target_link_libraries(dvstar Threads::Threads)
+    target_link_libraries(dvstar ${CountVLMC_LIBRARIES})
 
     if (CountVLMC_COMPILE_TESTS)
         add_subdirectory(tests)

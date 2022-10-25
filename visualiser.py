@@ -36,22 +36,22 @@ def _parse_node(line):
     return Node(n, int(count), *vs)
 
 
-def _find_build_vlmc(executable: Path = None):
+def _find_dvstar(executable: Path = None):
     if executable is not None:
         return executable
-    elif Path("build_vlmc").is_file():
-        return Path("./build_vlmc")
-    elif Path("build/build_vlmc").is_file():
-        return Path("build") / "build_vlmc"
-    elif shutil.which("build_vlmc") is not None:
-        return shutil.which("build_vlmc")
+    elif Path("dvstar").is_file():
+        return Path("./dvstar")
+    elif Path("build/dvstar").is_file():
+        return Path("build") / "dvstar"
+    elif shutil.which("dvstar") is not None:
+        return shutil.which("dvstar")
     else:
-        raise ValueError("'build_vlmc' executable not found, please provide the path to the executable.")
+        raise ValueError("'dvstar' executable not found, please provide the path to the executable.")
 
 
 def _get_contexts(path: Path, executable: Path = None):
     if path.suffix == ".bintree":
-        executable = _find_build_vlmc(executable)
+        executable = _find_dvstar(executable)
 
         args = (executable, "--mode", "dump", "--in-path", path)
         r = subprocess.run(args, capture_output=True, text=True)

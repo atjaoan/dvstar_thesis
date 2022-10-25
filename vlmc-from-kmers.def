@@ -43,4 +43,4 @@ From: debian:bullseye
 
 %runscript
     cd /vlmc-from-kmers/build/
-    /vlmc-from-kmers/build/build_vlmc $*
+    /vlmc-from-kmers/build/dvstar $*
