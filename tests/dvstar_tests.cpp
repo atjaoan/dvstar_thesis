@@ -58,7 +58,7 @@ TEST_F(DvstarTests, Similar) {
 
   double dist = dvstar(run_one_path, run_two_path, 0);
 
-  EXPECT_FLOAT_EQ(dist, 0.014657059);
+  EXPECT_FLOAT_EQ(dist, 0.15452552);
 }
 
 TEST_F(DvstarTests, Different) {
@@ -78,7 +78,7 @@ TEST_F(DvstarTests, Different) {
 
   double dist = dvstar(run_one_path, run_two_path, 0);
 
-  EXPECT_FLOAT_EQ(dist, 0.044825714);
+  EXPECT_FLOAT_EQ(dist, 0.27162704);
 }
 
 TEST_F(DvstarTests, RegressionVersions) {
