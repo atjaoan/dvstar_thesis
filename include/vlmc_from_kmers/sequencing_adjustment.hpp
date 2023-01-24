@@ -1,5 +1,5 @@
 #pragma once
-
+typedef unsigned int uint;
 namespace vlmc {
 
 struct SequencingParameters {
