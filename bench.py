@@ -118,9 +118,10 @@ def save_to_txt(res: subprocess.CompletedProcess, csv_path: Path):
     df.to_csv(csv_path, index=False)
 
 @app.command()
-def run(): ## fasta_path: Path):
-    fasta_path_1 = Path("/home/holmse/thesis/dvstar_thesis/tests/NC_001497.2.fa")
-    fasta_path_2 = Path("/home/holmse/thesis/dvstar_thesis/tests/NC_028367.1.fa")
+def run():
+    cwd = Path(__file__).parent
+    fasta_path_1 = cwd / "tests/NC_001497.2.fa"
+    fasta_path_2 = cwd / "tests/NC_028367.1.fa"
     vlmc_1 = dvstar(fasta_path_1, Path("NC_022098.1.bintree"))
     vlmc_2 = dvstar(fasta_path_2,  Path("NC_022099.1.bintree"))
 
