@@ -11,7 +11,7 @@ app = typer.Typer()
 
 K: Final[int] = 9
 
-def build_vlmc(kmc_db: Path) -> tuple[Path, float, float]:
+def build_vlmc(kmc_db: Path) -> Path:
     args = (
         "build/build_vlmc",
         "--mode",
@@ -23,14 +23,12 @@ def build_vlmc(kmc_db: Path) -> tuple[Path, float, float]:
         "--max-depth",
         f"{K}",
     )
-    start = time.perf_counter()
     subprocess.run(args)
-    end = time.perf_counter()
 
-    return kmc_db.with_suffix(".bintree"), start, end
+    return kmc_db.with_suffix(".bintree")
 
 
-def count_kmers(fasta_path: Path) -> tuple[Path, float, float]:
+def count_kmers(fasta_path: Path) -> Path:
     args = (
         "build/kmc",
         "-b",
@@ -44,11 +42,9 @@ def count_kmers(fasta_path: Path) -> tuple[Path, float, float]:
         f"tmp/{fasta_path.stem}",
         "tmp/",
     )
-    start = time.perf_counter()
     subprocess.run(args)
-    end = time.perf_counter()
 
-    return Path("tmp") / fasta_path.stem, start, end
+    return Path("tmp") / fasta_path.stem
 
 def dvstar(fasta_path: Path, out_path: Path) -> tuple[Path, float, float]:
     args = (
@@ -88,26 +84,37 @@ def dvstar_cmp(path_1: Path, path_2: Path) -> subprocess.CompletedProcess:
     return res
 
 def save_to_txt(res: subprocess.CompletedProcess, csv_path: Path):
-    split = res.stderr.split('\n')
+    new_line_separated_attr = res.stderr.split('\n')[3:-8]
 
     data = []
     columns = []
     
-    for s in split:
-        x = s.split('#')
-        if len(x) > 1:
-            val = x[1].lstrip().split(' ')[0]
-            x = x[0].strip()
-            if "msec" in x:
-                y = x.split('msec')
-            else: 
-                y = re.split(r"\s{2,}", x)
+    for line in new_line_separated_attr:
+        split_line = line.split('#')
 
-            col  = y[1].replace(":u", "")
-            cnts = y[0]
+        right_value = split_line[1].lstrip().split(' ')[0]
+        left_line = split_line[0].strip()
 
-            data.extend([val, cnts])
-            columns.extend([col, col + "_counts"])
+        if "msec" in left_line:
+            count_and_attribute = left_line.split('msec')
+        else: 
+            count_and_attribute = re.split(r"\s{2,}", left_line)
+
+        attribute  = count_and_attribute[1].replace(":u", "")
+        count = count_and_attribute[0]
+
+        data.extend([right_value, count])
+        columns.extend([attribute, attribute + "_count"])
+
+    new_line_separated_timings = res.stderr.split('\n')[-8:-3]
+    for line in new_line_separated_timings:
+        if len(line) < 1:
+            continue
+        split_line = line.lstrip().split(' ')
+        if split_line[-1] == "elapsed":
+            split_line[-1] = "elapsed time"
+        data.append(split_line[0])
+        columns.append(split_line[-1])
 
     if not os.path.exists(csv_path):
         df = pd.DataFrame(columns=columns)
