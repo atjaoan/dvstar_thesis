@@ -1,4 +1,6 @@
 build/
+images/
+.vscode/
 build-debug/
 cmake-build-debug/
 cmake-build-release/

@@ -2,8 +2,8 @@ Bootstrap: docker
 From: debian:bullseye
 
 %files
-    ../kmc/KMC3.linux/kmc /kmc/kmc
-    ../kmc/KMC3.linux/kmc_tools /kmc/kmc_tools
+    /usr/bin/kmc /kmc/kmc
+    /usr/bin/kmc_tools /kmc/kmc_tools
 
     visualiser.py /vlmc-from-kmers/visualiser.py
     src /vlmc-from-kmers/src
