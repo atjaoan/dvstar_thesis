@@ -82,10 +82,10 @@ Options:
                               If --adjust-for-sequencing-errors is given, this parameter is used to alter to estimate the number of k-mers that will be missing due to sequencing errors.
 ```
 
-For example, to construct a VLMC, run:
+For example, to construct a VLMC, run (from build/):
 
 ```shell
-./dvstar --fasta-path NC_022098.1.fasta --threshold 3.9075 --max-depth 4 --min-count 100 --out-path NC_022098.1.bintree --temp-path tmp
+./dvstar --fasta-path ../tests/NC_045512.2.fa --threshold 3.9075 --max-depth 4 --min-count 100 --out-path NC_022098.1.bintree --temp-path tmp
 ```
 
 To view the contents of the VLMC, run:
