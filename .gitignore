@@ -4,9 +4,10 @@ images/
 build-debug/
 cmake-build-debug/
 cmake-build-release/
+tmp/
 **.log
 **.errlog
 **.kmc_pre
 **.kmc_suf
-
+**.bintree
 *.sif
