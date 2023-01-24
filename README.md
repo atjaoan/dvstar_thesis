@@ -24,7 +24,11 @@ git submodule update --init --recursive
 ### Container solution / apptainer (previously singularity)
 
 We provide an [apptainer container](https://apptainer.org/). The definition file needs to be modified to
-include the path to kmc, see the fifth and sixth line. The container is built by running:
+include the path to kmc, see the fifth and sixth line. 
+
+The submodule CLI11 needs to be adjusted as well, specifically the folder `tests/mesonTest/subprojects/CLI11` should be removed. 
+
+The container is built by running:
 
 ```shell script
 sudo apptainer build vlmc-from-kmers.sif vlmc-from-kmers.def
