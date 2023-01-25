@@ -11,6 +11,8 @@ app = typer.Typer()
 
 K: Final[int] = 9
 
+cwd = Path(__file__).parent
+
 def build_vlmc(kmc_db: Path) -> Path:
     args = (
         "build/build_vlmc",
@@ -30,7 +32,7 @@ def build_vlmc(kmc_db: Path) -> Path:
 
 def count_kmers(fasta_path: Path) -> Path:
     args = (
-        "build/kmc",
+        cwd / "build/kmc",
         "-b",
         "-ci1",
         "-cs4294967295",
@@ -48,7 +50,7 @@ def count_kmers(fasta_path: Path) -> Path:
 
 def dvstar(fasta_path: Path, out_path: Path) -> tuple[Path, float, float]:
     args = (
-        "build/dvstar",
+        cwd / "build/dvstar",
         "--fasta-path",
         fasta_path,
         "--threshold",
@@ -71,7 +73,7 @@ def dvstar_cmp(path_1: Path, path_2: Path) -> subprocess.CompletedProcess:
         "perf",
         "stat",
         "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
-        "build/dvstar",
+        cwd / "build/dvstar",
         "--mode",
         "5",
         "--in-path",
@@ -83,11 +85,11 @@ def dvstar_cmp(path_1: Path, path_2: Path) -> subprocess.CompletedProcess:
 
     return res
 
-def save_to_txt(res: subprocess.CompletedProcess, csv_path: Path):
+def save_to_csv(res: subprocess.CompletedProcess, csv_path: Path):
     new_line_separated_attr = res.stderr.split('\n')[3:-8]
 
-    data = []
-    columns = []
+    data = [get_git_commit_version()]
+    columns = ["Repo Version"]
     
     for line in new_line_separated_attr:
         split_line = line.split('#')
@@ -124,9 +126,18 @@ def save_to_txt(res: subprocess.CompletedProcess, csv_path: Path):
     df.loc[len(df)] = data
     df.to_csv(csv_path, index=False)
 
+def get_git_commit_version():
+    args = (
+        "git",
+        "log",
+        "-1"
+    )
+    res = subprocess.run(args, capture_output=True, text=True)
+    commit = res.stdout.split('\n')[0].split(' ')[1][0:7]
+    return commit 
+
 @app.command()
 def run():
-    cwd = Path(__file__).parent
     fasta_path_1 = cwd / "tests/NC_001497.2.fa"
     fasta_path_2 = cwd / "tests/NC_028367.1.fa"
     vlmc_1 = dvstar(fasta_path_1, Path("NC_022098.1.bintree"))
@@ -134,7 +145,7 @@ def run():
 
     res = dvstar_cmp(vlmc_1, vlmc_2)
 
-    save_to_txt(res, "tmp/benchmarks/test.csv")
+    save_to_csv(res, cwd / "tmp/benchmarks/test.csv")
 
 if __name__ == "__main__":
     app()
