@@ -13,3 +13,6 @@
 [submodule "robin-hood-hashing"]
 	path = submodules/robin-hood-hashing
 	url = https://github.com/martinus/robin-hood-hashing.git
+[submodule "submodules/FlameGraph"]
+	path = submodules/FlameGraph
+	url = https://github.com/brendangregg/FlameGraph.git
