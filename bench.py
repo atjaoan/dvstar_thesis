@@ -136,16 +136,47 @@ def get_git_commit_version():
     commit = res.stdout.split('\n')[0].split(' ')[1][0:7]
     return commit 
 
+def dvstar_cmp_mem(path_1: Path, path_2: Path):
+    args = (
+        "perf",
+        "record",
+        "-F 99",
+        cwd / "build/dvstar",
+        "--mode",
+        "5",
+        "--in-path",
+        path_1,
+        "--to-path",
+        path_2
+    )
+    subprocess.run(args)
+
+    args = (
+        "perf script |",
+        cwd / "submodules" / "FlameGraph" / "./stackcollapse-perf.pl |",
+        cwd / "submodules" / "FlameGraph" / "./flamegraph.pl > call_stack.svg"
+    )
+    return
+
 @app.command()
-def run():
+def stat():
     fasta_path_1 = cwd / "tests/NC_001497.2.fa"
     fasta_path_2 = cwd / "tests/NC_028367.1.fa"
     vlmc_1 = dvstar(fasta_path_1, Path("NC_022098.1.bintree"))
     vlmc_2 = dvstar(fasta_path_2,  Path("NC_022099.1.bintree"))
 
-    res = dvstar_cmp(vlmc_1, vlmc_2)
+    timing_results = dvstar_cmp(vlmc_1, vlmc_2)
 
-    save_to_csv(res, cwd / "tmp/benchmarks/test.csv")
+    save_to_csv(timing_results, cwd / "tmp/benchmarks/test.csv")
+
+@app.command()
+def flame():
+    fasta_path_1 = cwd / "tests/NC_001497.2.fa"
+    fasta_path_2 = cwd / "tests/NC_028367.1.fa"
+    vlmc_1 = dvstar(fasta_path_1, Path("NC_022098.1.bintree"))
+    vlmc_2 = dvstar(fasta_path_2,  Path("NC_022099.1.bintree"))
+
+    dvstar_cmp_mem(vlmc_1, vlmc_2)
 
 if __name__ == "__main__":
     app()
