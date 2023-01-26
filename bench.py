@@ -13,48 +13,12 @@ K: Final[int] = 9
 
 cwd = Path(__file__).parent
 
-def build_vlmc(kmc_db: Path) -> Path:
-    args = (
-        "build/build_vlmc",
-        "--mode",
-        "build-from-kmc-db",
-        "--in-path",
-        kmc_db,
-        "--out-path",
-        kmc_db.with_suffix(".bintree"),
-        "--max-depth",
-        f"{K}",
-    )
-    subprocess.run(args)
-
-    return kmc_db.with_suffix(".bintree")
-
-
-def count_kmers(fasta_path: Path) -> Path:
-    args = (
-        cwd / "build/kmc",
-        "-b",
-        "-ci1",
-        "-cs4294967295",
-        "-r",
-        "-m24",
-        f"-k{K + 1}",
-        "-fm",
-        fasta_path,
-        f"tmp/{fasta_path.stem}",
-        "tmp/",
-    )
-    subprocess.run(args)
-
-    return Path("tmp") / fasta_path.stem
-
-def dvstar():
+def dvstar_build():
     args = (
         "find",
         "./data/sequences_split_files",
         "-name",
         "*.fasta",
-
         "-exec",
         "./build/dvstar",
         "--mode",
@@ -66,7 +30,7 @@ def dvstar():
         "--fasta-path",
         "{}",
         "--out-path",
-        "./data/VLMCs/{}.bintree",
+        "./data/VLMCs/{}.bintree", # Fix the output path 
         ";"
     )
     subprocess.run(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -88,8 +52,25 @@ def dvstar_cmp(path_1: Path, path_2: Path) -> subprocess.CompletedProcess:
 
     return res
 
+def calculate_distances() -> subprocess.CompletedProcess:
+    args = (
+        "perf",
+        "stat",
+        "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
+        cwd / "submodules/PstClassifierSeqan/build/src/calculate-distances", # Hard coded path to calculate-distances might need to be changed
+        "-p",
+        cwd / "data/VLMCs/data/sequences_split_files",
+        "-n",
+        "d2"
+    )
+    res = subprocess.run(args, capture_output=True, text=True)
+
+    return res
+
 def save_to_csv(res: subprocess.CompletedProcess, csv_path: Path):
     new_line_separated_attr = res.stderr.split('\n')[3:-8]
+
+    print(res.stderr)
 
     data = [get_git_commit_version()]
     columns = ["Repo Version"]
@@ -163,17 +144,13 @@ def dvstar_cmp_mem(path_1: Path, path_2: Path):
 
 @app.command()
 def stat():
-    fasta_path_1 = cwd / "tests/NC_001497.2.fa"
-    fasta_path_2 = cwd / "tests/NC_028367.1.fa"
-    vlmc_1 = dvstar(fasta_path_1, Path("NC_022098.1.bintree"))
-    vlmc_2 = dvstar(fasta_path_2,  Path("NC_022099.1.bintree"))
-
-    timing_results = dvstar_cmp(vlmc_1, vlmc_2)
+    timing_results = calculate_distances()
 
     save_to_csv(timing_results, cwd / "tmp/benchmarks/test.csv")
 
 @app.command()
 def build():
-    dvstar()
+    dvstar_build()
+
 if __name__ == "__main__":
     app()
