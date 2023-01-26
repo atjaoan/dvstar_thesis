@@ -48,7 +48,7 @@ def count_kmers(fasta_path: Path) -> Path:
 
     return Path("tmp") / fasta_path.stem
 
-def dvstar()
+def dvstar():
     args = (
         "find",
         "./data/sequences_split_files",
