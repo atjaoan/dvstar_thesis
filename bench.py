@@ -48,25 +48,28 @@ def count_kmers(fasta_path: Path) -> Path:
 
     return Path("tmp") / fasta_path.stem
 
-def dvstar(fasta_path: Path, out_path: Path) -> tuple[Path, float, float]:
+def dvstar()
     args = (
-        cwd / "build/dvstar",
-        "--fasta-path",
-        fasta_path,
-        "--threshold",
-        "3.9075",
-        "--max-depth",
-        "4",
+        "find",
+        "./data/sequences_split_files",
+        "-name",
+        "*.fasta",
+
+        "-exec",
+        "./build/dvstar",
+        "--mode",
+        "build",
         "--min-count",
-        "100",
+        "10",
+        "--max-depth",
+        "9",
+        "--fasta-path",
+        "{}",
         "--out-path",
-        out_path, # <- change this
-        "--temp-path",
-        "tmp"
+        "./data/VLMCs/{}.bintree",
+        ";"
     )
     subprocess.run(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-    return out_path
 
 def dvstar_cmp(path_1: Path, path_2: Path) -> subprocess.CompletedProcess:
     args = (
@@ -170,13 +173,7 @@ def stat():
     save_to_csv(timing_results, cwd / "tmp/benchmarks/test.csv")
 
 @app.command()
-def flame():
-    fasta_path_1 = cwd / "tests/NC_001497.2.fa"
-    fasta_path_2 = cwd / "tests/NC_028367.1.fa"
-    vlmc_1 = dvstar(fasta_path_1, Path("NC_022098.1.bintree"))
-    vlmc_2 = dvstar(fasta_path_2,  Path("NC_022099.1.bintree"))
-
-    dvstar_cmp_mem(vlmc_1, vlmc_2)
-
+def build():
+    dvstar()
 if __name__ == "__main__":
     app()
