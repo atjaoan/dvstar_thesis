@@ -16,3 +16,6 @@
 [submodule "submodules/FlameGraph"]
 	path = submodules/FlameGraph
 	url = https://github.com/brendangregg/FlameGraph.git
+[submodule "submodules/PstClassifierSeqan"]
+	path = submodules/PstClassifierSeqan
+	url = https://github.com/Schlieplab/PstClassifierSeqan.git
