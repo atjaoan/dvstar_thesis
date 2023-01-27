@@ -135,33 +135,36 @@ def get_git_commit_version():
     commit = res.stdout.split('\n')[0].split(' ')[1][0:7]
     return commit 
 
-def dvstar_cmp_mem(path_1: Path, path_2: Path):
+def dvstar_cmp_mem():
     args = (
         "perf",
         "record",
-        "-F 99",
-        cwd / "build/dvstar",
-        "--mode",
-        "5",
-        "--in-path",
-        path_1,
-        "--to-path",
-        path_2
+        "--call-graph",
+        "dwarf",
+        cwd / "submodules/PstClassifierSeqan/build/src/calculate-distances",
+        "-p",
+        cwd / "data/small_test/",
+        "-n",
+        "d2"
     )
-    subprocess.run(args)
+    subprocess.run(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     args = (
-        "perf script |",
-        cwd / "submodules" / "FlameGraph" / "./stackcollapse-perf.pl |",
-        cwd / "submodules" / "FlameGraph" / "./flamegraph.pl > call_stack.svg"
-    )
+        "perf script | ./submodules/FlameGraph/stackcollapse-perf.pl | ./submodules/FlameGraph/flamegraph.pl > test.svg"
+        )
+    subprocess.run(args, shell=True)
+
     return
 
 @app.command()
 def stat():
-    timing_results = calculate_distances_only_oh()
+    timing_results = calculate_distances()
 
     save_to_csv(timing_results, cwd / "tmp/benchmarks/test.csv")
+
+@app.command()
+def record():
+    dvstar_cmp_mem()
 
 @app.command()
 def build():
