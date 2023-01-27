@@ -59,7 +59,22 @@ def calculate_distances() -> subprocess.CompletedProcess:
         "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
         cwd / "submodules/PstClassifierSeqan/build/src/calculate-distances", # Hard coded path to calculate-distances might need to be changed
         "-p",
-        cwd / "data/VLMCs/data/sequences_split_files",
+        cwd / "data/small_test/",
+        "-n",
+        "d2"
+    )
+    res = subprocess.run(args, capture_output=True, text=True)
+
+    return res
+
+def calculate_distances_only_oh() -> subprocess.CompletedProcess:
+    args = (
+        "perf",
+        "stat",
+        "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
+        cwd / "submodules/PstClassifierSeqan/build/src/calculate-distances-oh", # Hard coded path to calculate-distances might need to be changed
+        "-p",
+        cwd / "data/small_test/",
         "-n",
         "d2"
     )
@@ -144,7 +159,7 @@ def dvstar_cmp_mem(path_1: Path, path_2: Path):
 
 @app.command()
 def stat():
-    timing_results = calculate_distances()
+    timing_results = calculate_distances_only_oh()
 
     save_to_csv(timing_results, cwd / "tmp/benchmarks/test.csv")
 
