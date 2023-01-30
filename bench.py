@@ -50,20 +50,21 @@ def dvstar_build(threshold: float, min_count: int, max_depth: int):
     )
     subprocess.run(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-def calculate_distances(dist_func: str) -> subprocess.CompletedProcess:
+def calculate_distances(dist_func: str, set_size: int) -> subprocess.CompletedProcess:
     args = (
         "perf",
         "stat",
         "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
         cwd / "submodules/PstClassifierSeqan/build/src/calculate-distances", 
         "-p",
-        cwd / "data/small_test/",
+        cwd / "data/small_test",
         "-n",
-        dist_func 
+        dist_func,
+        "-a",
+        str(set_size)
     )
-    res = subprocess.run(args, capture_output=True, text=True)
 
-    return res
+    return subprocess.run(args, capture_output=True, text=True)
 
 def calculate_distances_only_oh() -> subprocess.CompletedProcess:
     args = (
@@ -76,9 +77,7 @@ def calculate_distances_only_oh() -> subprocess.CompletedProcess:
         "-n",
         "d2"
     )
-    res = subprocess.run(args, capture_output=True, text=True)
-
-    return res
+    return subprocess.run(args, capture_output=True, text=True)
 
 def save_to_csv(res: subprocess.CompletedProcess, csv_path: Path, dist_func: str):
     new_line_separated_attr = res.stderr.split('\n')[3:-8]
@@ -162,7 +161,7 @@ def dvstar_cmp_mem():
 
 @app.command()
 def stat(dist_func: Distance_Function = Distance_Function.dvstar):
-    timing_results = calculate_distances(dist_func.value)
+    timing_results = calculate_distances(dist_func.value, -1)
 
     save_to_csv(timing_results, cwd / "tmp/benchmarks/test.csv", dist_func)
 
@@ -173,6 +172,13 @@ def record():
 @app.command()
 def build(threshold: float = 3.9075, min_count: int = 10, max_depth: int = 9):
     dvstar_build(threshold, min_count, max_depth)
+
+@app.command()
+def cache():
+    for size in range(0, 15000, 1500):
+        timing_results = calculate_distances("dvstar", size)
+
+        save_to_csv(timing_results, cwd / "tmp/benchmarks/test.csv", "kl")
 
 if __name__ == "__main__":
     app()
