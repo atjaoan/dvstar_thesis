@@ -10,7 +10,7 @@ csv_path = cwd / "tmp/benchmarks/test.csv"
 
 @app.command()
 def missses_vs_setsize():
-    df = pd.DataFrame().read_csv(csv_path, dtype=str)
+    df = pd.DataFrame().read_csv(csv_path)
     #fig = px.line(df, x="year", y="lifeExp", title='Life expectancy in Canada')
     #fig.show()
 

@@ -101,8 +101,14 @@ def save_to_csv(res: subprocess.CompletedProcess, csv_path: Path, dist_func: str
 
         attribute  = count_and_attribute[1].replace(":u", "")
         count = count_and_attribute[0]
+        
+        # Remove % if it exists and replace commas with dot
+        right_value = right_value.strip("%").replace(",", ".")
+        
+        # For counts to be made into ints, skip space separator
+        count = count.replace("\u202f", "").replace(",", ".").rstrip()
 
-        data.extend([right_value, count])
+        data.extend([float(right_value), int(float(count))])
         columns.extend([attribute, attribute + "_count"])
 
     new_line_separated_timings = res.stderr.split('\n')[-8:-3]
@@ -112,7 +118,7 @@ def save_to_csv(res: subprocess.CompletedProcess, csv_path: Path, dist_func: str
         split_line = line.lstrip().split(' ')
         if split_line[-1] == "elapsed":
             split_line[-1] = "elapsed time"
-        data.append(split_line[0])
+        data.append(float(split_line[0].replace(",", ".")))
         columns.append(split_line[-1])
 
     if not os.path.exists(csv_path):
