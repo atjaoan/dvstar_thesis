@@ -12,3 +12,6 @@ tmp/
 **.bintree
 *.sif
 data/
+**.pdf
+**.svg
+**.png
