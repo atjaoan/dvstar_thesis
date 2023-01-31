@@ -57,7 +57,7 @@ def calculate_distances(dist_func: str, set_size: int) -> subprocess.CompletedPr
         "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
         cwd / "submodules/PstClassifierSeqan/build/src/calculate-distances", 
         "-p",
-        cwd / "data/small_test",
+        cwd / "data/VLMCs",
         "-n",
         dist_func,
         "-a",
@@ -79,13 +79,13 @@ def calculate_distances_only_oh() -> subprocess.CompletedProcess:
     )
     return subprocess.run(args, capture_output=True, text=True)
 
-def save_to_csv(res: subprocess.CompletedProcess, csv_path: Path, dist_func: str):
+def save_to_csv(res: subprocess.CompletedProcess, csv_path: Path, dist_func: str, set_size: int):
     new_line_separated_attr = res.stderr.split('\n')[3:-8]
 
     print(res.stderr)
 
-    data = [get_git_commit_version(), dist_func]
-    columns = ["Repo Version", "distance_function"]
+    data = [get_git_commit_version(), dist_func, set_size]
+    columns = ["Repo Version", "distance_function", "Set size"]
     
     for line in new_line_separated_attr:
         split_line = line.split('#')
@@ -174,11 +174,11 @@ def build(threshold: float = 3.9075, min_count: int = 10, max_depth: int = 9):
     dvstar_build(threshold, min_count, max_depth)
 
 @app.command()
-def cache():
-    for size in range(0, 15000, 1500):
-        timing_results = calculate_distances("dvstar", size)
+def cache(dist_func: Distance_Function = Distance_Function.dvstar):
+    for size in range(50, 14500, 1450):
+        timing_results = calculate_distances(dist_func, size)
 
-        save_to_csv(timing_results, cwd / "tmp/benchmarks/test.csv", "kl")
+        save_to_csv(timing_results, cwd / "tmp/benchmarks/test.csv", dist_func, size)
 
 if __name__ == "__main__":
     app()
