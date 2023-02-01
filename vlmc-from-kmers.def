@@ -10,15 +10,18 @@ From: debian:bullseye
     tests /vlmc-from-kmers/tests
     include /vlmc-from-kmers/include
 
+    requirements.txt
+
     submodules /vlmc-from-kmers/submodules
 
     CMakeLists.txt /vlmc-from-kmers/CMakeLists.txt
 
 %post
-    apt-get update -y && apt-get install -y cmake build-essential g++ git gcc python3-pip libtbb-dev libgomp1
+    apt-get update -y && apt-get install -y cmake build-essential g++ git gcc libtbb-dev libgomp1 libboost-all-dev libhdf5-serial-dev libeigen3-dev
     echo 'deb http://deb.debian.org/debian testing main' >> /etc/apt/sources.list
     apt update -y
-    apt install -y gcc g++
+    apt install -y gcc g++ linux-perf
+    apt install -y python3.10 python3-pip
 
     mkdir -p /vlmc-from-kmers/build
     cd /vlmc-from-kmers/build/
@@ -33,9 +36,12 @@ From: debian:bullseye
     cp /kmc/kmc .
     cp /kmc/kmc_tools .
 
+    cd ..
+    cd ..
+    pip install --user -r ../../requirements.txt
+
 %environment
     export PATH="/vlmc-from-kmers/build/:$PATH"
-    export PYTHONPATH=/home/holmse/pytenv/bin/python
 
 %test
     cd /vlmc-from-kmers/build/tests
