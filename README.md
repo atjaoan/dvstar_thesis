@@ -31,7 +31,12 @@ The submodule CLI11 needs to be adjusted as well, specifically the folder `tests
 The container is built by running:
 
 ```shell script
-sudo apptainer build vlmc-from-kmers.sif vlmc-from-kmers.def
+apptainer build --fakeroot vlmc-from-kmers.sif vlmc-from-kmers.def
+```
+
+Using the created image, programs can be run by either using the ```apptainer exec ./program``` or ```apptainer run``` to run the programs in ```%runscripts``` of the .def file. It is also possible to spawn a shell in the container with 
+```shell script
+apptainer shell vlmc-from-kmers.sif
 ```
 
 ### Manually
