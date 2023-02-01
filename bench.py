@@ -26,10 +26,10 @@ class Distance_Function(str, Enum):
     cv = "cv"
     cv_estimation = "cv-estimation"
 
-def dvstar_build(threshold: float, min_count: int, max_depth: int):
+def dvstar_build(genome_path: Path, threshold: float, min_count: int, max_depth: int):
     args = (
         "find",
-        "./data/sequences_split_files",
+        genome_path,
         "-name",
         "*.fasta",
         "-exec",
@@ -45,10 +45,10 @@ def dvstar_build(threshold: float, min_count: int, max_depth: int):
         "--fasta-path",
         "{}",
         "--out-path",
-        "./data/VLMCs/{}.bintree", # Fix the output path 
+        "./data/human/{}.bintree", # Fix the output path 
         ";"
     )
-    subprocess.run(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(args)#, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
 
 def calculate_distances(dist_func: str, set_size: int) -> subprocess.CompletedProcess:
     args = (
@@ -171,7 +171,11 @@ def record():
 
 @app.command()
 def build(threshold: float = 3.9075, min_count: int = 10, max_depth: int = 9):
-    dvstar_build(threshold, min_count, max_depth)
+    dvstar_build("./data/sequences_split_files", threshold, min_count, max_depth)
+
+@app.command()
+def human_build(threshold: float = 3.9075, min_count: int = 10, max_depth: int = 9):
+    dvstar_build("./data/human_genome_split_files", threshold, min_count, max_depth)
 
 @app.command()
 def cache(dist_func: Distance_Function = Distance_Function.dvstar):
