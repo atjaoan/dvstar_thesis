@@ -26,29 +26,24 @@ class Distance_Function(str, Enum):
     cv = "cv"
     cv_estimation = "cv-estimation"
 
-def dvstar_build(genome_path: Path, threshold: float, min_count: int, max_depth: int):
-    args = (
-        "find",
-        genome_path,
-        "-name",
-        "*.fasta",
-        "-exec",
-        "./build/dvstar",
-        "--mode",
-        "build",
-        "--threshold",
-        str(threshold),
-        "--min-count",
-        str(min_count),
-        "--max-depth",
-        str(max_depth),
-        "--fasta-path",
-        "{}",
-        "--out-path",
-        "./data/human/{}.bintree", # Fix the output path 
-        ";"
-    )
-    subprocess.run(args)#, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+def dvstar_build(genome_path: Path, out_path: Path, threshold: float, min_count: int, max_depth: int):
+    for genome in os.listdir(genome_path):
+        args = (
+            "./build/dvstar",
+            "--mode",
+            "build",
+            "--threshold",
+            str(threshold),
+            "--min-count",
+            str(min_count),
+            "--max-depth",
+            str(max_depth),
+            "--fasta-path",
+            genome_path / genome,
+            "--out-path",
+            out_path / (os.path.splitext(genome)[0] + ".bintree")
+        )
+        subprocess.run(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 def calculate_distances(dist_func: str, set_size: int) -> subprocess.CompletedProcess:
     args = (
@@ -57,7 +52,7 @@ def calculate_distances(dist_func: str, set_size: int) -> subprocess.CompletedPr
         "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
         cwd / "submodules/PstClassifierSeqan/build/src/calculate-distances", 
         "-p",
-        cwd / "data/VLMCs",
+        cwd / "data/human_VLMCs",
         "-n",
         dist_func,
         "-a",
@@ -160,10 +155,10 @@ def dvstar_cmp_mem():
     return
 
 @app.command()
-def stat(dist_func: Distance_Function = Distance_Function.dvstar):
+def stat(set_size: int = -1, dist_func: Distance_Function = Distance_Function.dvstar):
     timing_results = calculate_distances(dist_func.value, -1)
 
-    save_to_csv(timing_results, cwd / "tmp/benchmarks/test.csv", dist_func)
+    save_to_csv(timing_results, cwd / "tmp/benchmarks/test.csv", dist_func, set_size)
 
 @app.command()
 def record():
@@ -171,11 +166,15 @@ def record():
 
 @app.command()
 def build(threshold: float = 3.9075, min_count: int = 10, max_depth: int = 9):
-    dvstar_build("./data/sequences_split_files", threshold, min_count, max_depth)
+    genome_path = Path("./data/test") # sequences_split_files")
+    out_path    = Path("./data/test_VLMCs")
+    dvstar_build(genome_path, out_path, threshold, min_count, max_depth)
 
 @app.command()
 def human_build(threshold: float = 3.9075, min_count: int = 10, max_depth: int = 9):
-    dvstar_build("./data/human_genome_split_files", threshold, min_count, max_depth)
+    genome_path = Path("./data/human_genome_split_files")
+    out_path    = Path("./data/human_VLMCs")
+    dvstar_build(genome_path, out_path, threshold, min_count, max_depth)
 
 @app.command()
 def cache(dist_func: Distance_Function = Distance_Function.dvstar):
