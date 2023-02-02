@@ -38,7 +38,10 @@ def get_bintree_name(genome_path: str, threshold: float, min_count: int, max_dep
 def get_parameter_from_bintree(bintree: str) -> tuple[float, int, int]:
     str_split = bintree.split('_')
     str_split.reverse()
-    return float(str_split[2]), int(str_split[1]), int(str_split[0].split('.')[0]) 
+    try:  
+        return float(str_split[2]), int(str_split[1]), int(str_split[0].split('.')[0]) 
+    except: 
+        return 3.9075, 10, 9
 
 def dvstar_build(genome_path: Path, out_path: Path, threshold: float, min_count: int, max_depth: int):
     for genome in os.listdir(genome_path):
