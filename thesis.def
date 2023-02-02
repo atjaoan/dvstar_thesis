@@ -16,7 +16,7 @@ From: debian:bullseye
 
     requirements.txt /thesis/requirements.txt
     bench.py /thesis/bench.py
-    ./data/small_test /thesis/small_test
+    ./data/small_test /thesis/data/small_test
     ./tmp /thesis/tmp
     .git/refs/heads/main /thesis/current_commit.txt
 
