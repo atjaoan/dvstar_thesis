@@ -5,16 +5,19 @@ From: debian:bullseye
     /usr/bin/kmc /kmc/kmc
     /usr/bin/kmc_tools /kmc/kmc_tools
 
-    visualiser.py /vlmc-from-kmers/visualiser.py
-    src /vlmc-from-kmers/src
-    tests /vlmc-from-kmers/tests
-    include /vlmc-from-kmers/include
+    visualiser.py /thesis/visualiser.py
+    src /thesis/src
+    tests /thesis/tests
+    include /thesis/include
 
-    requirements.txt .
+    submodules /thesis/submodules
 
-    submodules /vlmc-from-kmers/submodules
+    CMakeLists.txt /thesis/CMakeLists.txt
 
-    CMakeLists.txt /vlmc-from-kmers/CMakeLists.txt
+    requirements.txt /thesis/requirements.txt
+    ./data /thesis/data
+    bench.py /thesis/bench.py
+    ./tmp /thesis/tmp
 
 %post
     apt-get update -y && apt-get install -y cmake build-essential g++ git gcc libtbb-dev libgomp1 libboost-all-dev libhdf5-serial-dev libeigen3-dev
@@ -22,13 +25,13 @@ From: debian:bullseye
     apt update -y
     apt install -y linux-perf python3.10 python3-pip
 
-    mkdir -p /vlmc-from-kmers/build
-    cd /vlmc-from-kmers/build/
+    mkdir -p /thesis/build
+    cd /thesis/build/
 
-    mkdir -p /vlmc-from-kmers/build/fasta /vlmc-from-kmers/build/tmp /vlmc-from-kmers/build/results
+    mkdir -p /thesis/build/fasta /thesis/build/tmp /thesis/build/results
 
     cmake -DCMAKE_BUILD_TYPE=Release -DCountVLMC_COMPILE_TESTS=ON ..
-    make
+    make -j 8
 
     cp ../visualiser.py .
 
@@ -37,16 +40,16 @@ From: debian:bullseye
 
     cd ..
     cd ..
-    pip install --user -r ../../requirements.txt
+    pip install --user -r /thesis/requirements.txt
 
 %environment
-    export PATH="/vlmc-from-kmers/build/:$PATH"
+    export PATH="/thesis/build/:$PATH"
 
 %test
-    cd /vlmc-from-kmers/build/tests
+    cd /thesis/build/tests
     echo "Running tests"
 	#./kmer_tests
 
 %runscript
-    cd /vlmc-from-kmers/build/
-    /vlmc-from-kmers/build/dvstar $*
+    cd /thesis/build/
+    ./dvstar $*
