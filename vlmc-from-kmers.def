@@ -15,9 +15,10 @@ From: debian:bullseye
     CMakeLists.txt /thesis/CMakeLists.txt
 
     requirements.txt /thesis/requirements.txt
-    ./data /thesis/data
     bench.py /thesis/bench.py
+    ./data/small_test /thesis/small_test
     ./tmp /thesis/tmp
+    .git/refs/heads/main /thesis/current_commit.txt
 
 %post
     apt-get update -y && apt-get install -y cmake build-essential g++ git gcc libtbb-dev libgomp1 libboost-all-dev libhdf5-serial-dev libeigen3-dev
@@ -42,6 +43,7 @@ From: debian:bullseye
     cd ..
     pip install --user -r /thesis/requirements.txt
 
+
 %environment
     export PATH="/thesis/build/:$PATH"
 
@@ -51,5 +53,5 @@ From: debian:bullseye
 	#./kmer_tests
 
 %runscript
-    cd /thesis/build/
-    ./dvstar $*
+    cd /thesis
+    python3 bench.py stat
