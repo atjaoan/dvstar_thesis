@@ -145,8 +145,18 @@ def get_git_commit_version():
         "-1"
     )
     res = subprocess.run(args, capture_output=True, text=True)
-    commit = res.stdout.split('\n')[0].split(' ')[1][0:7]
+    try: commit = res.stdout.split('\n')[0].split(' ')[1][0:7]
+    except:
+        try: commit = get_commit_from_file()
+        except: 
+            print("Failed to get commit hash, using empty string")
+            return "" 
     return commit 
+
+def get_commit_from_file():
+    with open('current_commit.txt') as f:
+        hash = f.readline()
+        return hash[0:7]
 
 def dvstar_cmp_mem():
     args = (
