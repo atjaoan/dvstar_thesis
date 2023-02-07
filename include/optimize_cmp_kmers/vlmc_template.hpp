@@ -6,7 +6,7 @@
 #include "vlmc_from_kmers/kmer.hpp"
 
 /*
-  Stores multiple VLMCs in a container. 
+  Stores VLMC (multiple k-mers) in a container. 
 */
 
 using Kmer = vlmc::VLMCKmer; 
@@ -18,7 +18,7 @@ class VLMC_template{
   public:
     VLMC_template() = default;
     ~VLMC_template() = default;
-    VLMC_template(const std::filesystem::path &directory); 
+    VLMC_template(const std::filesystem::path &path_to_bintree); 
 
     Kmer null_kmer{};
     virtual size_t size() const { return 0; };
@@ -36,7 +36,19 @@ class VLMC_vector : public VLMC_template {
   public: 
     VLMC_vector() = default;
     ~VLMC_vector() = default; 
-    VLMC_vector(const std::filesystem::path &directory); 
+
+    VLMC_vector(const std::filesystem::path &path_to_bintree) {
+      std::ifstream ifs(path_to_bintree, std::ios::binary);
+      cereal::BinaryInputArchive archive(ifs);
+
+      Kmer kmer{};
+
+      while (ifs.peek() != EOF){
+        archive(kmer);
+        push(kmer);
+      }
+      ifs.close();
+    } 
 
     size_t size() const override { return container.size(); }
 
