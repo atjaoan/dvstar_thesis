@@ -2,6 +2,7 @@
 
 #include "optimize_cmp_kmers/distances/dvstar.hpp"
 #include "optimize_cmp_kmers/distances/kl_divergence.hpp"
+#include "optimize_cmp_kmers/get_trees.hpp"
 
 int main(int argc, char *argv[]){
   CLI::App app{"Distance comparison of either one directory or between two different directories."};
@@ -16,9 +17,8 @@ int main(int argc, char *argv[]){
   }
 
   if(arguments.mode == parser::Mode::compare){
-    //vlmc::dump_path(arguments.in_path, arguments.out_path);
+    get_trees::get_trees(arguments.in_path);
   }
-
-  std::cout << arguments.dist_fn << std::endl;
+  
   return EXIT_SUCCESS;
 }
