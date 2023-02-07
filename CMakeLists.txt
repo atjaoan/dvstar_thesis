@@ -38,7 +38,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/submodules/CLI11)
 set(SKIP_PERFORMANCE_COMPARISON ON)
 
 # Add include paths
-set(INCLUDE_DIRS ${STXXL_INCLUDE_DIRS} "${PROJECT_SOURCE_DIR}/submodules/stxxl/include" "${PROJECT_SOURCE_DIR}/submodules/robin-hood-hashing/src/include" "${PROJECT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/submodules/KMC/kmc_api" "${CMAKE_CURRENT_SOURCE_DIR}/submodules/cereal/include")
+set(INCLUDE_DIRS ${STXXL_INCLUDE_DIRS} "${PROJECT_SOURCE_DIR}/submodules/stxxl/include" "${PROJECT_SOURCE_DIR}/submodules/robin-hood-hashing/src/include" "${PROJECT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/submodules/KMC/kmc_api" "${CMAKE_CURRENT_SOURCE_DIR}/submodules/cereal/include" "${CMAKE_CURRENT_SOURCE_DIR}/submodules/eigen")
 
 include_directories("${INCLUDE_DIRS}")
 

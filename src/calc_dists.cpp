@@ -1,18 +1,30 @@
-// #include <Eigen/Dense>
+#include <Eigen/Dense>
 
 #include "optimize_cmp_kmers/parser.hpp"
-
-#include "optimize_cmp_kmers/distances/dvstar.hpp"
-#include "optimize_cmp_kmers/distances/kl_divergence.hpp"
 #include "optimize_cmp_kmers/get_trees.hpp"
-
 #include "optimize_cmp_kmers/cluster_container.hpp"
 #include "optimize_cmp_kmers/vlmc_template.hpp"
 
-// using matrix_t = Eigen::MatrixXd;
+// Distance Functions 
+#include "optimize_cmp_kmers/distances/dvstar.hpp"
+#include "optimize_cmp_kmers/distances/kl_divergence.hpp"
+
+using matrix_t = Eigen::MatrixXd;
 
 using vlmc_c = container::VLMC_vector;
 using cluster_c = cluster::Cluster_vector<vlmc_c>;
+
+std::function<float(vlmc_c &, vlmc_c &)>
+parse_distance_function(parser::Distance_function dist_fn) {
+
+  if (dist_fn == parser::Distance_function::dvstar) {
+    return distance::dvstar<vlmc_c>; 
+  } 
+  else if (dist_fn ==  parser::Distance_function::kl) {
+    return distance::kl<vlmc_c>; 
+  }  
+  throw std::invalid_argument("Invalid distance function name.");
+}
 
 int main(int argc, char *argv[]){
   CLI::App app{"Distance comparison of either one directory or between two different directories."};
@@ -36,6 +48,7 @@ int main(int argc, char *argv[]){
     if(arguments.to_path.empty()){
       cluster_c trees{}; 
       get_trees::get_trees<cluster_c, vlmc_c>(arguments.in_path, trees);
+
     } else {
       cluster_c left_trees{};
       cluster_c right_trees{};
