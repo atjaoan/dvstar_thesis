@@ -6,6 +6,10 @@
 #include "CLI/Config.hpp"
 #include "CLI/Formatter.hpp"
 
+// Distance Functions 
+#include "optimize_cmp_kmers/distances/dvstar.hpp"
+#include "optimize_cmp_kmers/distances/kl_divergence.hpp"
+
 namespace parser {
 
 enum Mode {
@@ -33,6 +37,19 @@ struct cli_arguments {
   std::filesystem::path to_path;
   std::filesystem::path out_path{};
 };
+
+template <typename VLMC_Container>
+std::function<float(VLMC_Container &, VLMC_Container &)>
+parse_distance_function(parser::Distance_function dist_fn) {
+
+  if (dist_fn == parser::Distance_function::dvstar) {
+    return distance::dvstar<VLMC_Container>; 
+  } 
+  else if (dist_fn ==  parser::Distance_function::kl) {
+    return distance::kl<VLMC_Container>; 
+  }  
+  throw std::invalid_argument("Invalid distance function name.");
+}
 
 void add_options(CLI::App &app, cli_arguments &arguments) {
   std::map<std::string, Mode> mode_map{
