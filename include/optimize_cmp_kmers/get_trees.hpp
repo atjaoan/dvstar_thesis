@@ -2,15 +2,19 @@
 
 #include <filesystem>
 
+#include "cluster_container.hpp"
+#include "vlmc_template.hpp"
+
 using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
 
 namespace get_trees{
   
-template<typename CC, typename VC>
-void get_trees(const std::filesystem::path &directory, CC trees){
+template <typename VC>  
+void get_trees(const std::filesystem::path &directory, cluster::Cluster_Container trees){
 
   for (const auto& dir_entry : recursive_directory_iterator(directory)) {
     VC tree(dir_entry.path());
+    std::cout << tree.size() << std::endl; 
     trees.push(tree);
   }
 

@@ -18,7 +18,7 @@ class VLMC_template{
   public:
     VLMC_template() = default;
     ~VLMC_template() = default;
-    VLMC_template(const std::filesystem::path &path_to_bintree); 
+    VLMC_template(const std::filesystem::path &path_to_bintree){}; 
 
     Kmer null_kmer{};
     virtual size_t size() const { return 0; };

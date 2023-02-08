@@ -7,7 +7,7 @@
 using matrix_t = Eigen::MatrixXd;
 
 using vlmc_c = container::VLMC_vector;
-using cluster_c = cluster::Cluster_vector<vlmc_c>;
+using cluster_c = cluster::Cluster_vector;
 
 
 int main(int argc, char *argv[]){
@@ -28,17 +28,17 @@ int main(int argc, char *argv[]){
           << std::endl;
       return EXIT_FAILURE;
     }
-    auto distance_function = parser::parse_distance_function<vlmc_c>(arguments.dist_fn);
+    auto distance_function = parser::parse_distance_function(arguments.dist_fn);
 
     if(arguments.second_VLMC_path.empty()){
       cluster_c trees{};
-      get_trees::get_trees<cluster_c, vlmc_c>(arguments.first_VLMC_path, trees);
+      get_trees::get_trees<vlmc_c>(arguments.first_VLMC_path, trees);
       matrix_t distance_matrix;
     } else {
       cluster_c left_trees{};
       cluster_c right_trees{};
-      get_trees::get_trees<cluster_c, vlmc_c>(arguments.first_VLMC_path, left_trees);
-      get_trees::get_trees<cluster_c, vlmc_c>(arguments.second_VLMC_path, right_trees);
+      get_trees::get_trees<vlmc_c>(arguments.first_VLMC_path, left_trees);
+      get_trees::get_trees<vlmc_c>(arguments.second_VLMC_path, right_trees);
       matrix_t distance_matrix;
     }
   }

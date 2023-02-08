@@ -6,11 +6,15 @@
 #include "CLI/Config.hpp"
 #include "CLI/Formatter.hpp"
 
+#include "vlmc_template.hpp"
+
 // Distance Functions 
 #include "optimize_cmp_kmers/distances/dvstar.hpp"
 #include "optimize_cmp_kmers/distances/kl_divergence.hpp"
 
 namespace parser {
+
+using vlmc_c = container::VLMC_template;
 
 enum Mode {
   compare
@@ -38,15 +42,14 @@ struct cli_arguments {
   std::filesystem::path out_path{};
 };
 
-template <typename VLMC_Container>
-std::function<float(VLMC_Container &, VLMC_Container &)>
+std::function<float(vlmc_c &, vlmc_c &)>
 parse_distance_function(parser::Distance_function dist_fn) {
 
   if (dist_fn == parser::Distance_function::dvstar) {
-    return distance::dvstar<VLMC_Container>; 
+    return distance::dvstar; 
   } 
   else if (dist_fn ==  parser::Distance_function::kl) {
-    return distance::kl<VLMC_Container>; 
+    return distance::kl; 
   }  
   throw std::invalid_argument("Invalid distance function name.");
 }
