@@ -25,17 +25,18 @@ int main(int argc, char *argv[]){
       return EXIT_FAILURE;
     }
     auto distance_function = parser::parse_distance_function(arguments.dist_fn);
+    size_t nr_cores_to_use = parser::parse_dop(arguments.dop);
 
     if(arguments.second_VLMC_path.empty()){
       cluster_c trees{};
       get_trees::get_trees<vlmc_c>(arguments.first_VLMC_path, trees);
-      matrix_t distance_matrix = calculate::calculate_distances(trees, distance_function);
+      matrix_t distance_matrix = calculate::calculate_distances(trees, distance_function, nr_cores_to_use);
     } else {
       cluster_c left_trees{};
       cluster_c right_trees{};
       get_trees::get_trees<vlmc_c>(arguments.first_VLMC_path, left_trees);
       get_trees::get_trees<vlmc_c>(arguments.second_VLMC_path, right_trees);
-      matrix_t distance_matrix;
+      matrix_t distance_matrix = calculate::calculate_distances(left_trees, right_trees, distance_function, nr_cores_to_use);
     }
   }
 

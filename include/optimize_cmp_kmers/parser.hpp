@@ -37,9 +37,10 @@ enum Distance_function {
 struct cli_arguments {
   Mode mode{Mode::compare};
   Distance_function dist_fn{Distance_function::dvstar};
-  std::filesystem::path first_VLMC_path;
-  std::filesystem::path second_VLMC_path;
+  std::filesystem::path first_VLMC_path{};
+  std::filesystem::path second_VLMC_path{};
   std::filesystem::path out_path{};
+  size_t dop {1};
 };
 
 std::function<float(vlmc_c &, vlmc_c &)>
@@ -52,6 +53,14 @@ parse_distance_function(parser::Distance_function dist_fn) {
     return distance::kl; 
   }  
   throw std::invalid_argument("Invalid distance function name.");
+}
+
+size_t parse_dop(size_t requested_cores){
+  if(requested_cores < 1){
+    throw std::invalid_argument("Too low degree of parallelism, must be >= 1");
+  } else{
+    return requested_cores;
+  }
 }
 
 void add_options(CLI::App &app, cli_arguments &arguments) {
@@ -82,8 +91,9 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
 
   app.add_option("-o,--matrix-path", arguments.out_path,
                  "Path to matrix of distances.");
+  
+  app.add_option("-n,--max-dop", arguments.dop,
+                 "Degree of parallelism. Default 1 (sequential).");
 }
-
-
 
 }
