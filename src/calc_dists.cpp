@@ -3,10 +3,8 @@
 #include "calc_dists.hpp"
 
 using matrix_t = Eigen::MatrixXd;
-
 using vlmc_c = container::VLMC_vector;
 using cluster_c = container::Cluster_vector;
-
 
 int main(int argc, char *argv[]){
   CLI::App app{"Distance comparison of either one directory or between two different directories."};
@@ -31,7 +29,7 @@ int main(int argc, char *argv[]){
     if(arguments.second_VLMC_path.empty()){
       cluster_c trees{};
       get_trees::get_trees<vlmc_c>(arguments.first_VLMC_path, trees);
-      matrix_t distance_matrix;
+      matrix_t distance_matrix = calculate::calculate_distances(trees, distance_function);
     } else {
       cluster_c left_trees{};
       cluster_c right_trees{};
