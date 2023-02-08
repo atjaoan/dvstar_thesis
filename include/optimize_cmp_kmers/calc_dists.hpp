@@ -5,6 +5,6 @@ using matrix_t = Eigen::MatrixXd;
 
 namespace calculate{
 
-matrix_t calculate_distances(container::VLMC_template &t){}
+matrix_t calculate_distances(container::VLMC_Container &t){}
     
 }

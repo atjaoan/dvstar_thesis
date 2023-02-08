@@ -6,15 +6,15 @@
 #include "CLI/Config.hpp"
 #include "CLI/Formatter.hpp"
 
-#include "vlmc_template.hpp"
+#include "vlmc_container.hpp"
 
 // Distance Functions 
-#include "optimize_cmp_kmers/distances/dvstar.hpp"
-#include "optimize_cmp_kmers/distances/kl_divergence.hpp"
+#include "distances/dvstar.hpp"
+#include "distances/kl_divergence.hpp"
 
 namespace parser {
 
-using vlmc_c = container::VLMC_template;
+using vlmc_c = container::VLMC_Container;
 
 enum Mode {
   compare

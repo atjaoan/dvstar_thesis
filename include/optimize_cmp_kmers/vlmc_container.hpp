@@ -13,12 +13,12 @@ using Kmer = vlmc::VLMCKmer;
 
 namespace container{
  
-class VLMC_template{
+class VLMC_Container{
 
   public:
-    VLMC_template() = default;
-    ~VLMC_template() = default;
-    VLMC_template(const std::filesystem::path &path_to_bintree){}; 
+    VLMC_Container() = default;
+    ~VLMC_Container() = default;
+    VLMC_Container(const std::filesystem::path &path_to_bintree){}; 
 
     Kmer null_kmer{};
     virtual size_t size() const { return 0; };
@@ -28,7 +28,7 @@ class VLMC_template{
 
 };
 
-class VLMC_vector : public VLMC_template {
+class VLMC_vector : public VLMC_Container {
 
   private: 
     std::vector<Kmer> container{}; 

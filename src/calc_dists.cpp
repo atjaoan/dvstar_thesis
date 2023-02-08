@@ -1,13 +1,11 @@
 #include "parser.hpp"
 #include "get_trees.hpp"
-#include "cluster_container.hpp"
-#include "vlmc_template.hpp"
 #include "calc_dists.hpp"
 
 using matrix_t = Eigen::MatrixXd;
 
 using vlmc_c = container::VLMC_vector;
-using cluster_c = cluster::Cluster_vector;
+using cluster_c = container::Cluster_vector;
 
 
 int main(int argc, char *argv[]){
