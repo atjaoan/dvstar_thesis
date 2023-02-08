@@ -4,26 +4,11 @@
 #include "vlmc_template.hpp"
 #include "calc_dists.hpp"
 
-// Distance Functions 
-#include "distances/dvstar.hpp"
-#include "distances/kl_divergence.hpp"
-
 using matrix_t = Eigen::MatrixXd;
 
 using vlmc_c = container::VLMC_vector;
 using cluster_c = cluster::Cluster_vector<vlmc_c>;
 
-std::function<float(vlmc_c &, vlmc_c &)>
-parse_distance_function(parser::Distance_function dist_fn) {
-
-  if (dist_fn == parser::Distance_function::dvstar) {
-    return distance::dvstar<vlmc_c>; 
-  } 
-  else if (dist_fn ==  parser::Distance_function::kl) {
-    return distance::kl<vlmc_c>; 
-  }  
-  throw std::invalid_argument("Invalid distance function name.");
-}
 
 int main(int argc, char *argv[]){
   CLI::App app{"Distance comparison of either one directory or between two different directories."};
@@ -43,6 +28,7 @@ int main(int argc, char *argv[]){
           << std::endl;
       return EXIT_FAILURE;
     }
+    auto distance_function = parser::parse_distance_function<vlmc_c>(arguments.dist_fn);
 
     if(arguments.second_VLMC_path.empty()){
       cluster_c trees{};
