@@ -11,10 +11,16 @@ namespace parallel {
 
 std::vector<std::tuple<size_t, size_t>> get_bounds(size_t size, const size_t requested_cores) {
   const size_t processor_count = std::thread::hardware_concurrency();
+  size_t used_cores {1};
+  if(requested_cores <= processor_count){
+      used_cores = requested_cores;
+  } else {
+    used_cores = processor_count;
+  }
   std::vector<std::tuple<size_t, size_t>> bounds_per_thread{};
-  float values_per_thread = float(size) / float(processor_count);
+  float values_per_thread = float(size) / float(used_cores);
 
-  auto limit = std::min(processor_count, size);
+  auto limit = std::min(used_cores, size);
   for (size_t i = 0; i < limit; i++) {
     size_t start_index = std::floor(values_per_thread * i);
     size_t stop_index = std::floor(values_per_thread * (i + 1.0));

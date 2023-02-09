@@ -32,7 +32,7 @@ int main(int argc, char *argv[]){
       cluster::get_cluster<container::VLMC_vector>(arguments.first_VLMC_path, cluster);
 
       matrix_t distance_matrix = calculate::calculate_distances(cluster, distance_function, nr_cores_to_use);
-
+      /*  
       for (size_t i = 0; i < cluster.size(); i++)
       {
         for (size_t j = 0; j < cluster.size(); j++)
@@ -41,6 +41,7 @@ int main(int argc, char *argv[]){
         }
         std::cout << std::endl;
       }
+      */
     } else {
       cluster_c left_cluster{};
       cluster_c right_cluster{};

@@ -31,7 +31,7 @@ matrix_t calculate_distances(
                            cluster, cluster, distance_function);
   };
   //TODO use parallelize
-  parallel::sequential(cluster.size(), fun, requested_cores);
+  parallel::parallelize(cluster.size(), fun, requested_cores);
   return distances; 
 }
 
