@@ -1,5 +1,5 @@
 #include "parser.hpp"
-#include "get_trees.hpp"
+#include "get_cluster.hpp"
 #include "calc_dists.hpp"
 
 using matrix_t = Eigen::MatrixXd;
@@ -28,15 +28,23 @@ int main(int argc, char *argv[]){
     size_t nr_cores_to_use = parser::parse_dop(arguments.dop);
 
     if(arguments.second_VLMC_path.empty()){
-      cluster_c trees{};
-      get_trees::get_trees<vlmc_c>(arguments.first_VLMC_path, trees);
-      matrix_t distance_matrix = calculate::calculate_distances(trees, distance_function, nr_cores_to_use);
+      cluster_c cluster{};
+      cluster::get_cluster<vlmc_c>(arguments.first_VLMC_path, cluster);
+      matrix_t distance_matrix = calculate::calculate_distances(cluster, distance_function, nr_cores_to_use);
+      for (size_t i = 0; i < cluster.size(); i++)
+      {
+        for (size_t j = 0; j < cluster.size(); j++)
+        {
+          std::cout << distance_matrix(i,j);
+        }
+        std::cout << std::endl;
+      }
     } else {
-      cluster_c left_trees{};
-      cluster_c right_trees{};
-      get_trees::get_trees<vlmc_c>(arguments.first_VLMC_path, left_trees);
-      get_trees::get_trees<vlmc_c>(arguments.second_VLMC_path, right_trees);
-      matrix_t distance_matrix = calculate::calculate_distances(left_trees, right_trees, distance_function, nr_cores_to_use);
+      cluster_c left_cluster{};
+      cluster_c right_cluster{};
+      cluster::get_cluster<vlmc_c>(arguments.first_VLMC_path, left_cluster);
+      cluster::get_cluster<vlmc_c>(arguments.second_VLMC_path, right_cluster);
+      matrix_t distance_matrix = calculate::calculate_distances(left_cluster, right_cluster, distance_function, nr_cores_to_use);
     }
   }
 

@@ -7,17 +7,17 @@
 
 using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
 
-namespace get_trees{
+namespace cluster{
   
 template <typename VC>  
-void get_trees(const std::filesystem::path &directory, container::Cluster_Container trees){
+void get_cluster(const std::filesystem::path &directory, container::Cluster_Container cluster){
 
   for (const auto& dir_entry : recursive_directory_iterator(directory)) {
-    VC tree(dir_entry.path());
-    std::cout << tree.size() << std::endl; 
-    trees.push(tree);
+    VC vlmc(dir_entry.path());
+    std::cout << vlmc.size() << std::endl; 
+    cluster.push(vlmc);
   }
 
-  std::cout << trees.size() << std::endl; 
+  std::cout << cluster.size() << std::endl; 
 }
 }
