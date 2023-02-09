@@ -12,7 +12,7 @@ using cluster_c = container::Cluster_Container;
 void calculate_reduced_slice(size_t start_index, size_t stop_index, matrix_t &distances,
                      cluster_c &cluster_left, cluster_c &cluster_right,
                      const std::function<double(vlmc_c &, vlmc_c &)> &fun) {
-  size_t y_bound = 0;
+  size_t y_bound = 1;
   for (size_t i = start_index; i < stop_index; i++) {
     for (size_t j = y_bound; j < cluster_right.size(); j++) {
       distances(i, j) = fun(cluster_left.get(i), cluster_right.get(j));
