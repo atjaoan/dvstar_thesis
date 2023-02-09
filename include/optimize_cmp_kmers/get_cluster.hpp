@@ -13,7 +13,7 @@ template <typename VC>
 void get_cluster(const std::filesystem::path &directory, container::Cluster_Container &cluster){
   for (const auto& dir_entry : recursive_directory_iterator(directory)) {
     VC vlmc{dir_entry.path()};
-    cluster.push(vlmc);
+    cluster.push(std::make_shared<VC>(vlmc));
   }
 }
 }

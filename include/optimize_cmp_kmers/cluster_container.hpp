@@ -22,8 +22,8 @@ class Cluster_Container{
 
     vlmc_container null_vlmc{};
     virtual size_t size() const { return 0; };
-    virtual void push(const vlmc_container &vlmc) { };
-    virtual void for_each(const std::function<void(vlmc_container &vlmc)> &){};
+    virtual void push(const std::shared_ptr<vlmc_container> vlmc) { };
+    virtual void for_each(const std::function<void(std::shared_ptr<vlmc_container> vlmc)> &f){};
     virtual vlmc_container &get(const int i) { return null_vlmc; };
 
 };
@@ -33,7 +33,7 @@ class Cluster_vector : public Cluster_Container {
   using vlmc_container = container::VLMC_Container;
 
   private: 
-    std::vector<vlmc_container> container{}; // <--- this needs to be a pointer to vlmc_container 
+    std::vector<std::shared_ptr<vlmc_container>> container{};
 
   public: 
     Cluster_vector() = default;
@@ -41,15 +41,15 @@ class Cluster_vector : public Cluster_Container {
 
     size_t size() const override { return container.size(); }
 
-    void push(const vlmc_container &vlmc) override { container.push_back(vlmc); }
+    void push(const std::shared_ptr<vlmc_container> vlmc) override { container.push_back(vlmc); }
 
-    void for_each(const std::function<void(vlmc_container &vlmc)> &f) override {
+    void for_each(const std::function<void(std::shared_ptr<vlmc_container> vlmc)> &f) override {
       for (auto vlmc : container){
         f(vlmc);
       }
     }
 
-    vlmc_container &get(const int i) override { return container[i]; }
+    vlmc_container &get(const int i) override { return *container[i]; }
 
 };
 
