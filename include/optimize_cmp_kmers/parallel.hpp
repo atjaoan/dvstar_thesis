@@ -58,12 +58,12 @@ void parallelize(size_t size_left, size_t size_right, const std::function<void(s
 }
 
 void sequential(size_t size, const std::function<void(size_t, size_t)> &fun, const size_t requested_cores) {
-  std::thread t {fun, size, size};
+  std::thread t {fun, 0, size};
   t.join();
 }
 
 void sequential(size_t size_left, size_t size_right, const std::function<void(size_t, size_t)> &fun, const size_t requested_cores) {
-  std::thread t {fun, size_left, size_right};
+  std::thread t {fun, 0, size_left};
   t.join();
 }
 

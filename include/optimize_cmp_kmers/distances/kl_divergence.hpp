@@ -6,7 +6,7 @@ namespace distance {
   
 using vlmc_c = container::VLMC_Container;
 
-float kl(vlmc_c left, vlmc_c right){
+double kl(vlmc_c left, vlmc_c right){
   return 0.0;  
 }
 }

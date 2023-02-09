@@ -10,14 +10,10 @@ using recursive_directory_iterator = std::filesystem::recursive_directory_iterat
 namespace cluster{
   
 template <typename VC>  
-void get_cluster(const std::filesystem::path &directory, container::Cluster_Container cluster){
-
+void get_cluster(const std::filesystem::path &directory, container::Cluster_Container &cluster){
   for (const auto& dir_entry : recursive_directory_iterator(directory)) {
-    VC vlmc(dir_entry.path());
-    std::cout << vlmc.size() << std::endl; 
+    VC vlmc{dir_entry.path()};
     cluster.push(vlmc);
   }
-
-  std::cout << cluster.size() << std::endl; 
 }
 }

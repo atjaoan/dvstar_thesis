@@ -29,21 +29,23 @@ int main(int argc, char *argv[]){
 
     if(arguments.second_VLMC_path.empty()){
       cluster_c cluster{};
-      cluster::get_cluster<vlmc_c>(arguments.first_VLMC_path, cluster);
+      cluster::get_cluster<container::VLMC_vector>(arguments.first_VLMC_path, cluster);
+
       matrix_t distance_matrix = calculate::calculate_distances(cluster, distance_function, nr_cores_to_use);
+
       for (size_t i = 0; i < cluster.size(); i++)
       {
         for (size_t j = 0; j < cluster.size(); j++)
         {
-          std::cout << distance_matrix(i,j);
+          std::cout << distance_matrix(i,j) << " ";
         }
         std::cout << std::endl;
       }
     } else {
       cluster_c left_cluster{};
       cluster_c right_cluster{};
-      cluster::get_cluster<vlmc_c>(arguments.first_VLMC_path, left_cluster);
-      cluster::get_cluster<vlmc_c>(arguments.second_VLMC_path, right_cluster);
+      cluster::get_cluster<container::VLMC_vector>(arguments.first_VLMC_path, left_cluster);
+      cluster::get_cluster<container::VLMC_vector>(arguments.second_VLMC_path, right_cluster);
       matrix_t distance_matrix = calculate::calculate_distances(left_cluster, right_cluster, distance_function, nr_cores_to_use);
     }
   }

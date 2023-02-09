@@ -22,7 +22,7 @@ class Cluster_Container{
 
     vlmc_container null_vlmc{};
     virtual size_t size() const { return 0; };
-    virtual void push(const vlmc_container &vlmc) {};
+    virtual void push(const vlmc_container &vlmc) { };
     virtual void for_each(const std::function<void(vlmc_container &vlmc)> &){};
     virtual vlmc_container &get(const int i) { return null_vlmc; };
 
@@ -33,7 +33,7 @@ class Cluster_vector : public Cluster_Container {
   using vlmc_container = container::VLMC_Container;
 
   private: 
-    std::vector<vlmc_container> container{}; 
+    std::vector<vlmc_container> container{}; // <--- this needs to be a pointer to vlmc_container 
 
   public: 
     Cluster_vector() = default;

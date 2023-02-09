@@ -43,7 +43,7 @@ struct cli_arguments {
   size_t dop {1};
 };
 
-std::function<float(vlmc_c &, vlmc_c &)>
+std::function<double(vlmc_c &, vlmc_c &)>
 parse_distance_function(parser::Distance_function dist_fn) {
 
   if (dist_fn == parser::Distance_function::dvstar) {

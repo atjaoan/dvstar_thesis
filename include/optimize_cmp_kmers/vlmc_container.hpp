@@ -21,7 +21,7 @@ class VLMC_Container{
     VLMC_Container(const std::filesystem::path &path_to_bintree){}; 
 
     Kmer null_kmer{};
-    virtual size_t size() const { return 0; };
+    virtual size_t size() const { return 0;};
     virtual void push(const Kmer &kmer){};
     virtual void for_each(const std::function<void(Kmer &kmer)> &){};
     virtual Kmer &get(const int i) { return null_kmer; };
