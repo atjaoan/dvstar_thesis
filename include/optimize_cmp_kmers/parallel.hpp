@@ -9,7 +9,7 @@
 
 namespace parallel {
 
-std::vector<std::tuple<size_t, size_t>> get_bounds(size_t size, const size_t requested_cores) {
+std::vector<std::tuple<size_t, size_t>> get_x_bounds(size_t size, const size_t requested_cores) {
   const size_t processor_count = std::thread::hardware_concurrency();
   size_t used_cores {1};
   if(requested_cores <= processor_count){
@@ -36,7 +36,7 @@ std::vector<std::tuple<size_t, size_t>> get_bounds(size_t size, const size_t req
 void parallelize(size_t size, const std::function<void(size_t, size_t)> &fun, const size_t requested_cores) {
   std::vector<std::thread> threads{};
 
-  auto bounds = get_bounds(size, requested_cores);
+  auto bounds = get_x_bounds(size, requested_cores);
   for (auto &[start_index, stop_index] : bounds) {
     threads.emplace_back(fun, start_index, stop_index);
   }
@@ -51,7 +51,7 @@ void parallelize(size_t size, const std::function<void(size_t, size_t)> &fun, co
 void parallelize(size_t size_left, size_t size_right, const std::function<void(size_t, size_t)> &fun, const size_t requested_cores) {
   std::vector<std::thread> threads{};
   // TODO only uses one size...
-  auto bounds = get_bounds(size_left, requested_cores);
+  auto bounds = get_x_bounds(size_left, requested_cores);
   for (auto &[start_index, stop_index] : bounds) {
     threads.emplace_back(fun, start_index, stop_index);
   }
