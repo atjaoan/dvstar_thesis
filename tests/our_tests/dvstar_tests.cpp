@@ -16,8 +16,6 @@
 #include "vlmc_from_kmers/dvstar.hpp"
 #include "vlmc_from_kmers/build_vlmc.hpp"
 
-// using namespace dvstarnamespace;
-
 using vlmc_c = container::VLMC_vector;
 
 class DvstarTests : public ::testing::Test {
