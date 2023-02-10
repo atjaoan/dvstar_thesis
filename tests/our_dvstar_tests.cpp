@@ -38,24 +38,10 @@ protected:
 
 
 TEST_F(OurDvstarTests, Identity) {
-  std::filesystem::path tmp_path = std::filesystem::temp_directory_path();
-
-  std::filesystem::create_directories(tmp_path);
-  vlmc::configure_stxxl(tmp_path);
-
-  std::filesystem::path run_one_path{"out-one.bintree"};
-  int exit_one_code = vlmc::build_vlmc(first_fasta, 6, 2, 3.9075,
-                                       run_one_path, tmp_path, vlmc::Core::in);
-
-  std::filesystem::path run_two_path{"out-two.bintree"};
-  int exit_two_code = vlmc::build_vlmc(first_fasta, 6, 2, 3.9075,
-                                       run_two_path, tmp_path, vlmc::Core::in);
-
-  double dist_test = vlmc::dvstar(run_one_path, run_two_path, 0);
-
   double dist = distance::dvstar(first_vlmc, first_vlmc);
+  EXPECT_DOUBLE_EQ(dist, 0.0);
   double dist_real = vlmc::dvstar(first_bintree, first_bintree, 0);
-  EXPECT_DOUBLE_EQ(dist_test, 0.0);
+  EXPECT_DOUBLE_EQ(dist_real, 0.0);
 }
 
 TEST_F(OurDvstarTests, EqualDistance) {
