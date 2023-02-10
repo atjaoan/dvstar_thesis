@@ -20,7 +20,7 @@
 
 using vlmc_c = container::VLMC_vector;
 
-class OurDvstarTests : public ::testing::Test {
+class DvstarTests : public ::testing::Test {
 protected:
   void SetUp() override {}
 
@@ -37,17 +37,25 @@ protected:
 };
 
 
-TEST_F(OurDvstarTests, Identity) {
+TEST_F(DvstarTests, Identity) {
   double dist = distance::dvstar(first_vlmc, first_vlmc);
   EXPECT_DOUBLE_EQ(dist, 0.0);
   double dist_real = vlmc::dvstar(first_bintree, first_bintree, 0);
   EXPECT_DOUBLE_EQ(dist_real, 0.0);
 }
 
-TEST_F(OurDvstarTests, EqualDistance) {
+TEST_F(DvstarTests, EqualDistance) {
 
   double dist_our = distance::dvstar(first_vlmc, second_vlmc);
   double dist_real = vlmc::dvstar(first_bintree, second_bintree, 0);
 
   EXPECT_DOUBLE_EQ(dist_our, dist_real);
+}
+
+TEST_F(DvstarTests, Symmetry) {
+
+  double dist_one = distance::dvstar(first_vlmc, second_vlmc);
+  double dist_two = distance::dvstar(second_vlmc, first_vlmc);
+
+  EXPECT_DOUBLE_EQ(dist_one, dist_two);
 }

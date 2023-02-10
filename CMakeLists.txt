@@ -2,6 +2,8 @@ cmake_minimum_required (VERSION 3.4...3.12)
 
 project (CountVLMC CXX)
 
+add_definitions(-w)
+
 option(CountVLMC_COMPILE_TESTS "To compile tests, specify -DCountVLMC_COMPILE_TESTS=ON")
 
 set(MAIN_PROJECT OFF)
