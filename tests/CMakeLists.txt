@@ -86,6 +86,7 @@ test_case(regression_tests.cpp)
 test_case(negative_log_likelihood_tests.cpp)
 test_case(method_regression.cpp)
 test_case(our_dvstar_tests.cpp)
+test_case(dvstar_tests.cpp)
 
 benchmark_case(benchmarks.cpp)
 benchmark_case(method_benchmarks.cpp)
