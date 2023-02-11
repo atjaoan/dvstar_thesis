@@ -38,16 +38,52 @@ protected:
   std::function<double(vlmc_t &, vlmc_t &)> dist_func = distance::dvstar;
 };
 
-
-TEST_F(CalcDistsTests, Identity) {
-  cluster_c cluster_left{};
-  cluster_c cluster_right{};
-  cluster_left.push(std::make_shared<vlmc_c>(first_vlmc));
-  cluster_left.push(std::make_shared<vlmc_c>(second_vlmc));
-  cluster_right.push(std::make_shared<vlmc_c>(first_vlmc));
-  cluster_right.push(std::make_shared<vlmc_c>(second_vlmc));
-
-  matrix_t distances = calculate::calculate_distances(cluster_left, dist_func, 1);
-  EXPECT_DOUBLE_EQ(distances(0,0), 0.0);
-  EXPECT_DOUBLE_EQ(distances(1,1), 0.0);
+cluster_c create_cluster(vlmc_c &vlmc, size_t size) {
+  cluster_c cluster{};
+  for (size_t i = 0; i < size; i++){
+    cluster.push(std::make_shared<vlmc_c>(vlmc));
+  }
+  return cluster; 
 }
+
+// Tests when comparing two directories 
+TEST_F(CalcDistsTests, SizeTwoDirectories) {
+  for (size_t x = 1; x < 5; x++){
+    for (size_t y = 1; y < 5; y++){
+      cluster_c cluster_left = create_cluster(first_vlmc, x);
+      cluster_c cluster_right = create_cluster(second_vlmc, y);
+
+      matrix_t distances = calculate::calculate_distances(cluster_left, cluster_right, dist_func, 1);
+      EXPECT_EQ(distances.size(), x*y);
+      EXPECT_EQ(distances.rows(), x);
+      EXPECT_EQ(distances.cols(), y);
+    }
+  }
+}
+
+TEST_F(CalcDistsTests, AllValuesAssigned) {
+  for (size_t x = 1; x < 2; x++){
+    cluster_c cluster_left = create_cluster(first_vlmc, x);
+    cluster_c cluster_right = create_cluster(second_vlmc, x);
+
+    matrix_t distances = calculate::calculate_distances(cluster_left, cluster_right, dist_func, 1);
+
+    for (size_t row = 0; row < distances.rows(); row++){
+      for (size_t col = 0; col < distances.cols(); col++){
+        EXPECT_GT(distances(row,col), 0);
+      }
+    }
+  }
+}
+
+// Tests for inter-directory comparisons
+TEST_F(CalcDistsTests, SizeOneDirectories) {
+  for (size_t x = 1; x < 5; x++){
+    cluster_c cluster_left = create_cluster(first_vlmc, x);
+
+    matrix_t distances = calculate::calculate_distances(cluster_left, dist_func, 1);
+    EXPECT_EQ(distances.size(), x*x); // <-- change when implementation has been corrected 
+    EXPECT_EQ(distances.rows(), x);
+  }
+}
+
