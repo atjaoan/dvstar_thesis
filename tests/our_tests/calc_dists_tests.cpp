@@ -76,14 +76,22 @@ TEST_F(CalcDistsTests, AllValuesAssigned) {
   }
 }
 
+size_t get_expected_size(size_t i) {
+  if (i <= 1) {
+    return 0;
+  } else {
+    return (i - 1) + get_expected_size(i - 1);
+  }
+}
+
 // Tests for inter-directory comparisons
 TEST_F(CalcDistsTests, SizeOneDirectories) {
-  for (size_t x = 1; x < 5; x++){
+  for (size_t x = 0; x < 4; x++){
     cluster_c cluster_left = create_cluster(first_vlmc, x);
-
     matrix_t distances = calculate::calculate_distances(cluster_left, dist_func, 1);
-    EXPECT_EQ(distances.size(), x*x); // <-- change when implementation has been corrected 
-    EXPECT_EQ(distances.rows(), x);
+    auto size = get_expected_size(x);
+    EXPECT_EQ(distances.size(), size); 
+    EXPECT_EQ(distances.rows(), x-1);
   }
 }
 
