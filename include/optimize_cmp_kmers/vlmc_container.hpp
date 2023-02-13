@@ -64,5 +64,61 @@ class VLMC_vector : public VLMC_Container {
 
 };
 
+class VLMC_multi_vector : public VLMC_Container {
+
+  private: 
+    std::vector<Kmer> container{}; 
+
+  public: 
+    VLMC_multi_vector() = default;
+    ~VLMC_multi_vector() = default; 
+
+    VLMC_multi_vector(const std::filesystem::path &path_to_bintree) {
+      std::ifstream ifs(path_to_bintree, std::ios::binary);
+      cereal::BinaryInputArchive archive(ifs);
+
+      Kmer kmer{};
+
+      while (ifs.peek() != EOF){
+        archive(kmer);
+        push(kmer);
+      }
+      ifs.close();
+    } 
+
+    size_t size() const override { return container.size(); }
+
+    void push(const Kmer &kmer) override { 
+      std::cout << container.capacity() << std::endl;
+      auto it_pos = container.begin() + get_index_rep(kmer);
+      if(it_pos > container.end()){
+        container.resize(get_index_rep(kmer) + 1);
+      }
+      std::cout << container.capacity() << std::endl;
+      std::cout << get_index_rep(kmer) << std::endl;
+      //container.insert(it_pos, kmer); 
+      }
+
+    void for_each(const std::function<void(Kmer &kmer)> &f) override {
+      for (auto kmer : container){
+        f(kmer);
+      }
+    }
+
+    Kmer &get(const int i) override { return container[i]; }
+
+    
+  int get_index_rep(const Kmer &kmer) {
+      int integer_value = 0;
+      int offset = 1;
+      for (int i = kmer.length - 1; i >= 0; i--) {
+        auto kmer_2_bits = kmer.extract2bits(i) + 1;
+        integer_value += (kmer_2_bits * offset);
+        offset *= 4;
+      }
+      return integer_value;
+    }
+};
+
 }
 
