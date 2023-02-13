@@ -78,7 +78,5 @@ TEST_F(VlmcContainerTest, AddToMultiVector) {
   ifs.close();
   
   int kmer_index = container.get_index_rep(kmer);
-  //std::cout << kmer_index << std::endl;
-  std::cout << kmer.to_string() << std::endl;
-  //EXPECT_EQ(container.get(kmer_index).to_string(), kmer.to_string());
+  EXPECT_EQ(container.get(kmer_index).to_string(), kmer.to_string());
 }

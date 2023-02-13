@@ -67,7 +67,7 @@ class VLMC_vector : public VLMC_Container {
 class VLMC_multi_vector : public VLMC_Container {
 
   private: 
-    std::vector<Kmer> container{}; 
+    std::vector<Kmer> container{256}; 
 
   public: 
     VLMC_multi_vector() = default;
@@ -89,14 +89,11 @@ class VLMC_multi_vector : public VLMC_Container {
     size_t size() const override { return container.size(); }
 
     void push(const Kmer &kmer) override { 
-      std::cout << container.capacity() << std::endl;
       auto it_pos = container.begin() + get_index_rep(kmer);
       if(it_pos > container.end()){
         container.resize(get_index_rep(kmer) + 1);
       }
-      std::cout << container.capacity() << std::endl;
-      std::cout << get_index_rep(kmer) << std::endl;
-      //container.insert(it_pos, kmer); 
+      container.insert(it_pos, kmer); 
       }
 
     void for_each(const std::function<void(Kmer &kmer)> &f) override {
