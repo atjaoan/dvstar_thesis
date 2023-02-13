@@ -24,7 +24,7 @@ class VLMC_Container{
     virtual size_t size() const { return 0;};
     virtual void push(const Kmer &kmer){};
     virtual void for_each(const std::function<void(Kmer &kmer)> &){};
-    virtual Kmer &get(const int i) { return null_kmer; };
+    virtual Kmer &get(const int i) { std::cout << "Hello from bad place" << std::endl; return null_kmer; };
 
 };
 
@@ -67,7 +67,8 @@ class VLMC_vector : public VLMC_Container {
 class VLMC_multi_vector : public VLMC_Container {
 
   private: 
-    std::vector<Kmer> container{256}; 
+    std::vector<Kmer> container{}; 
+    size_t c_size;
 
   public: 
     VLMC_multi_vector() = default;
@@ -84,16 +85,20 @@ class VLMC_multi_vector : public VLMC_Container {
         push(kmer);
       }
       ifs.close();
+      
     } 
 
-    size_t size() const override { return container.size(); }
+    size_t size() const override { return c_size; }
 
     void push(const Kmer &kmer) override { 
-      auto it_pos = container.begin() + get_index_rep(kmer);
-      if(it_pos > container.end()){
-        container.resize(get_index_rep(kmer) + 1);
+      int index = get_index_rep(kmer);
+      if(index > container.capacity() + 1){
+        container.resize(index + 1);
       }
-      container.insert(it_pos, kmer); 
+      //Must be done after resize (resize invalidades all iterators)
+      auto it_pos = container.begin() + index;
+      container.insert(it_pos, kmer);
+      c_size = c_size + 1;
       }
 
     void for_each(const std::function<void(Kmer &kmer)> &f) override {
@@ -102,7 +107,7 @@ class VLMC_multi_vector : public VLMC_Container {
       }
     }
 
-    Kmer &get(const int i) override { return container[i]; }
+    Kmer &get(const int i) override { std::cout << "Hello from good place" << std::endl; return container[i]; }
 
     
   int get_index_rep(const Kmer &kmer) {
