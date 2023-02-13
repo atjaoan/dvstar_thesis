@@ -23,18 +23,24 @@ TEST_F(GetClusterTest, ClusterGetWithVlmcVector) {
   container::Cluster_vector container{};
   cluster::get_cluster<container::VLMC_vector>(path_to_bintrees, container);
 
-  std::cout << container.get(0).get(0).to_string() << std::endl;
+  //std::cout << container.get(0).get(0).to_string() << std::endl;
   EXPECT_GT(container.size(), 0);
   EXPECT_GT(container.get(0).size(), 0);
 }
 
 TEST_F(GetClusterTest, ClusterGetWithVlmcMultiVector) {
   container::Cluster_vector container{};
-  cluster::get_cluster<container::VLMC_multi_vector>(path_to_bintrees, container);
+  cluster::get_cluster<container::VLMC_multi_vector>(path_to_bintrees, container); 
 
   std::ifstream ifs(path_to_vlmc, std::ios::binary);
   cereal::BinaryInputArchive archive(ifs);
   container::VLMC_multi_vector vlmc_multi_vec{};
+  
+  for (size_t i = 0; i < 50; i++)
+  {
+    std::string s = container.get(2).get(i).to_string();
+    std::cout << i << " has " << s << " with " << " Rep : " << vlmc_multi_vec.get_index_rep(container.get(0).get(i)) << std::endl;
+  }
   
   Kmer kmer{};
 
@@ -42,10 +48,11 @@ TEST_F(GetClusterTest, ClusterGetWithVlmcMultiVector) {
     archive(kmer);
   }
   ifs.close();
+  //std::cout << "direct kmer " << kmer.to_string() << std::endl;
 
   int index = vlmc_multi_vec.get_index_rep(kmer);
-  //container::VLMC_multi_vector vlmc = container.get(0);
+  container::VLMC_Container vlmc = container.get(0);
   std::cout << container.get(2).get(0).to_string() << std::endl;
   EXPECT_GT(container.size(), 0);
-  //EXPECT_EQ(vlmc.get(index).to_string(), kmer.to_string());
+  EXPECT_EQ(vlmc.get(index).to_string(), kmer.to_string());
 }
