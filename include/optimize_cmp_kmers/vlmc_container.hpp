@@ -27,6 +27,7 @@ class VLMC_Container{
     virtual void for_each(const std::function<void(Kmer &kmer)> &){};
     virtual Kmer &get(const int i) { std::cout << "Hello from bad place" << std::endl; return null_kmer; };
     virtual Kmer &find(const Kmer &kmer) { std::cout << "Looking in a bad place" << std::endl; return null_kmer; }
+    virtual Kmer &find(const std::string &kmer_data) { std::cout << "Searching in the wrong place" << std::endl; return null_kmer; }
     virtual int get_max_kmer_index() const { return INT_MAX; }
     virtual int get_min_kmer_index() const { return 0; }
 
@@ -73,6 +74,15 @@ class VLMC_vector : public VLMC_Container {
       for (size_t i = 0; i < container.size(); i++){
         if (container[i]==kmer) {
           return container[i]; 
+        }
+      }
+      return null_kmer; 
+    }
+
+    Kmer &find(const std::string &kmer_data) override { 
+      for (size_t i = 0; i < container.size(); i++){
+        if (container[i].to_string() == kmer_data) {
+          return container[i];
         }
       }
       return null_kmer; 
@@ -140,6 +150,15 @@ class VLMC_multi_vector : public VLMC_Container {
       return null_kmer; 
     }
 
+    Kmer &find(const std::string &kmer_data) override { 
+      auto tmp_kmer = create_kmer(kmer_data);
+      auto index = get_index_rep(tmp_kmer);
+      if (container[index].to_string()==kmer_data){
+        return container[index];
+      }
+      return null_kmer; 
+    }
+
     int get_index_rep(const Kmer &kmer) {
       int integer_value = 0;
       int offset = 1;
@@ -150,6 +169,14 @@ class VLMC_multi_vector : public VLMC_Container {
       }
       return integer_value;
     }
+
+    Kmer create_kmer(const std::string &kmer_string) {
+      vlmc::VLMCTranslator kmer{static_cast<int>(kmer_string.size())};
+      if (!kmer_string.empty()) {
+        kmer.from_string(kmer_string);
+      }
+      return kmer.construct_vlmc_kmer();
+    }   
 };
 
 }

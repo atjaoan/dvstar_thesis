@@ -31,24 +31,34 @@ get_components(const Kmer &left, const Kmer &left_background,
               right_probs[3] / std::sqrt(right_probs_background[3])}};
 }
 
-Kmer &find_background(vlmc_c &kmers, const Kmer &kmer,
-                          uint &background_i, int background_order) {
-  auto diff_pos = Kmer::get_first_differing_position(
-      kmer, kmers.get(background_i), kmer.length - background_order);
-
-  while (diff_pos != -1 || kmers.get(background_i).length != background_order) {
-    if (background_i < kmers.size()) {
-      background_i++;
-    } else {
-      // TODO So this must be the last background, lets just use that for now...
-      return kmers.get(background_i);
-    }
-    diff_pos = Kmer::get_first_differing_position(
-        kmer, kmers.get(background_i), kmer.length - background_order);
+std::string get_background_context(const std::string &state,
+                                   const size_t background_order) {
+  if (state.size() <= background_order) {
+    return state;
+  } else {
+    size_t background = state.size() - background_order;
+    return state.substr(background);
   }
-
-  return kmers.get(background_i);
 }
+
+// Kmer &find_background(vlmc_c &kmers, const Kmer &kmer,
+//                           uint &background_i, int background_order) {
+//   auto diff_pos = Kmer::get_first_differing_position(
+//       kmer, kmers.get(background_i), kmer.length - background_order);
+// 
+//   while (diff_pos != -1 || kmers.get(background_i).length != background_order) {
+//     if (background_i < kmers.size()) {
+//       background_i++;
+//     } else {
+//       // TODO So this must be the last background, lets just use that for now...
+//       return kmers.get(background_i);
+//     }
+//     diff_pos = Kmer::get_first_differing_position(
+//         kmer, kmers.get(background_i), kmer.length - background_order);
+//   }
+// 
+//   return kmers.get(background_i);
+// }
 
 void iterate_kmers(
     vlmc_c &left_kmers, vlmc_c &right_kmers,
@@ -58,11 +68,13 @@ void iterate_kmers(
 
   for (size_t i = left_kmers.get_min_kmer_index() ; i <= left_kmers.get_max_kmer_index(); i++) {
     const Kmer &left_kmer = left_kmers.get(i);
-    const Kmer &right_kmer = right_kmers.find(left_kmer);
-    if (right_kmer.length==0){
-      f_not_shared(left_kmer, right_kmer);
-    } else {
-      f(left_kmer, right_kmer);
+    if (left_kmer.length != 0){
+      const Kmer &right_kmer = right_kmers.find(left_kmer);
+      if (right_kmer.length == 0){
+        f_not_shared(left_kmer, right_kmer);
+      } else {
+        f(left_kmer, right_kmer);
+      }
     }
   }
 }
@@ -89,8 +101,8 @@ double normalise_dvstar(double dot_product, double left_norm,
 }
 
 double dvstar(vlmc_c &left, vlmc_c &right){
-  int background_order = 0;
-  
+  const size_t background_order = 0; 
+
   double dot_product = 0.0;
 
   double left_norm = 0.0;
@@ -104,10 +116,15 @@ double dvstar(vlmc_c &left, vlmc_c &right){
         if (left_v.length <= background_order) {
           return;
         }
-        auto &left_kmer_background = find_background(
-            left, left_v, left_background_i, background_order);
-        auto &right_kmer_background = find_background(
-            right, right_v, right_background_i, background_order);
+        const auto background_context = get_background_context(left_v.to_string(), background_order);
+
+        auto left_kmer_background = left.find(background_context);
+        auto right_kmer_background = right.find(background_context);
+
+        // auto &left_kmer_background = find_background(
+        //     left, left_v, left_background_i, background_order);
+        // auto &right_kmer_background = find_background(
+        //     right, right_v, right_background_i, background_order);
 
         auto [left_comp, right_comp] = get_components(
             left_v, left_kmer_background, right_v, right_kmer_background);
