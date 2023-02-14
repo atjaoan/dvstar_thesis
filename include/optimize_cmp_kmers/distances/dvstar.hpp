@@ -100,8 +100,8 @@ double normalise_dvstar(double dot_product, double left_norm,
   }
 }
 
-double dvstar(vlmc_c &left, vlmc_c &right){
-  const size_t background_order = 0; 
+double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
+  // const size_t background_order = 0; 
 
   double dot_product = 0.0;
 

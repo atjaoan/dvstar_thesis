@@ -13,6 +13,7 @@
 #include "optimize_cmp_kmers/calc_dists.hpp"
 
 using matrix_t  = Eigen::MatrixXd;
+using vlmc_t = container::VLMC_Container;
 
 class ParallelTest : public ::testing::Test {
 protected:
@@ -20,10 +21,16 @@ protected:
 
   std::filesystem::path first_directory{"../data/test_VLMCs"};
   std::filesystem::path second_bintree{"../data/test_VLMCs"};
+
+  size_t background_order = 0; 
+
+  std::function<double(vlmc_t &, vlmc_t &)> distance_function = [&](auto &left, auto &right) {
+      return distance::dvstar(left, right, background_order);
+  };
 };
 
 TEST_F(ParallelTest, SequentialEqParallel) {
-  auto distance_function = distance::dvstar;
+  // auto distance_function = distance::dvstar;
 
   container::Cluster_vector cluster{};
   cluster::get_cluster<container::VLMC_vector>(first_directory, cluster);
@@ -48,7 +55,7 @@ TEST_F(ParallelTest, SequentialEqParallel) {
 }
 
 TEST_F(ParallelTest, ReducedEqFullSlice) {
-  auto distance_function = distance::dvstar;
+  // auto distance_function = distance::dvstar;
 
   container::Cluster_vector cluster{};
   cluster::get_cluster<container::VLMC_vector>(first_directory, cluster);

@@ -54,13 +54,16 @@ struct cli_arguments {
   size_t dop {1};
   Cluster_Rep cluster{Cluster_Rep::cluster_vector};
   Vlmc_Rep vlmc{Vlmc_Rep::vlmc_vector}; 
+  size_t background_order {0}; 
 };
 
 std::function<double(vlmc_c &, vlmc_c &)>
-parse_distance_function(parser::Distance_function dist_fn) {
-
+parse_distance_function(parser::Distance_function dist_fn, size_t background_order) {
   if (dist_fn == parser::Distance_function::dvstar) {
-    return distance::dvstar; 
+    auto fun = [&](auto &left, auto &right) {
+      return distance::dvstar(left, right, background_order);
+    };
+    return fun; 
   } 
   else if (dist_fn ==  parser::Distance_function::kl) {
     return distance::kl; 
@@ -124,6 +127,9 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
   app.add_option("-c,--cluster-rep", arguments.cluster,
                  "Cluster container representation to use.")
       ->transform(CLI::CheckedTransformer(cluster_rep_map, CLI::ignore_case));
+
+  app.add_option("-b,--background-order", arguments.background_order,
+                 "Background order.");
 }
 
 }

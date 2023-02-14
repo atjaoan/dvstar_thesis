@@ -26,7 +26,7 @@ int main(int argc, char *argv[]){
         << std::endl;
     return EXIT_FAILURE;
   }
-  auto distance_function = parser::parse_distance_function(arguments.dist_fn);
+  auto distance_function = parser::parse_distance_function(arguments.dist_fn, arguments.background_order);
   size_t nr_cores_to_use = parser::parse_dop(arguments.dop);
   
   if(arguments.second_VLMC_path.empty()){

@@ -35,7 +35,11 @@ protected:
   vlmc_c second_vlmc{second_bintree};
   vlmc_c third_vlmc{third_bintree};
 
-  std::function<double(vlmc_t &, vlmc_t &)> dist_func = distance::dvstar;
+  size_t background_order = 0;
+
+  std::function<double(vlmc_t &, vlmc_t &)> dist_func = [&](auto &left, auto &right) {
+      return distance::dvstar(left, right, background_order);
+  };
 };
 
 cluster_c create_cluster(vlmc_c &vlmc, size_t size) {
