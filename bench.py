@@ -78,6 +78,24 @@ def calculate_distances(dist_func: str, set_size: int, genome_path: str) -> subp
 
     return subprocess.run(args, capture_output=True, text=True)
 
+def our_calculate_distances(dist_func: str, set_size: int, genome_path: str, vlmc_container: str, nr_cores: int) -> subprocess.CompletedProcess:
+    args = (
+        "perf",
+        "stat",
+        "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
+        cwd / "build/dist", 
+        "-p",
+        cwd / genome_path,
+        "--function",
+        dist_func,
+        "-v",
+        vlmc_container,
+        "-n",
+        str(nr_cores)
+    )
+
+    return subprocess.run(args, capture_output=True, text=True)
+
 def calculate_distances_only_oh() -> subprocess.CompletedProcess:
     args = (
         "perf",
@@ -186,6 +204,15 @@ def dvstar_cmp_mem():
 def stat(set_size: int = -1, dist_func: Distance_Function = Distance_Function.dvstar, 
         genome_path: str = "data/human_VLMCs"):
     timing_results = calculate_distances(dist_func.value, -1, genome_path)
+
+    th, min, max = get_parameter_from_bintree(os.listdir(genome_path)[0])
+
+    save_to_csv(timing_results, cwd / "tmp/benchmarks/test.csv", dist_func, set_size, th, min, max)
+
+@app.command()
+def stat_new(set_size: int = -1, dist_func: Distance_Function = Distance_Function.dvstar, 
+        genome_path: str = "data/human_VLMCs", vlmc_container: str = "vector", nr_cores: int = 1):
+    timing_results = our_calculate_distances(dist_func.value, set_size, genome_path, vlmc_container, nr_cores)
 
     th, min, max = get_parameter_from_bintree(os.listdir(genome_path)[0])
 
