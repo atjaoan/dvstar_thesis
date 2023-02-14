@@ -78,19 +78,13 @@ TEST_F(VlmcContainerTest, AddToMultiVector) {
   ifs.close();
   
   int kmer_index = container.get_index_rep(kmer);
-  std::cout << kmer_index << " : " << kmer.to_string() << std::endl;
   EXPECT_EQ(container.get(kmer_index).to_string(), kmer.to_string());
 }
 
 TEST_F(VlmcContainerTest, IndexAdd1) {
   container::VLMC_multi_vector container{};
   std::string kmer_string{"A"};
-  std::cout << "1" << std::endl;
   Kmer created = create_kmer(kmer_string);
-  std::cout << "2" << std::endl;
-  //std::cout << container.size() << std::endl;
-  std::cout << "3" << std::endl;
   container.push(created);
-  std::cout << "end" << std::endl;
-  //EXPECT_EQ(container.get(1).to_string(), "A");
+  EXPECT_EQ(container.get(1).to_string(), "A");
 }

@@ -98,9 +98,7 @@ class VLMC_multi_vector : public VLMC_Container {
         max_kmer_index = index;
       }
       //Must be done after resize (resize invalidades all iterators)
-      auto it_pos = container.begin() + index;
-      std::cout << kmer.to_string() << " added at : " << index << std::endl;
-      container.insert(it_pos, kmer);
+      container[index] = kmer; 
       c_size = c_size + 1;
       }
 
