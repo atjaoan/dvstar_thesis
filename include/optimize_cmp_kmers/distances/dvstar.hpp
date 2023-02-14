@@ -56,15 +56,13 @@ void iterate_kmers(
     const std::function<void(const Kmer &left, const Kmer &right)>
         &f_not_shared) {
 
-  for (size_t i = 0; i < left_kmers.size(); i++) {
+  for (size_t i = left_kmers.get_min_kmer_index() ; i <= left_kmers.get_max_kmer_index(); i++) {
     const Kmer &left_kmer = left_kmers.get(i);
-    for (size_t j = 0; j < right_kmers.size(); j++) {
-      const Kmer &right_kmer = right_kmers.get(j); 
-      if (left_kmer == right_kmer){
-        f(left_kmer, right_kmer);
-      } else {
-        f_not_shared(left_kmer, right_kmer); 
-      }
+    const Kmer &right_kmer = right_kmers.find(left_kmer);
+    if (right_kmer.length==0){
+      f_not_shared(left_kmer, right_kmer);
+    } else {
+      f(left_kmer, right_kmer);
     }
   }
 }

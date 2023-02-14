@@ -21,7 +21,7 @@ class Cluster_Container{
     ~Cluster_Container() = default;
 
     vlmc_container null_vlmc{};
-    virtual size_t size() const { return 0; };
+    virtual size_t size() const { std::cout << "I dont wanna be here :(" << std::endl; return 0; };
     virtual void push(const std::shared_ptr<vlmc_container> vlmc) { };
     virtual void for_each(const std::function<void(std::shared_ptr<vlmc_container> vlmc)> &f){};
     virtual vlmc_container &get(const int i) { return null_vlmc; };

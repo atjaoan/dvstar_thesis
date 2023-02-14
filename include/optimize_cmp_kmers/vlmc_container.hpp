@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <filesystem>
+#include <limits.h>
 
 #include "vlmc_from_kmers/kmer.hpp"
 
@@ -25,6 +26,9 @@ class VLMC_Container{
     virtual void push(const Kmer &kmer){};
     virtual void for_each(const std::function<void(Kmer &kmer)> &){};
     virtual Kmer &get(const int i) { std::cout << "Hello from bad place" << std::endl; return null_kmer; };
+    virtual Kmer &find(const Kmer &kmer) { std::cout << "Looking in a bad place" << std::endl; return null_kmer; }
+    virtual int get_max_kmer_index() const { return INT_MAX; }
+    virtual int get_min_kmer_index() const { return 0; }
 
 };
 
@@ -62,6 +66,18 @@ class VLMC_vector : public VLMC_Container {
 
     Kmer &get(const int i) override { return container[i]; }
 
+    int get_max_kmer_index() const override { return container.size() - 1; }
+    int get_min_kmer_index() const override { return 0; }
+
+    Kmer &find(const Kmer &kmer) override {
+      for (size_t i = 0; i < container.size(); i++){
+        if (container[i]==kmer) {
+          return container[i]; 
+        }
+      }
+      return null_kmer; 
+    }
+
 };
 
 class VLMC_multi_vector : public VLMC_Container {
@@ -70,6 +86,7 @@ class VLMC_multi_vector : public VLMC_Container {
     std::vector<Kmer> container{}; 
     int c_size = 0;
     int max_kmer_index = 0;
+    int min_kmer_index = INT_MAX;
 
   public: 
     VLMC_multi_vector() = default;
@@ -96,6 +113,8 @@ class VLMC_multi_vector : public VLMC_Container {
       if(index > max_kmer_index){
         container.resize(index + 10);
         max_kmer_index = index;
+      } else if (index < min_kmer_index){
+        min_kmer_index = index;
       }
       //Must be done after resize (resize invalidades all iterators)
       container[index] = kmer; 
@@ -110,8 +129,18 @@ class VLMC_multi_vector : public VLMC_Container {
 
     Kmer &get(const int i) override { return container[i]; }
 
-    
-  int get_index_rep(const Kmer &kmer) {
+    int get_max_kmer_index() const override { return max_kmer_index; }
+    int get_min_kmer_index() const override { return min_kmer_index; }
+
+    Kmer &find(const Kmer &kmer) override {
+      auto index = get_index_rep(kmer);
+      if (container[index]==kmer){
+        return container[index];
+      }
+      return null_kmer; 
+    }
+
+    int get_index_rep(const Kmer &kmer) {
       int integer_value = 0;
       int offset = 1;
       for (int i = kmer.length - 1; i >= 0; i--) {
