@@ -68,7 +68,8 @@ class VLMC_multi_vector : public VLMC_Container {
 
   private: 
     std::vector<Kmer> container{}; 
-    size_t c_size;
+    int c_size = 0;
+    int max_kmer_index = 0;
 
   public: 
     VLMC_multi_vector() = default;
@@ -92,18 +93,14 @@ class VLMC_multi_vector : public VLMC_Container {
 
     void push(const Kmer &kmer) override { 
       int index = get_index_rep(kmer);
-      if(index > container.size() + 1){
+      if(index > max_kmer_index){
         container.resize(index + 10);
+        max_kmer_index = index;
       }
       //Must be done after resize (resize invalidades all iterators)
       auto it_pos = container.begin() + index;
-      for (size_t i = 0; i < container.size(); i++)
-      {
-        std::cout << i << " : " << container[i].to_string() << std::endl;
-      }
-      std::cout << "4" << std::endl;
+      std::cout << kmer.to_string() << " added at : " << index << std::endl;
       container.insert(it_pos, kmer);
-      std::cout << "5" << std::endl;
       c_size = c_size + 1;
       }
 
