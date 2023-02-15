@@ -50,11 +50,11 @@ void iterate_kmers(
   for (size_t i = left_kmers.get_min_kmer_index() ; i <= left_kmers.get_max_kmer_index(); i++) {
     const Kmer &left_kmer = left_kmers.get(i);
     if (left_kmer.length != 0){
-      const Kmer &right_kmer = right_kmers.find(left_kmer);
-      if (right_kmer.length == 0){
-        f_not_shared(left_kmer, right_kmer);
+      auto right_kmer = right_kmers.find(left_kmer);
+      if (std::get<1>(right_kmer)){
+        f(left_kmer, std::get<0>(right_kmer));
       } else {
-        f(left_kmer, right_kmer);
+        f_not_shared(left_kmer, std::get<0>(right_kmer));
       }
     }
   }
@@ -106,7 +106,7 @@ double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
         auto right_kmer_background = right.find(context);
 
         auto [left_comp, right_comp] = get_components(
-            left_v, left_kmer_background, right_v, right_kmer_background);
+            left_v, std::get<0>(left_kmer_background), right_v, std::get<0>(right_kmer_background));
 
         for (int i = 0; i < 4; i++) { 
           dot_product += left_comp[i] * right_comp[i];

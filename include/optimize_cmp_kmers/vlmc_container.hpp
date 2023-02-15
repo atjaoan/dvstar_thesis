@@ -26,7 +26,10 @@ class VLMC_Container{
     virtual void push(const Kmer &kmer){};
     virtual void for_each(const std::function<void(Kmer &kmer)> &){};
     virtual Kmer &get(const int i) { std::cout << "Hello from bad place" << std::endl; return null_kmer; };
-    virtual Kmer &find(const Kmer &kmer) { std::cout << "Looking in a bad place" << std::endl; return null_kmer; }
+    virtual std::tuple<std::reference_wrapper<Kmer>,bool> find(const Kmer &kmer) { 
+      std::cout << "Bad place" << std::endl; 
+      return std::make_tuple(std::ref(null_kmer), false); 
+    }
     virtual int get_max_kmer_index() const { return INT_MAX; }
     virtual int get_min_kmer_index() const { return 0; }
 
@@ -69,13 +72,13 @@ class VLMC_vector : public VLMC_Container {
     int get_max_kmer_index() const override { return container.size() - 1; }
     int get_min_kmer_index() const override { return 0; }
 
-    Kmer &find(const Kmer &kmer) override {
+    std::tuple<std::reference_wrapper<Kmer>,bool> find(const Kmer &kmer) override {
       for (size_t i = 0; i < container.size(); i++){
         if (container[i]==kmer) {
-          return container[i]; 
+          return std::make_tuple(std::ref(container[i]), true); 
         }
       }
-      return null_kmer; 
+      return std::make_tuple(std::ref(null_kmer), false); 
     }
 };
 
@@ -131,12 +134,12 @@ class VLMC_multi_vector : public VLMC_Container {
     int get_max_kmer_index() const override { return max_kmer_index; }
     int get_min_kmer_index() const override { return min_kmer_index; }
 
-    Kmer &find(const Kmer &kmer) override {
+    std::tuple<std::reference_wrapper<Kmer>,bool> find(const Kmer &kmer) override {
       auto index = get_index_rep(kmer);
       if (container[index]==kmer){
-        return container[index];
+        return std::make_tuple(std::ref(container[index]), true);
       }
-      return null_kmer; 
+      return std::make_tuple(std::ref(null_kmer), false); 
     }
 
     int get_index_rep(const Kmer &kmer) {
