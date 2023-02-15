@@ -95,6 +95,7 @@ test_case(our_tests/get_cluster_tests.cpp)
 test_case(our_tests/parallel_tests.cpp)
 test_case(our_tests/parser_tests.cpp)
 test_case(our_tests/vlmc_container_tests.cpp)
+test_case(our_tests/veb_tree_tests.cpp)
 
 
 # benchmark_case(benchmarks.cpp)
