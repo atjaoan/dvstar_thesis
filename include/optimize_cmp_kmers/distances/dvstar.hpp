@@ -41,25 +41,6 @@ std::string get_background_context(const std::string &state,
   }
 }
 
-// Kmer &find_background(vlmc_c &kmers, const Kmer &kmer,
-//                           uint &background_i, int background_order) {
-//   auto diff_pos = Kmer::get_first_differing_position(
-//       kmer, kmers.get(background_i), kmer.length - background_order);
-// 
-//   while (diff_pos != -1 || kmers.get(background_i).length != background_order) {
-//     if (background_i < kmers.size()) {
-//       background_i++;
-//     } else {
-//       // TODO So this must be the last background, lets just use that for now...
-//       return kmers.get(background_i);
-//     }
-//     diff_pos = Kmer::get_first_differing_position(
-//         kmer, kmers.get(background_i), kmer.length - background_order);
-//   }
-// 
-//   return kmers.get(background_i);
-// }
-
 void iterate_kmers(
     vlmc_c &left_kmers, vlmc_c &right_kmers,
     const std::function<void(const Kmer &left, const Kmer &right)> &f,
@@ -101,15 +82,11 @@ double normalise_dvstar(double dot_product, double left_norm,
 }
 
 double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
-  // const size_t background_order = 0; 
 
   double dot_product = 0.0;
 
   double left_norm = 0.0;
   double right_norm = 0.0;
-
-  uint left_background_i = 0;
-  uint right_background_i = 0;
 
   iterate_kmers(
       left, right, [&](const Kmer &left_v, const Kmer &right_v) {
@@ -118,13 +95,15 @@ double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
         }
         const auto background_context = get_background_context(left_v.to_string(), background_order);
 
-        auto left_kmer_background = left.find(background_context);
-        auto right_kmer_background = right.find(background_context);
+        //Create new kmer with new context, should be reconsidered
+        vlmc::VLMCTranslator kmer{static_cast<int>(background_context.size())};
+        if (!background_context.empty()) {
+          kmer.from_string(background_context);
+        }
+        Kmer context = kmer.construct_vlmc_kmer();
 
-        // auto &left_kmer_background = find_background(
-        //     left, left_v, left_background_i, background_order);
-        // auto &right_kmer_background = find_background(
-        //     right, right_v, right_background_i, background_order);
+        auto left_kmer_background = left.find(context);
+        auto right_kmer_background = right.find(context);
 
         auto [left_comp, right_comp] = get_components(
             left_v, left_kmer_background, right_v, right_kmer_background);
