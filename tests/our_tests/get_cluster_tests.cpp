@@ -42,9 +42,9 @@ TEST_F(GetClusterTest, ClusterGetWithVlmcMultiVector) {
     archive(kmer);
   }
   ifs.close();
-
+  //If fail, check directory of bintrees, use container.get(last_tree index), 
+  //I.e if directory contains 10 bintrees, use index 9.
   int index = vlmc_multi_vec.get_index_rep(kmer);
-  container::VLMC_Container vlmc = container.get(0);
   EXPECT_GT(container.size(), 0);
-  EXPECT_EQ(vlmc.get(index).to_string(), kmer.to_string());
+  EXPECT_EQ(container.get(9).get(index).to_string(), kmer.to_string());
 }
