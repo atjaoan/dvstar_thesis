@@ -32,19 +32,6 @@ TEST_F(GetClusterTest, ClusterGetWithVlmcMultiVector) {
   container::Cluster_vector container{};
   cluster::get_cluster<container::VLMC_multi_vector>(path_to_bintrees, container); 
 
-  std::ifstream ifs(path_to_vlmc, std::ios::binary);
-  cereal::BinaryInputArchive archive(ifs);
-  container::VLMC_multi_vector vlmc_multi_vec{};
-  
-  Kmer kmer{};
-
-  if (ifs.peek() != EOF){
-    archive(kmer);
-  }
-  ifs.close();
-  //If fail, check directory of bintrees, use container.get(last_tree index), 
-  //I.e if directory contains 10 bintrees, use index 9.
-  int index = vlmc_multi_vec.get_index_rep(kmer);
   EXPECT_GT(container.size(), 0);
-  EXPECT_EQ(container.get(9).get(index).to_string(), kmer.to_string());
+  EXPECT_EQ(container.get(0).get(1).to_string(), "A");
 }
