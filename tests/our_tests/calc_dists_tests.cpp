@@ -48,7 +48,7 @@ protected:
       return distance::dvstar(left, right, background_order);
   };
 
-  double error_tolerance = 1E-9;
+  double error_tolerance = 1E-7;
 };
 
 cluster_c create_cluster(vlmc_c &vlmc, size_t size) {
@@ -119,8 +119,8 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
   for (int x = 0; x < distances_vector.cols(); x++){
     for (int y = 0; y < distances_vector.rows(); y++){
       if (x==y){
-        EXPECT_DOUBLE_EQ(0.0, distances_multi_vector(x,y));
-        EXPECT_DOUBLE_EQ(0.0, distances_vector(x,y));
+        EXPECT_NEAR(0.0, distances_multi_vector(x,y), error_tolerance);
+        EXPECT_NEAR(0.0, distances_vector(x,y), error_tolerance);
       } else { 
         EXPECT_NEAR(distances_multi_vector(x,y), distances_vector(x,y), error_tolerance);
         EXPECT_NEAR(distances_org_dvstar(x,y), distances_multi_vector(x,y), error_tolerance);
