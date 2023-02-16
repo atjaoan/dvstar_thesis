@@ -19,10 +19,6 @@
 #include "vlmc_from_kmers/dvstar.hpp"
 #include "vlmc_from_kmers/build_vlmc.hpp"
 
-//Pst calculate-distances
-// #include "../submodules/PstClassifierSeqan/src/calculate-distances.h"
-// #include "../submodules/PstClassifierSeqan/src/io_utils.hpp"
-
 using matrix_t  = Eigen::MatrixXd;
 using vlmc_c = container::VLMC_vector;
 using vlmc_t = container::VLMC_Container;
