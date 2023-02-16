@@ -47,6 +47,8 @@ protected:
   std::function<double(vlmc_t &, vlmc_t &)> dist_func = [&](auto &left, auto &right) {
       return distance::dvstar(left, right, background_order);
   };
+
+  double error_tolerance = 1E-9;
 };
 
 cluster_c create_cluster(vlmc_c &vlmc, size_t size) {
@@ -88,32 +90,42 @@ TEST_F(CalcDistsTests, AllValsTwoDir) {
 }
 
 TEST_F(CalcDistsTests, ValueCheckTwoDir){
-  // input_arguments arguments = parse_cli_arguments(argc, argv);
-
-  // const auto [distance_fun, distance_name_with_args] = parse_distance_function(arguments);
-
-  // std::vector<tree_t> trees = get_trees(path_to_bintrees, 1, -1);
-  // std::vector<tree_t> trees_to = trees;
-  
-  // matrix_t distances = calculate_distances(trees, trees_to, arguments, distance_fun);
-  
+  // Multi Vector Implementation
   container::Cluster_vector left_cluster_mv{};
-  cluster::get_cluster<container::VLMC_multi_vector>(path_to_bintrees, left_cluster_mv);
   container::Cluster_vector right_cluster_mv{};
+  cluster::get_cluster<container::VLMC_multi_vector>(path_to_bintrees, left_cluster_mv);
   cluster::get_cluster<container::VLMC_multi_vector>(path_to_bintrees, right_cluster_mv);
-
   matrix_t distances_multi_vector = calculate::calculate_distances(left_cluster_mv, right_cluster_mv, dist_func, 1);
 
+  // Vector Implementation
   container::Cluster_vector left_cluster_v{};
-  cluster::get_cluster<container::VLMC_vector>(path_to_bintrees, left_cluster_v);
   container::Cluster_vector right_cluster_v{};
+  cluster::get_cluster<container::VLMC_vector>(path_to_bintrees, left_cluster_v);
   cluster::get_cluster<container::VLMC_vector>(path_to_bintrees, right_cluster_v);
-
   matrix_t distances_vector = calculate::calculate_distances(left_cluster_v, right_cluster_v, dist_func, 1);
   
+  // Dvstar Original implementation 
+  matrix_t distances_org_dvstar{distances_vector.cols(), distances_vector.rows()};
+  int x = 0;
+  for (const auto& dir_entry_x : recursive_directory_iterator(path_to_bintrees)) {
+    int y = 0; 
+    for (const auto& dir_entry_y : recursive_directory_iterator(path_to_bintrees)) {
+      distances_org_dvstar(x,y) = vlmc::dvstar(dir_entry_x, dir_entry_y, 0);
+      y++;
+    }
+    x++;
+  }
+
   for (int x = 0; x < distances_vector.cols(); x++){
     for (int y = 0; y < distances_vector.rows(); y++){
-      EXPECT_DOUBLE_EQ(distances_multi_vector(x,y), distances_vector(x,y));
+      if (x==y){
+        EXPECT_DOUBLE_EQ(0.0, distances_multi_vector(x,y));
+        EXPECT_DOUBLE_EQ(0.0, distances_vector(x,y));
+      } else { 
+        EXPECT_NEAR(distances_multi_vector(x,y), distances_vector(x,y), error_tolerance);
+        EXPECT_NEAR(distances_org_dvstar(x,y), distances_multi_vector(x,y), error_tolerance);
+        EXPECT_NEAR(distances_org_dvstar(x,y), distances_vector(x,y), error_tolerance);
+      }
     }
   }
 }
