@@ -35,14 +35,14 @@ protected:
   };
 };
 
-
+// Vector Tests
 TEST_F(DvstarTests, Identity_vector) {
   container::VLMC_vector first_vlmc{first_bintree};
 
-  double dist = dist_func(first_vlmc, first_vlmc);
-  EXPECT_DOUBLE_EQ(dist, 0.0);
+  double dist_vector = dist_func(first_vlmc, first_vlmc);
+  EXPECT_DOUBLE_EQ(0.0, dist_vector);
   double old_dvstar_implementation = vlmc::dvstar(first_bintree, first_bintree, background_order);
-  EXPECT_DOUBLE_EQ(old_dvstar_implementation, 0.0);
+  EXPECT_DOUBLE_EQ(0.0, old_dvstar_implementation);
 }
 
 TEST_F(DvstarTests, EqualDistance_vector) {
@@ -52,7 +52,7 @@ TEST_F(DvstarTests, EqualDistance_vector) {
   double dist_vector = dist_func(first_vlmc, second_vlmc);
   double old_dvstar_implementation = vlmc::dvstar(first_bintree, second_bintree, background_order);
 
-  EXPECT_DOUBLE_EQ(dist_vector, old_dvstar_implementation);
+  EXPECT_DOUBLE_EQ(old_dvstar_implementation, dist_vector);
 }
 
 TEST_F(DvstarTests, Symmetry_vector) {
@@ -65,13 +65,48 @@ TEST_F(DvstarTests, Symmetry_vector) {
   EXPECT_DOUBLE_EQ(dist_one_vector, dist_two_vector);
 }
 
+TEST_F(DvstarTests, multiple_runs_vector) {
+  container::VLMC_vector first_vlmc{first_bintree};
+  container::VLMC_vector second_vlmc{second_bintree};
+  size_t runs = 10; 
+  double prev = dist_func(first_vlmc, second_vlmc);
+  for (int i = 0; i < runs; i++){
+    double current = dist_func(first_vlmc, second_vlmc);
+    EXPECT_DOUBLE_EQ(prev, current); 
+    prev = current; 
+  }
+}
+
+// Multi Vector Tests
 TEST_F(DvstarTests, Identity_multivec) {
   container::VLMC_multi_vector first_vlmc{first_bintree};
 
-  double dist = dist_func(first_vlmc, first_vlmc);
-  EXPECT_DOUBLE_EQ(dist, 0.0);
+  double dist_multi_vector = dist_func(first_vlmc, first_vlmc);
+  EXPECT_DOUBLE_EQ(0.0, dist_multi_vector);
   double old_dvstar_implementation = vlmc::dvstar(first_bintree, first_bintree, background_order);
-  EXPECT_DOUBLE_EQ(old_dvstar_implementation, 0.0);
+  EXPECT_DOUBLE_EQ(0.0, old_dvstar_implementation);
+}
+
+TEST_F(DvstarTests, Symmetry_multivec) {
+  container::VLMC_multi_vector first_vlmc{first_bintree};
+  container::VLMC_multi_vector second_vlmc{second_bintree};
+
+  double dist_one_multi_vector = dist_func(first_vlmc, second_vlmc);
+  double dist_two_multi_vector = dist_func(second_vlmc, first_vlmc);
+
+  EXPECT_DOUBLE_EQ(dist_one_multi_vector, dist_two_multi_vector);
+}
+
+TEST_F(DvstarTests, multiple_runs_multivec) {
+  container::VLMC_multi_vector first_vlmc{first_bintree};
+  container::VLMC_multi_vector second_vlmc{second_bintree};
+  size_t runs = 10; 
+  double prev = dist_func(first_vlmc, second_vlmc);
+  for (int i = 0; i < runs; i++){
+    double current = dist_func(first_vlmc, second_vlmc);
+    EXPECT_DOUBLE_EQ(prev, current); 
+    prev = current; 
+  }
 }
 
 TEST_F(DvstarTests, EqualDistance_multivec) {
@@ -86,15 +121,6 @@ TEST_F(DvstarTests, EqualDistance_multivec) {
   double old_dvstar_implementation = vlmc::dvstar(first_bintree, second_bintree, background_order);
 
   EXPECT_DOUBLE_EQ(dist_multi_vector, dist_vector);
-  EXPECT_DOUBLE_EQ(dist_multi_vector, old_dvstar_implementation);
-}
-
-TEST_F(DvstarTests, Symmetry_multivec) {
-  container::VLMC_multi_vector first_vlmc{first_bintree};
-  container::VLMC_multi_vector second_vlmc{second_bintree};
-
-  double dist_one_multi_vector = dist_func(first_vlmc, second_vlmc);
-  double dist_two_multi_vector = dist_func(second_vlmc, first_vlmc);
-
-  EXPECT_DOUBLE_EQ(dist_one_multi_vector, dist_two_multi_vector);
+  EXPECT_DOUBLE_EQ(old_dvstar_implementation, dist_vector);
+  EXPECT_DOUBLE_EQ(old_dvstar_implementation, dist_multi_vector);
 }

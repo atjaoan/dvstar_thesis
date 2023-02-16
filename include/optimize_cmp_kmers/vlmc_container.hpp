@@ -136,8 +136,10 @@ class VLMC_multi_vector : public VLMC_Container {
 
     std::tuple<std::reference_wrapper<Kmer>,bool> find(const Kmer &kmer) override {
       auto index = get_index_rep(kmer);
-      if (container[index]==kmer){
-        return std::make_tuple(std::ref(container[index]), true);
+      if (index <= max_kmer_index){
+        if (container[index]==kmer){
+          return std::make_tuple(std::ref(container[index]), true);
+        }
       }
       return std::make_tuple(std::ref(null_kmer), false); 
     }
