@@ -79,7 +79,12 @@ TEST_F(RIKmerTest, KmerBackgroundRep4) {
   container::RI_Kmer kmer{old_kmer};
   EXPECT_EQ(kmer.background_order_index(kmer.integer_rep, 2), 20);
 }
-
+TEST_F(RIKmerTest, KmerBackgroundRep5) {
+  std::string kmer_string{"AAG"};
+  auto old_kmer = create_kmer(kmer_string);
+  container::RI_Kmer kmer{old_kmer};
+  EXPECT_EQ(kmer.background_order_index(kmer.integer_rep, 2), 7);
+}
 void createStrComb(std::vector<std::string> &strings, std::string str, int size){
   if (size <= 0){
     return; 
@@ -122,7 +127,7 @@ TEST_F(RIKmerTest, showIntRep) {
   container::RI_Kmer ri_kmer{};
   std::vector<std::string> strings{""};
   std::string current_string{""};  
-  createStrComb(strings, current_string, 3);
+  createStrComb(strings, current_string, 5);
 
   std::vector<std::pair<int, std::string>> cmb{};
 
@@ -135,11 +140,7 @@ TEST_F(RIKmerTest, showIntRep) {
 
   sort(cmb.begin(), cmb.end(), compare);
 
-  // for (auto item : cmb) {
-  //   std::cout << "Index " << item.first << " -> " << item.second << std::endl; 
-  // }
-
-  for (int background_order = 2; background_order < 3; background_order++){
+  for (int background_order = 0; background_order <= 3; background_order++){
     for (auto item : cmb) {
       auto idx = item.first;
       auto context = get_background_context(item.second, background_order);
@@ -148,7 +149,6 @@ TEST_F(RIKmerTest, showIntRep) {
       container::RI_Kmer kmer{old_kmer};
       auto context_idx = kmer.integer_rep;
       auto our_context_idx = ri_kmer.background_order_index(idx, background_order);
-      std::cout << "Index " << idx << " " << item.second << std::endl; 
       EXPECT_EQ(context_idx, our_context_idx);
     }
   }
