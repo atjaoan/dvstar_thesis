@@ -79,3 +79,9 @@ TEST_F(RIKmerTest, KmerBackgroundRep4) {
   container::RI_Kmer kmer{old_kmer};
   EXPECT_EQ(kmer.background_order_index(kmer.integer_rep, 2), 20);
 }
+TEST_F(RIKmerTest, KmerBackgroundRep5) {
+  std::string kmer_string{"AAG"};
+  auto old_kmer = create_kmer(kmer_string);
+  container::RI_Kmer kmer{old_kmer};
+  EXPECT_EQ(kmer.background_order_index(kmer.integer_rep, 2), 7);
+}

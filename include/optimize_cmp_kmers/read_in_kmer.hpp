@@ -63,12 +63,11 @@ struct RI_Kmer{
   int background_order_index(int integer_rep, int order){
     int back_rep = 0;
     int i = 1;
-    int r = integer_rep % 4;
-    if(order == 0) return 0;
     for(int o = 0; o < order; o++){
+      int r = integer_rep % 4;
       if(r == 0) r = 4;
-      r *= i;
-      back_rep += r;
+      integer_rep = (integer_rep - r) / 4;
+      back_rep += r*i;
       i *= 4;
     }
     return back_rep;
