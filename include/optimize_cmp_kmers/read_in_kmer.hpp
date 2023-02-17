@@ -61,6 +61,7 @@ struct RI_Kmer{
   }
 
   int background_order_index(int integer_rep, int order){
+    if(integer_rep < std::pow(4, order)) return integer_rep;
     int back_rep = 0;
     int i = 1;
     for(int o = 0; o < order; o++){
