@@ -54,7 +54,7 @@ void iterate_kmers(
     if (left_kmer.is_null){
       continue; 
     }
-    auto right_kmer = right_kmers.find(left_kmer);
+    auto right_kmer = right_kmers.find(left_kmer.integer_rep);
     if (right_kmer.is_null){
       f_not_shared(left_kmer, right_kmer);
     } else {
@@ -96,19 +96,10 @@ double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
         if (left_v.length <= background_order) {
           return;
         }
-        // const auto background_context = get_background_context(left_v.to_string(), background_order);
-        std::string background_context{""};
+        const auto background_context = left_v.background_order_index(left_v.integer_rep, background_order);
 
-        //Create new kmer with new context, should be reconsidered
-        vlmc::VLMCTranslator kmer{static_cast<int>(background_context.size())};
-        if (!background_context.empty()) {
-          kmer.from_string(background_context);
-        }
-        Kmer context = kmer.construct_vlmc_kmer();
-        container::RI_Kmer ri_context{context};
-
-        auto left_kmer_background = left.find(ri_context);
-        auto right_kmer_background = right.find(ri_context);
+        auto left_kmer_background = left.find(background_context);
+        auto right_kmer_background = right.find(background_context);
 
         auto [left_comp, right_comp] = get_components(
             left_v, left_kmer_background, right_v, right_kmer_background);

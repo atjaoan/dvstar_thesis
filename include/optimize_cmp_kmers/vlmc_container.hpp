@@ -27,7 +27,7 @@ class VLMC_Container{
     virtual void push(const RI_Kmer &kmer){};
     virtual void for_each(const std::function<void(RI_Kmer &kmer)> &){};
     virtual RI_Kmer &get(const int i) { std::cout << "Hello from bad place" << std::endl; return null_kmer; };
-    virtual RI_Kmer find(const RI_Kmer &kmer) { 
+    virtual RI_Kmer find(const int idx) { 
       std::cout << "Bad place" << std::endl; 
       return null_kmer; 
     }
@@ -73,9 +73,9 @@ class VLMC_vector : public VLMC_Container {
     int get_max_kmer_index() const override { return container.size() - 1; }
     int get_min_kmer_index() const override { return 0; }
 
-    RI_Kmer find(const RI_Kmer &kmer) override {
+    RI_Kmer find(const int idx) override {
       for (size_t i = 0; i < container.size(); i++){
-        if (container[i]==kmer) {
+        if (container[i].integer_rep==idx) {
           return container[i]; 
         }
       }
@@ -141,10 +141,9 @@ class Index_by_value : public VLMC_Container {
     int get_max_kmer_index() const override { return max_kmer_index; }
     int get_min_kmer_index() const override { return min_kmer_index; }
 
-    RI_Kmer find(const RI_Kmer &kmer) override {
-      auto index = kmer.integer_rep;
-      if (index <= max_kmer_index){
-        return container[index]; 
+    RI_Kmer find(const int idx) override {
+      if (idx <= max_kmer_index){
+        return container[idx]; 
       }
       return null_kmer;
     }

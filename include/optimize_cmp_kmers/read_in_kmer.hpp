@@ -20,7 +20,7 @@ struct RI_Kmer{
     //Using 4 since it may be useful in SIMD instructions
     size_t length = 0; 
     int integer_rep;
-    int background_rep;
+    // int background_rep; <- Should be implemented 
     std::array<double,4> next_char_prob{};
     std::array<uint64, 4> bit_representation;
     bool is_null = true;
@@ -35,7 +35,7 @@ struct RI_Kmer{
         }
         this->integer_rep = get_index_rep(old_kmer);
         this->is_null = false;
-        this->background_rep = background_order_index(this->integer_rep, 0);
+        // this->background_rep = background_order_index(this->integer_rep, 0);  <- Should be implemented 
     }
     ~RI_Kmer() = default;
 
