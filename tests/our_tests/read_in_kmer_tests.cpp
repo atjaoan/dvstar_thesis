@@ -27,11 +27,11 @@ TEST_F(RIKmerTest, EmptyConstructor) {
 }
 TEST_F(RIKmerTest, KmerConstructorProb) {
   vlmc::VLMCKmer old_kmer{5, 10, {5, 10, 7, 8}};
-  double sum_children = 30.0;
+  double sum_children = 30.0+4.0;
   
   container::RI_Kmer kmer{old_kmer};
   for (size_t i = 0; i < 4; i++){
-    EXPECT_DOUBLE_EQ(kmer.next_char_prob[i], old_kmer.next_symbol_counts[i]/sum_children);
+    EXPECT_DOUBLE_EQ(kmer.next_char_prob[i], (old_kmer.next_symbol_counts[i] + 1)/sum_children);
   }
   EXPECT_FALSE(kmer.is_null);
 }
