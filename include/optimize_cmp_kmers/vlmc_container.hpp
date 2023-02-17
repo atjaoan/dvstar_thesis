@@ -193,7 +193,7 @@ class Index_by_value {
     void push(const RI_Kmer &kmer) { 
       int index = kmer.integer_rep;
       if(index > max_kmer_index){
-        container.resize(index + (index / 2));
+        container.resize(index + 10);
         max_kmer_index = index;
       } else if (index < min_kmer_index){
         min_kmer_index = index;

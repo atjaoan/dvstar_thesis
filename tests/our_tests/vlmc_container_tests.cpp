@@ -96,5 +96,29 @@ TEST_F(VlmcContainerTest, AddReadInKmerToIndexByValue) {
   Kmer created = create_kmer(kmer_string);
   container::RI_Kmer in_kmer{created};
   container.push(in_kmer);
-  //EXPECT_EQ(container.get(1).get_index_rep, 1);
+  EXPECT_EQ(container.get(1), in_kmer);
+}
+
+TEST_F(VlmcContainerTest, AddManyReadInKmerToIndexByValue) {
+  container::Index_by_value container{};
+  std::vector<std::string> kmer_strings {"A", "C", "G", "T", "AC"};
+  std::vector<container::RI_Kmer> in_kmers {};
+  for(auto s : kmer_strings){
+    Kmer created = create_kmer(s);
+    container::RI_Kmer new_kmer{created};
+    in_kmers.push_back(new_kmer);
+    container.push(new_kmer);
+  }
+  for(auto kmer : in_kmers){
+    EXPECT_EQ(container.get(kmer.integer_rep), kmer);
+  }
+}
+
+TEST_F(VlmcContainerTest, UseDirectoryIndexByValue) {
+  container::Index_by_value container{path_bintree};
+  container::VLMC_multi_vector multi_vec{path_bintree};
+  for(size_t i = 1; i <= multi_vec.get_max_kmer_index(); i++){
+    if(multi_vec.get_index_rep(multi_vec.get(i)) == 0) continue;
+    EXPECT_EQ(container.get(i).integer_rep, i);
+  }
 }
