@@ -82,6 +82,73 @@ class VLMC_vector : public VLMC_Container {
       return null_kmer; 
     }
 };
+
+/*
+  To be integrated, only for testing
+*/
+class Index_by_value : public VLMC_Container {
+
+  private: 
+    std::vector<RI_Kmer> container{}; 
+    int c_size = 0;
+    int max_kmer_index = 0;
+    int min_kmer_index = INT_MAX;
+    RI_Kmer null_kmer {};
+
+  public: 
+    Index_by_value() = default;
+    ~Index_by_value() = default; 
+
+    Index_by_value(const std::filesystem::path &path_to_bintree) {
+      std::ifstream ifs(path_to_bintree, std::ios::binary);
+      cereal::BinaryInputArchive archive(ifs);
+
+      Kmer input_kmer{};
+
+      while (ifs.peek() != EOF){
+        archive(input_kmer);
+        RI_Kmer ri_kmer {input_kmer};
+        push(ri_kmer);
+      }
+      ifs.close();
+      
+    } 
+
+    size_t size() const override { return c_size; }
+
+    void push(const RI_Kmer &kmer) override { 
+      int index = kmer.integer_rep;
+      if(index > max_kmer_index){
+        container.resize(index + 10);
+        max_kmer_index = index;
+      } else if (index < min_kmer_index){
+        min_kmer_index = index;
+      }
+      //Must be done after resize (resize invalidades all iterators)
+      container[index] = kmer; 
+      c_size++;
+      }
+
+    void for_each(const std::function<void(RI_Kmer &kmer)> &f) override {
+      for (auto kmer : container){
+        f(kmer);
+      }
+    }
+
+    RI_Kmer &get(const int i) override { return container[i]; }
+
+    int get_max_kmer_index() const override { return max_kmer_index; }
+    int get_min_kmer_index() const override { return min_kmer_index; }
+
+    RI_Kmer find(const RI_Kmer &kmer) override {
+      auto index = kmer.integer_rep;
+      if (index <= max_kmer_index){
+        return container[index]; 
+      }
+      return null_kmer;
+    }
+};
+
 /*
 class VLMC_multi_vector : public VLMC_Container {
 
@@ -157,72 +224,6 @@ class VLMC_multi_vector : public VLMC_Container {
     }
 };
 */
-
-/*
-  To be integrated, only for testing
-*/
-class Index_by_value : public VLMC_Container {
-
-  private: 
-    std::vector<RI_Kmer> container{}; 
-    int c_size = 0;
-    int max_kmer_index = 0;
-    int min_kmer_index = INT_MAX;
-    RI_Kmer null_kmer {};
-
-  public: 
-    Index_by_value() = default;
-    ~Index_by_value() = default; 
-
-    Index_by_value(const std::filesystem::path &path_to_bintree) {
-      std::ifstream ifs(path_to_bintree, std::ios::binary);
-      cereal::BinaryInputArchive archive(ifs);
-
-      Kmer input_kmer{};
-
-      while (ifs.peek() != EOF){
-        archive(input_kmer);
-        RI_Kmer ri_kmer {input_kmer};
-        push(ri_kmer);
-      }
-      ifs.close();
-      
-    } 
-
-    size_t size() const override { return c_size; }
-
-    void push(const RI_Kmer &kmer) override { 
-      int index = kmer.integer_rep;
-      if(index > max_kmer_index){
-        container.resize(index + 10);
-        max_kmer_index = index;
-      } else if (index < min_kmer_index){
-        min_kmer_index = index;
-      }
-      //Must be done after resize (resize invalidades all iterators)
-      container[index] = kmer; 
-      c_size++;
-      }
-
-    void for_each(const std::function<void(RI_Kmer &kmer)> &f) override {
-      for (auto kmer : container){
-        f(kmer);
-      }
-    }
-
-    RI_Kmer &get(const int i) override { return container[i]; }
-
-    int get_max_kmer_index() const override { return max_kmer_index; }
-    int get_min_kmer_index() const override { return min_kmer_index; }
-
-    RI_Kmer find(const RI_Kmer &kmer) override {
-      auto index = kmer.integer_rep;
-      if (index <= max_kmer_index){
-        return container[index]; 
-      }
-      return null_kmer;
-    }
-};
 
 }
 

@@ -18,6 +18,7 @@ namespace container{
 struct RI_Kmer{
     //Could be 3 and infer the fourth probability,
     //Using 4 since it may be useful in SIMD instructions
+    size_t length = 0; 
     int integer_rep;
     std::array<double,4> next_char_prob{};
     std::array<uint64, 4> bit_representation;
@@ -25,7 +26,7 @@ struct RI_Kmer{
 
     RI_Kmer() = default;
     RI_Kmer(const vlmc::VLMCKmer &old_kmer){
-
+        this->length = old_kmer.length;
         double child_count = std::accumulate(old_kmer.next_symbol_counts.begin(), old_kmer.next_symbol_counts.end(), pseudo_count_amount * 4);
         for (size_t i = 0; i < 4; i++){
             this->next_char_prob[i] = (static_cast<double>(old_kmer.next_symbol_counts[i]) + pseudo_count_amount) / child_count; // Perhaps change static cast to double
