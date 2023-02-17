@@ -11,6 +11,7 @@
 #include "vlmc_container.hpp"
 #include "cluster_container.hpp"
 #include "../read_helper.hpp"
+#include "read_in_kmer.hpp"
 
 class VlmcContainerTest : public ::testing::Test {
 protected:
@@ -87,4 +88,13 @@ TEST_F(VlmcContainerTest, IndexAdd1) {
   Kmer created = create_kmer(kmer_string);
   container.push(created);
   EXPECT_EQ(container.get(1).to_string(), "A");
+}
+
+TEST_F(VlmcContainerTest, AddReadInKmerToIndexByValue) {
+  container::Index_by_value container{};
+  std::string kmer_string{"A"};
+  Kmer created = create_kmer(kmer_string);
+  container::RI_Kmer in_kmer{created};
+  container.push(in_kmer);
+  //EXPECT_EQ(container.get(1).get_index_rep, 1);
 }

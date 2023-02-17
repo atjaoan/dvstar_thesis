@@ -23,12 +23,12 @@ struct RI_Kmer{
 
     RI_Kmer() = default;
     RI_Kmer(const vlmc::VLMCKmer &old_kmer){
-        this->integer_rep = get_index_rep(old_kmer);
         double child_count = std::accumulate(old_kmer.next_symbol_counts.begin(), old_kmer.next_symbol_counts.end(), 0.0);
         for (size_t i = 0; i < 4; i++){
             this->next_char_prob[i] = old_kmer.next_symbol_counts[i] / child_count;
             this->bit_representation[i] = old_kmer.kmer_data[i];
         }
+        this->integer_rep = get_index_rep(old_kmer);
         this->is_null = false;
     }
     ~RI_Kmer() = default;
@@ -53,5 +53,13 @@ struct RI_Kmer{
     uchar n_shift_pos_to_end = (62 - pos_in_row * 2);
     return (bit_representation[row] >> n_shift_pos_to_end) & 3;
   }
+
+  inline bool operator<(const RI_Kmer &kmer) const {
+    return this->integer_rep < kmer.integer_rep;
+  };
+
+  inline bool operator==(const RI_Kmer &kmer) const {
+    return this->integer_rep == kmer.integer_rep;
+  };
 };
 }
