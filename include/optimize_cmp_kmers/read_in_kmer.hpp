@@ -11,6 +11,8 @@
   Stores VLMC (multiple k-mers) in a container. 
 */
 
+constexpr double pseudo_count_amount = 1.0; 
+
 namespace container{
  
 struct RI_Kmer{
@@ -23,9 +25,10 @@ struct RI_Kmer{
 
     RI_Kmer() = default;
     RI_Kmer(const vlmc::VLMCKmer &old_kmer){
-        double child_count = std::accumulate(old_kmer.next_symbol_counts.begin(), old_kmer.next_symbol_counts.end(), 0.0);
+
+        double child_count = std::accumulate(old_kmer.next_symbol_counts.begin(), old_kmer.next_symbol_counts.end(), pseudo_count_amount * 4);
         for (size_t i = 0; i < 4; i++){
-            this->next_char_prob[i] = old_kmer.next_symbol_counts[i] / child_count;
+            this->next_char_prob[i] = (static_cast<double>(old_kmer.next_symbol_counts[i]) + pseudo_count_amount) / child_count; // Perhaps change static cast to double
             this->bit_representation[i] = old_kmer.kmer_data[i];
         }
         this->integer_rep = get_index_rep(old_kmer);

@@ -94,10 +94,10 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
   matrix_t distances_multi_vector = calculate::calculate_distances(left_cluster_mv, right_cluster_mv, dist_func, 1);
 
   // Vector Implementation
-  container::Cluster_vector left_cluster_v{};
-  container::Cluster_vector right_cluster_v{};
-  cluster::get_cluster<container::VLMC_vector>(path_to_bintrees, left_cluster_v);
-  cluster::get_cluster<container::VLMC_vector>(path_to_bintrees, right_cluster_v);
+  cluster_c left_cluster_v{};
+  cluster_c right_cluster_v{};
+  cluster::get_cluster<vlmc_c>(path_to_bintrees, left_cluster_v);
+  cluster::get_cluster<vlmc_c>(path_to_bintrees, right_cluster_v);
   matrix_t distances_vector = calculate::calculate_distances(left_cluster_v, right_cluster_v, dist_func, 1);
   
   // Dvstar Original implementation 

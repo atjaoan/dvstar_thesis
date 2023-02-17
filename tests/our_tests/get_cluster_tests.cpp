@@ -10,6 +10,9 @@
 #include "vlmc_container.hpp"
 #include "get_cluster.hpp"
 
+using VLMC_vector = container::VLMC_vector;
+using Index_by_value = container::Index_by_value;
+
 class GetClusterTest : public ::testing::Test {
 protected:
   void SetUp() override {}
@@ -21,7 +24,7 @@ protected:
 
 TEST_F(GetClusterTest, ClusterGetWithVlmcVector) {
   container::Cluster_vector container{};
-  cluster::get_cluster<container::VLMC_vector>(path_to_bintrees, container);
+  cluster::get_cluster<VLMC_vector>(path_to_bintrees, container);
 
   //std::cout << container.get(0).get(0).to_string() << std::endl;
   EXPECT_GT(container.size(), 0);
@@ -30,8 +33,8 @@ TEST_F(GetClusterTest, ClusterGetWithVlmcVector) {
 
 TEST_F(GetClusterTest, ClusterGetWithVlmcMultiVector) {
   container::Cluster_vector container{};
-  cluster::get_cluster<container::VLMC_multi_vector>(path_to_bintrees, container); 
+  cluster::get_cluster<Index_by_value>(path_to_bintrees, container); 
 
   EXPECT_GT(container.size(), 0);
-  EXPECT_EQ(container.get(0).get(1).to_string(), "A");
+  EXPECT_EQ(container.get(0).get(1).integer_rep, 1);
 }

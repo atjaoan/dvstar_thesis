@@ -16,6 +16,9 @@
 #include "vlmc_from_kmers/dvstar.hpp"
 #include "vlmc_from_kmers/build_vlmc.hpp"
 
+using VLMC_vector = container::VLMC_vector;
+using Index_by_value = container::Index_by_value;
+
 class DvstarTests : public ::testing::Test {
 protected:
   void SetUp() override {}
@@ -37,7 +40,7 @@ protected:
 
 // Vector Tests
 TEST_F(DvstarTests, Identity_vector) {
-  container::VLMC_vector first_vlmc{first_bintree};
+  VLMC_vector first_vlmc{first_bintree};
 
   double dist_vector = dist_func(first_vlmc, first_vlmc);
   EXPECT_DOUBLE_EQ(0.0, dist_vector);
@@ -46,8 +49,8 @@ TEST_F(DvstarTests, Identity_vector) {
 }
 
 TEST_F(DvstarTests, EqualDistance_vector) {
-  container::VLMC_vector first_vlmc{first_bintree};
-  container::VLMC_vector second_vlmc{second_bintree};
+  VLMC_vector first_vlmc{first_bintree};
+  VLMC_vector second_vlmc{second_bintree};
 
   double dist_vector = dist_func(first_vlmc, second_vlmc);
   double old_dvstar_implementation = vlmc::dvstar(first_bintree, second_bintree, background_order);
@@ -56,8 +59,8 @@ TEST_F(DvstarTests, EqualDistance_vector) {
 }
 
 TEST_F(DvstarTests, Symmetry_vector) {
-  container::VLMC_vector first_vlmc{first_bintree};
-  container::VLMC_vector second_vlmc{second_bintree};
+  VLMC_vector first_vlmc{first_bintree};
+  VLMC_vector second_vlmc{second_bintree};
 
   double dist_one_vector = dist_func(first_vlmc, second_vlmc);
   double dist_two_vector = dist_func(second_vlmc, first_vlmc);
@@ -66,8 +69,8 @@ TEST_F(DvstarTests, Symmetry_vector) {
 }
 
 TEST_F(DvstarTests, multiple_runs_vector) {
-  container::VLMC_vector first_vlmc{first_bintree};
-  container::VLMC_vector second_vlmc{second_bintree};
+  VLMC_vector first_vlmc{first_bintree};
+  VLMC_vector second_vlmc{second_bintree};
   size_t runs = 10; 
   double prev = dist_func(first_vlmc, second_vlmc);
   for (int i = 0; i < runs; i++){
@@ -79,7 +82,7 @@ TEST_F(DvstarTests, multiple_runs_vector) {
 
 // Multi Vector Tests
 TEST_F(DvstarTests, Identity_multivec) {
-  container::VLMC_multi_vector first_vlmc{first_bintree};
+  Index_by_value first_vlmc{first_bintree};
 
   double dist_multi_vector = dist_func(first_vlmc, first_vlmc);
   EXPECT_DOUBLE_EQ(0.0, dist_multi_vector);
@@ -88,8 +91,8 @@ TEST_F(DvstarTests, Identity_multivec) {
 }
 
 TEST_F(DvstarTests, Symmetry_multivec) {
-  container::VLMC_multi_vector first_vlmc{first_bintree};
-  container::VLMC_multi_vector second_vlmc{second_bintree};
+  Index_by_value first_vlmc{first_bintree};
+  Index_by_value second_vlmc{second_bintree};
 
   double dist_one_multi_vector = dist_func(first_vlmc, second_vlmc);
   double dist_two_multi_vector = dist_func(second_vlmc, first_vlmc);
@@ -98,8 +101,8 @@ TEST_F(DvstarTests, Symmetry_multivec) {
 }
 
 TEST_F(DvstarTests, multiple_runs_multivec) {
-  container::VLMC_multi_vector first_vlmc{first_bintree};
-  container::VLMC_multi_vector second_vlmc{second_bintree};
+  Index_by_value first_vlmc{first_bintree};
+  Index_by_value second_vlmc{second_bintree};
   size_t runs = 10; 
   double prev = dist_func(first_vlmc, second_vlmc);
   for (int i = 0; i < runs; i++){
@@ -110,11 +113,11 @@ TEST_F(DvstarTests, multiple_runs_multivec) {
 }
 
 TEST_F(DvstarTests, EqualDistance_multivec) {
-  container::VLMC_multi_vector first_vlmc{first_bintree};
-  container::VLMC_multi_vector second_vlmc{second_bintree};
+  Index_by_value first_vlmc{first_bintree};
+  Index_by_value second_vlmc{second_bintree};
 
-  container::VLMC_vector first_vlmc_v{first_bintree};
-  container::VLMC_vector second_vlmc_v{second_bintree};
+  VLMC_vector first_vlmc_v{first_bintree};
+  VLMC_vector second_vlmc_v{second_bintree};
 
   double dist_vector = dist_func(first_vlmc_v, second_vlmc_v);
   double dist_multi_vector = dist_func(first_vlmc, second_vlmc);

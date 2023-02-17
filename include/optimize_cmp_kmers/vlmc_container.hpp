@@ -22,24 +22,23 @@ class VLMC_Container{
     ~VLMC_Container() = default;
     VLMC_Container(const std::filesystem::path &path_to_bintree){}; 
 
-    Kmer null_kmer{};
+    RI_Kmer null_kmer{};
     virtual size_t size() const { return 0;};
-    virtual void push(const Kmer &kmer){};
-    virtual void for_each(const std::function<void(Kmer &kmer)> &){};
-    virtual Kmer &get(const int i) { std::cout << "Hello from bad place" << std::endl; return null_kmer; };
-    virtual std::tuple<std::reference_wrapper<Kmer>,bool> find(const Kmer &kmer) { 
+    virtual void push(const RI_Kmer &kmer){};
+    virtual void for_each(const std::function<void(RI_Kmer &kmer)> &){};
+    virtual RI_Kmer &get(const int i) { std::cout << "Hello from bad place" << std::endl; return null_kmer; };
+    virtual RI_Kmer find(const RI_Kmer &kmer) { 
       std::cout << "Bad place" << std::endl; 
-      return std::make_tuple(std::ref(null_kmer), false); 
+      return null_kmer; 
     }
     virtual int get_max_kmer_index() const { return INT_MAX; }
     virtual int get_min_kmer_index() const { return 0; }
-
 };
 
 class VLMC_vector : public VLMC_Container {
 
   private: 
-    std::vector<Kmer> container{}; 
+    std::vector<RI_Kmer> container{}; 
 
   public: 
     VLMC_vector() = default;
@@ -53,36 +52,37 @@ class VLMC_vector : public VLMC_Container {
 
       while (ifs.peek() != EOF){
         archive(kmer);
-        push(kmer);
+        RI_Kmer ri_kmer{kmer};
+        push(ri_kmer);
       }
       ifs.close();
     } 
 
     size_t size() const override { return container.size(); }
 
-    void push(const Kmer &kmer) override { container.push_back(kmer); }
+    void push(const RI_Kmer &kmer) override { container.push_back(kmer); }
 
-    void for_each(const std::function<void(Kmer &kmer)> &f) override {
+    void for_each(const std::function<void(RI_Kmer &kmer)> &f) override {
       for (auto kmer : container){
         f(kmer);
       }
     }
 
-    Kmer &get(const int i) override { return container[i]; }
+    RI_Kmer &get(const int i) override { return container[i]; }
 
     int get_max_kmer_index() const override { return container.size() - 1; }
     int get_min_kmer_index() const override { return 0; }
 
-    std::tuple<std::reference_wrapper<Kmer>,bool> find(const Kmer &kmer) override {
+    RI_Kmer find(const RI_Kmer &kmer) override {
       for (size_t i = 0; i < container.size(); i++){
         if (container[i]==kmer) {
-          return std::make_tuple(std::ref(container[i]), true); 
+          return container[i]; 
         }
       }
-      return std::make_tuple(std::ref(null_kmer), false); 
+      return null_kmer; 
     }
 };
-
+/*
 class VLMC_multi_vector : public VLMC_Container {
 
   private: 
@@ -145,7 +145,7 @@ class VLMC_multi_vector : public VLMC_Container {
       return std::make_tuple(std::ref(null_kmer), false); 
     }
 
-    int get_index_rep(const Kmer &kmer) {
+    int get_index_rep(const RI_Kmer &kmer) {
       int integer_value = 0;
       int offset = 1;
       for (int i = kmer.length - 1; i >= 0; i--) {
@@ -156,11 +156,12 @@ class VLMC_multi_vector : public VLMC_Container {
       return integer_value;
     }
 };
+*/
 
 /*
   To be integrated, only for testing
 */
-class Index_by_value {
+class Index_by_value : public VLMC_Container {
 
   private: 
     std::vector<RI_Kmer> container{}; 
@@ -188,9 +189,9 @@ class Index_by_value {
       
     } 
 
-    size_t size() const { return c_size; }
+    size_t size() const override { return c_size; }
 
-    void push(const RI_Kmer &kmer) { 
+    void push(const RI_Kmer &kmer) override { 
       int index = kmer.integer_rep;
       if(index > max_kmer_index){
         container.resize(index + 10);
@@ -203,25 +204,23 @@ class Index_by_value {
       c_size++;
       }
 
-    void for_each(const std::function<void(RI_Kmer &kmer)> &f) {
+    void for_each(const std::function<void(RI_Kmer &kmer)> &f) override {
       for (auto kmer : container){
         f(kmer);
       }
     }
 
-    RI_Kmer &get(const int i) { return container[i]; }
+    RI_Kmer &get(const int i) override { return container[i]; }
 
-    int get_max_kmer_index() const { return max_kmer_index; }
-    int get_min_kmer_index() const { return min_kmer_index; }
+    int get_max_kmer_index() const override { return max_kmer_index; }
+    int get_min_kmer_index() const override { return min_kmer_index; }
 
-    std::tuple<std::reference_wrapper<RI_Kmer>,bool> find(const RI_Kmer &kmer) {
+    RI_Kmer find(const RI_Kmer &kmer) override {
       auto index = kmer.integer_rep;
       if (index <= max_kmer_index){
-        if (container[index]==kmer){
-          return std::make_tuple(std::ref(container[index]), true);
-        }
+        return container[index]; 
       }
-      return std::make_tuple(std::ref(null_kmer), false); 
+      return null_kmer;
     }
 };
 

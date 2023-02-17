@@ -3,7 +3,7 @@
 #include "calc_dists.hpp"
 
 using matrix_t = Eigen::MatrixXd;
-using vlmc_c = container::VLMC_multi_vector;
+using vlmc_c = container::Index_by_value;
 using cluster_c = container::Cluster_Container;
 
 int main(int argc, char *argv[]){
@@ -35,7 +35,7 @@ int main(int argc, char *argv[]){
       if (arguments.vlmc==parser::Vlmc_Rep::vlmc_vector){
         cluster::get_cluster<container::VLMC_vector>(arguments.first_VLMC_path, cluster); 
       } else if (arguments.vlmc==parser::Vlmc_Rep::vlmc_multi_vector){
-        cluster::get_cluster<container::VLMC_multi_vector>(arguments.first_VLMC_path, cluster);
+        cluster::get_cluster<container::Index_by_value>(arguments.first_VLMC_path, cluster);
       } else {
         std::cerr
           << "Error: vlmc representation is not one that can be used :( "

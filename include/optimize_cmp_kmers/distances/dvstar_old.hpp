@@ -1,22 +1,23 @@
 #pragma once 
 
 #include "vlmc_container.hpp"
-#include "read_in_kmer.hpp"
 #include "vlmc_from_kmers/kmer.hpp"
 #include "vlmc_from_kmers/estimators.hpp"
 
 namespace distance {
 
 using vlmc_c = container::VLMC_Container;  
-using Kmer = container::RI_Kmer;
+using Kmer = vlmc::VLMCKmer;
 
 std::array<std::array<double, 4>, 2>
 get_components(const Kmer &left, const Kmer &left_background,
                const Kmer &right, const Kmer &right_background) {
-  auto left_probs = left.next_char_prob;
-  auto left_probs_background = left_background.next_char_prob;
-  auto right_probs = right.next_char_prob;
-  auto right_probs_background = right_background.next_char_prob;
+  auto left_probs = vlmc::get_next_symbol_probabilities(left, 1);
+  auto left_probs_background =
+      vlmc::get_next_symbol_probabilities(left_background, 1);
+  auto right_probs = vlmc::get_next_symbol_probabilities(right, 1);
+  auto right_probs_background =
+      vlmc::get_next_symbol_probabilities(right_background, 1);
 
   return {std::array<double, 4>{
               left_probs[0] / std::sqrt(left_probs_background[0]),
@@ -48,14 +49,13 @@ void iterate_kmers(
 
   for (size_t i = left_kmers.get_min_kmer_index() ; i <= left_kmers.get_max_kmer_index(); i++) {
     const Kmer &left_kmer = left_kmers.get(i);
-    if (left_kmer.is_null){
-      continue; 
-    }
-    auto right_kmer = right_kmers.find(left_kmer);
-    if (right_kmer.is_null){
-      f_not_shared(left_kmer, right_kmer);
-    } else {
-      f(left_kmer, right_kmer);
+    if (left_kmer.length != 0){
+      auto right_kmer = right_kmers.find(left_kmer);
+      if (std::get<1>(right_kmer)){
+        f(left_kmer, std::get<0>(right_kmer));
+      } else {
+        f_not_shared(left_kmer, std::get<0>(right_kmer));
+      }
     }
   }
 }
@@ -90,23 +90,23 @@ double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
 
   iterate_kmers(
       left, right, [&](const Kmer &left_v, const Kmer &right_v) {
-        if (left_v.bit_representation.size() <= background_order) {
+        if (left_v.length <= background_order) {
           return;
         }
-        // const auto background_context = get_background_context(left_v.to_string(), background_order);
-// 
-        // //Create new kmer with new context, should be reconsidered
-        // vlmc::VLMCTranslator kmer{static_cast<int>(background_context.size())};
-        // if (!background_context.empty()) {
-        //   kmer.from_string(background_context);
-        // }
-        // Kmer context = kmer.construct_vlmc_kmer();
+        const auto background_context = get_background_context(left_v.to_string(), background_order);
 
-        auto left_kmer_background = left.get(0);
-        auto right_kmer_background = right.get(0);
+        //Create new kmer with new context, should be reconsidered
+        vlmc::VLMCTranslator kmer{static_cast<int>(background_context.size())};
+        if (!background_context.empty()) {
+          kmer.from_string(background_context);
+        }
+        Kmer context = kmer.construct_vlmc_kmer();
+
+        auto left_kmer_background = left.find(context);
+        auto right_kmer_background = right.find(context);
 
         auto [left_comp, right_comp] = get_components(
-            left_v, left_kmer_background, right_v, right_kmer_background);
+            left_v, std::get<0>(left_kmer_background), right_v, std::get<0>(right_kmer_background));
 
         for (int i = 0; i < 4; i++) { 
           dot_product += left_comp[i] * right_comp[i];
