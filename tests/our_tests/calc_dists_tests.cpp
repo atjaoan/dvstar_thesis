@@ -89,8 +89,8 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
   // Multi Vector Implementation
   container::Cluster_vector left_cluster_mv{};
   container::Cluster_vector right_cluster_mv{};
-  cluster::get_cluster<container::VLMC_multi_vector>(path_to_bintrees, left_cluster_mv);
-  cluster::get_cluster<container::VLMC_multi_vector>(path_to_bintrees, right_cluster_mv);
+  cluster::get_cluster<container::Index_by_value>(path_to_bintrees, left_cluster_mv);
+  cluster::get_cluster<container::Index_by_value>(path_to_bintrees, right_cluster_mv);
   matrix_t distances_multi_vector = calculate::calculate_distances(left_cluster_mv, right_cluster_mv, dist_func, 1);
 
   // Vector Implementation
