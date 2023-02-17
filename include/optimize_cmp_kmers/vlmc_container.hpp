@@ -91,7 +91,7 @@ class Index_by_value : public VLMC_Container {
   private: 
     std::vector<RI_Kmer> container{}; 
     int c_size = 0;
-    int max_kmer_index = 0;
+    int max_kmer_index = -1;
     int min_kmer_index = INT_MAX;
     RI_Kmer null_kmer {};
 
@@ -116,7 +116,7 @@ class Index_by_value : public VLMC_Container {
 
     size_t size() const override { return c_size; }
 
-    void push(const RI_Kmer &kmer) override { 
+    void push(const RI_Kmer &kmer) override {  
       int index = kmer.integer_rep;
       if(index > max_kmer_index){
         container.resize(index + 10);
@@ -125,7 +125,8 @@ class Index_by_value : public VLMC_Container {
         min_kmer_index = index;
       }
       //Must be done after resize (resize invalidades all iterators)
-      container[index] = kmer; 
+      // std::cout << "Index " << index << " maxKmerIndex = " << max_kmer_index << std::endl;
+      container[index] = kmer;
       c_size++;
       }
 
