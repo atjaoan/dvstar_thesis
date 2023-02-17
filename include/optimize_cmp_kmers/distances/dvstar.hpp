@@ -36,7 +36,7 @@ get_components(const Kmer &left, const Kmer &left_background,
 std::string get_background_context(const std::string &state,
                                    const size_t background_order) {
   if (state.size() <= background_order) {
-    return state;
+    return state; // <- This will never happen 
   } else {
     size_t background = state.size() - background_order;
     return state.substr(background);

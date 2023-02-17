@@ -15,6 +15,7 @@
 #include <kmc_file.h>
 #include "vlmc_from_kmers/dvstar.hpp"
 #include "vlmc_from_kmers/build_vlmc.hpp"
+#include "vlmc_from_kmers/kmer.hpp"
 
 using VLMC_vector = container::VLMC_vector;
 using Index_by_value = container::Index_by_value;
@@ -37,6 +38,19 @@ protected:
       return distance::dvstar(left, right, background_order);
   };
 };
+
+TEST_F(DvstarTests, BackgroundOrderTest) {
+  std::string test{"AAT"};
+  vlmc::VLMCTranslator kmer{static_cast<int>(test.size())};
+  if (!test.empty()) {
+    kmer.from_string(test);
+  }
+  Kmer context = kmer.construct_vlmc_kmer();
+
+  EXPECT_EQ("", distance::get_background_context(context.to_string(), 0));
+  EXPECT_EQ("T", distance::get_background_context(context.to_string(), 1));
+  EXPECT_EQ("AT", distance::get_background_context(context.to_string(), 2));
+}
 
 // Vector Tests
 TEST_F(DvstarTests, Identity_vector) {
