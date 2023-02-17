@@ -55,3 +55,27 @@ TEST_F(RIKmerTest, KmerConstructorBitRep) {
   }
   EXPECT_FALSE(kmer.is_null);
 }
+TEST_F(RIKmerTest, KmerBackgroundRep1) {
+  std::string kmer_string{"A"};
+  auto old_kmer = create_kmer(kmer_string);
+  container::RI_Kmer kmer{old_kmer};
+  EXPECT_EQ(kmer.background_order_index(kmer.integer_rep, 0), 0);
+}
+TEST_F(RIKmerTest, KmerBackgroundRep2) {
+  std::string kmer_string{"A"};
+  auto old_kmer = create_kmer(kmer_string);
+  container::RI_Kmer kmer{old_kmer};
+  EXPECT_EQ(kmer.background_order_index(kmer.integer_rep, 1), 1);
+}
+TEST_F(RIKmerTest, KmerBackgroundRep3) {
+  std::string kmer_string{"ATT"};
+  auto old_kmer = create_kmer(kmer_string);
+  container::RI_Kmer kmer{old_kmer};
+  EXPECT_EQ(kmer.background_order_index(kmer.integer_rep, 1), 4);
+}
+TEST_F(RIKmerTest, KmerBackgroundRep4) {
+  std::string kmer_string{"ATT"};
+  auto old_kmer = create_kmer(kmer_string);
+  container::RI_Kmer kmer{old_kmer};
+  EXPECT_EQ(kmer.background_order_index(kmer.integer_rep, 2), 20);
+}

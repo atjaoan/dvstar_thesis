@@ -20,6 +20,7 @@ struct RI_Kmer{
     //Using 4 since it may be useful in SIMD instructions
     size_t length = 0; 
     int integer_rep;
+    int background_rep;
     std::array<double,4> next_char_prob{};
     std::array<uint64, 4> bit_representation;
     bool is_null = true;
@@ -34,6 +35,7 @@ struct RI_Kmer{
         }
         this->integer_rep = get_index_rep(old_kmer);
         this->is_null = false;
+        this->background_rep = background_order_index(this->integer_rep, 0);
     }
     ~RI_Kmer() = default;
 
@@ -56,6 +58,20 @@ struct RI_Kmer{
     uchar pos_in_row = pos & 31;
     uchar n_shift_pos_to_end = (62 - pos_in_row * 2);
     return (bit_representation[row] >> n_shift_pos_to_end) & 3;
+  }
+
+  int background_order_index(int integer_rep, int order){
+    int back_rep = 0;
+    int i = 1;
+    int r = integer_rep % 4;
+    if(order == 0) return 0;
+    for(int o = 0; o < order; o++){
+      if(r == 0) r = 4;
+      r *= i;
+      back_rep += r;
+      i *= 4;
+    }
+    return back_rep;
   }
 
   inline bool operator<(const RI_Kmer &kmer) const {
