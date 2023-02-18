@@ -44,9 +44,9 @@ int main(int argc, char *argv[]){
       }
       matrix_t distance_matrix = calculate::calculate_distances(cluster, distance_function, nr_cores_to_use);
       
-      for (size_t i = 0; i < cluster.size(); i++)
+      for (size_t i = 0; i < distance_matrix.rows(); i++)
       {
-        for (size_t j = 0; j < cluster.size(); j++)
+        for (size_t j = 0; j < distance_matrix.cols(); j++)
         {
           std::cout << distance_matrix(i,j) << " ";
         }
@@ -62,9 +62,28 @@ int main(int argc, char *argv[]){
     if (arguments.cluster == parser::Cluster_Rep::cluster_vector){
       container::Cluster_vector left_cluster{};
       container::Cluster_vector right_cluster{};
-      cluster::get_cluster<vlmc_c>(arguments.first_VLMC_path, left_cluster);
-      cluster::get_cluster<vlmc_c>(arguments.second_VLMC_path, right_cluster);
+      if (arguments.vlmc==parser::Vlmc_Rep::vlmc_vector){
+        cluster::get_cluster<container::VLMC_vector>(arguments.first_VLMC_path, left_cluster); 
+        cluster::get_cluster<container::VLMC_vector>(arguments.first_VLMC_path, right_cluster); 
+      } else if (arguments.vlmc==parser::Vlmc_Rep::vlmc_multi_vector){
+        cluster::get_cluster<container::Index_by_value>(arguments.second_VLMC_path, left_cluster);
+        cluster::get_cluster<container::Index_by_value>(arguments.second_VLMC_path, right_cluster); 
+      } else {
+        std::cerr
+          << "Error: vlmc representation is not one that can be used :( "
+          << std::endl;
+        return EXIT_FAILURE;
+      }
       matrix_t distance_matrix = calculate::calculate_distances(left_cluster, right_cluster, distance_function, nr_cores_to_use);
+
+      for (size_t i = 0; i < distance_matrix.rows(); i++)
+      {
+        for (size_t j = 0; j < distance_matrix.cols(); j++)
+        {
+          std::cout << distance_matrix(i,j) << " ";
+        }
+        std::cout << std::endl;
+      }
     } else {
       std::cerr
         << "Error: cluster representation is not one that can be used :( "
