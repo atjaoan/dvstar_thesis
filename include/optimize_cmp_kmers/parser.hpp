@@ -42,7 +42,8 @@ enum Cluster_Rep {
 
 enum Vlmc_Rep {
   vlmc_vector, 
-  vlmc_multi_vector
+  vlmc_multi_vector,
+  vlmc_sorted_vector
 };
 
 struct cli_arguments {
@@ -91,6 +92,7 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
   std::map<std::string, Vlmc_Rep> vlmc_rep_map{
       {"vector", Vlmc_Rep::vlmc_vector},
       {"multi-vector", Vlmc_Rep::vlmc_multi_vector},
+      {"sorted-vector", Vlmc_Rep::vlmc_sorted_vector},
   };
 
   std::map<std::string, Cluster_Rep> cluster_rep_map{

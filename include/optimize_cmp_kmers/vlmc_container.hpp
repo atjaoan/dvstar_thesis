@@ -35,6 +35,9 @@ class VLMC_Container{
     virtual int get_min_kmer_index() const { return 0; }
 };
 
+/*
+  Storing Kmers in a unsorted vector.
+*/
 class VLMC_vector : public VLMC_Container {
 
   private: 
@@ -73,9 +76,9 @@ class VLMC_vector : public VLMC_Container {
     int get_max_kmer_index() const override { return container.size() - 1; }
     int get_min_kmer_index() const override { return 0; }
 
-    RI_Kmer find(const int idx) override {
+    RI_Kmer find(const int i_rep) override {
       for (size_t i = 0; i < container.size(); i++){
-        if (container[i].integer_rep==idx) {
+        if (container[i].integer_rep==i_rep) {
           return container[i]; 
         }
       }
@@ -84,7 +87,7 @@ class VLMC_vector : public VLMC_Container {
 };
 
 /*
-  To be integrated, only for testing
+  Storing Kmers in a vector where the Kmer string is used as index.
 */
 class Index_by_value : public VLMC_Container {
 
@@ -141,9 +144,72 @@ class Index_by_value : public VLMC_Container {
     int get_max_kmer_index() const override { return max_kmer_index; }
     int get_min_kmer_index() const override { return min_kmer_index; }
 
-    RI_Kmer find(const int idx) override {
-      if (idx <= max_kmer_index){
-        return container[idx]; 
+    RI_Kmer find(const int i_rep) override {
+      if (i_rep <= max_kmer_index){
+        return container[i_rep]; 
+      }
+      return null_kmer;
+    }
+};
+
+/*
+  Storing Kmers in a sorted vector.
+*/
+class VLMC_sorted_vector : public VLMC_Container {
+
+  private: 
+    std::vector<RI_Kmer> container{}; 
+
+  public: 
+    VLMC_sorted_vector() = default;
+    ~VLMC_sorted_vector() = default; 
+
+    VLMC_sorted_vector(const std::filesystem::path &path_to_bintree) {
+      std::ifstream ifs(path_to_bintree, std::ios::binary);
+      cereal::BinaryInputArchive archive(ifs);
+
+      Kmer kmer{};
+
+      while (ifs.peek() != EOF){
+        archive(kmer);
+        RI_Kmer ri_kmer{kmer};
+        push(ri_kmer);
+      }
+      ifs.close();
+
+      std::sort(container.begin(), container.end());
+    } 
+
+    size_t size() const override { return container.size(); }
+
+    void push(const RI_Kmer &kmer) override { container.push_back(kmer); }
+
+    void for_each(const std::function<void(RI_Kmer &kmer)> &f) override {
+      for (auto kmer : container){
+        f(kmer);
+      }
+    }
+
+    RI_Kmer &get(const int i) override { return container[i]; }
+
+    int get_max_kmer_index() const override { return container.size() - 1; }
+    int get_min_kmer_index() const override { return 0; }
+
+    RI_Kmer find(const int i_rep) override {
+      int L = 0;
+      int R = size() - 1;
+      if (i_rep < R){
+        R = i_rep;
+      }
+      while (L <= R) {
+          int m = (L + R) / 2;
+          if (container[m].integer_rep < i_rep) {
+            L = m + 1;
+          } else if (container[m].integer_rep > i_rep) {
+            R = m - 1;
+          } else {
+            return container[m];
+          }
       }
       return null_kmer;
     }
