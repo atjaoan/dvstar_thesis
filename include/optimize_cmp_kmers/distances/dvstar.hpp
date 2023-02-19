@@ -1,8 +1,5 @@
 #pragma once 
 
-//temp
-#include "read_in_kmer.hpp"
-
 #include "vlmc_container.hpp"
 #include "read_in_kmer.hpp"
 #include "vlmc_from_kmers/kmer.hpp"
@@ -43,12 +40,14 @@ std::string get_background_context(const std::string &state,
   }
 }
 
+/*
+// Perhaps remove this since it is now placed in the vlmc_container.hpp script
+
 void iterate_kmers(
     vlmc_c &left_kmers, vlmc_c &right_kmers,
     const std::function<void(const Kmer &left, const Kmer &right)> &f,
     const std::function<void(const Kmer &left, const Kmer &right)>
         &f_not_shared) {
-
   for (size_t i = left_kmers.get_min_kmer_index() ; i <= left_kmers.get_max_kmer_index(); i++) {
     const Kmer &left_kmer = left_kmers.get(i);
     if (left_kmer.is_null){
@@ -62,6 +61,7 @@ void iterate_kmers(
     }
   }
 }
+*/
 
 double normalise_dvstar(double dot_product, double left_norm,
                         double right_norm) {
@@ -91,7 +91,7 @@ double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
   double left_norm = 0.0;
   double right_norm = 0.0;
 
-  iterate_kmers(
+  left.iterate_kmers(
       left, right, [&](const Kmer &left_v, const Kmer &right_v) {
         if (left_v.length <= background_order) {
           return;

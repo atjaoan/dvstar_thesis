@@ -25,7 +25,6 @@ class VLMC_Container{
     RI_Kmer null_kmer{};
     virtual size_t size() const { return 0;};
     virtual void push(const RI_Kmer &kmer){};
-    virtual void for_each(const std::function<void(RI_Kmer &kmer)> &){};
     virtual RI_Kmer &get(const int i) { std::cout << "Hello from bad place" << std::endl; return null_kmer; };
     virtual RI_Kmer find(const int idx) { 
       std::cout << "Bad place" << std::endl; 
@@ -33,6 +32,11 @@ class VLMC_Container{
     }
     virtual int get_max_kmer_index() const { return INT_MAX; }
     virtual int get_min_kmer_index() const { return 0; }
+
+    virtual void iterate_kmers(VLMC_Container &left_kmers, VLMC_Container &right_kmers,
+    const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f,
+    const std::function<void(const RI_Kmer &left, const RI_Kmer &right)>
+        &f_not_shared){};
 };
 
 /*
@@ -65,12 +69,6 @@ class VLMC_vector : public VLMC_Container {
 
     void push(const RI_Kmer &kmer) override { container.push_back(kmer); }
 
-    void for_each(const std::function<void(RI_Kmer &kmer)> &f) override {
-      for (auto kmer : container){
-        f(kmer);
-      }
-    }
-
     RI_Kmer &get(const int i) override { return container[i]; }
 
     int get_max_kmer_index() const override { return container.size() - 1; }
@@ -83,6 +81,24 @@ class VLMC_vector : public VLMC_Container {
         }
       }
       return null_kmer; 
+    }
+
+    void iterate_kmers(VLMC_Container &left_kmers, VLMC_Container &right_kmers,
+    const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f,
+    const std::function<void(const RI_Kmer &left, const RI_Kmer &right)>
+        &f_not_shared) override {
+      for (size_t i = left_kmers.get_min_kmer_index() ; i <= left_kmers.get_max_kmer_index(); i++) {
+        const RI_Kmer &left_kmer = left_kmers.get(i);
+        if (left_kmer.is_null){
+          continue; 
+        }
+        auto right_kmer = right_kmers.find(left_kmer.integer_rep);
+        if (right_kmer.is_null){
+          f_not_shared(left_kmer, right_kmer);
+        } else {
+          f(left_kmer, right_kmer);
+        }
+      }
     }
 };
 
@@ -133,12 +149,6 @@ class Index_by_value : public VLMC_Container {
       c_size++;
       }
 
-    void for_each(const std::function<void(RI_Kmer &kmer)> &f) override {
-      for (auto kmer : container){
-        f(kmer);
-      }
-    }
-
     RI_Kmer &get(const int i) override { return container[i]; }
 
     int get_max_kmer_index() const override { return max_kmer_index; }
@@ -149,6 +159,24 @@ class Index_by_value : public VLMC_Container {
         return container[i_rep]; 
       }
       return null_kmer;
+    }
+
+    void iterate_kmers(VLMC_Container &left_kmers, VLMC_Container &right_kmers,
+    const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f,
+    const std::function<void(const RI_Kmer &left, const RI_Kmer &right)>
+        &f_not_shared) override {
+      for (size_t i = left_kmers.get_min_kmer_index() ; i <= left_kmers.get_max_kmer_index(); i++) {
+        const RI_Kmer &left_kmer = left_kmers.get(i);
+        if (left_kmer.is_null){
+          continue; 
+        }
+        auto right_kmer = right_kmers.find(left_kmer.integer_rep);
+        if (right_kmer.is_null){
+          f_not_shared(left_kmer, right_kmer);
+        } else {
+          f(left_kmer, right_kmer);
+        }
+      }
     }
 };
 
@@ -184,12 +212,6 @@ class VLMC_sorted_vector : public VLMC_Container {
 
     void push(const RI_Kmer &kmer) override { container.push_back(kmer); }
 
-    void for_each(const std::function<void(RI_Kmer &kmer)> &f) override {
-      for (auto kmer : container){
-        f(kmer);
-      }
-    }
-
     RI_Kmer &get(const int i) override { return container[i]; }
 
     int get_max_kmer_index() const override { return container.size() - 1; }
@@ -212,6 +234,29 @@ class VLMC_sorted_vector : public VLMC_Container {
           }
       }
       return null_kmer;
+    }
+
+    void iterate_kmers(VLMC_Container &left_kmers, VLMC_Container &right_kmers,
+    const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f,
+    const std::function<void(const RI_Kmer &left, const RI_Kmer &right)>
+        &f_not_shared) override {
+      size_t left_i = 0;
+      size_t right_i = 0;  
+      while(left_i < left_kmers.size() && right_i < right_kmers.size()) {
+        const RI_Kmer &left_kmer = left_kmers.get(left_i);
+        const RI_Kmer &right_kmer = right_kmers.get(right_i);
+        if (right_kmer == left_kmer) {
+          f(left_kmer, right_kmer);
+          left_i++;
+          right_i++;
+        } else if (left_kmer < right_kmer) {
+          f_not_shared(left_kmer, right_kmer);
+          left_i++;
+        } else {
+          f_not_shared(right_kmer, left_kmer);
+          right_i++;
+        }
+      }
     }
 };
 

@@ -60,7 +60,8 @@ matrix_t calculate_distances(
                            cluster_left, cluster_right, distance_function);
       };
       //TODO use parallelize
-      parallel::sequential(cluster_left.size(), cluster_right.size(), fun, requested_cores);
+      parallel::parallelize(cluster_left.size(), cluster_right.size(), fun, requested_cores);
+      // parallel::sequential(cluster_left.size(), cluster_right.size(), fun, requested_cores);
       return distances; 
 }
 }
