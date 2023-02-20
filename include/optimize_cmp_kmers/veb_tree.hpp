@@ -22,38 +22,24 @@ struct Veb_tree{
   size_t size = 0;
   bool is_empty;
   std::unique_ptr<Veb_tree> summary;
-  std::unique_ptr<Veb_tree[]> trees;
+  std::vector<std::shared_ptr<Veb_tree>> trees;
 
-  Veb_tree() : trees{}, is_empty{true} {};
+  Veb_tree() = default;
   // srqt(nr_trees) = |U|
-  Veb_tree(size_t nr_trees) : 
-    size{nr_trees}, trees{new Veb_tree[size]}, summary{}, is_empty{true} 
-    {};
+  Veb_tree(size_t nr_trees) : is_empty{true} {
+    if(nr_trees <= 2){
+      summary = nullptr;
+      size = 0;
+      trees = std::vector<std::shared_ptr<Veb_tree>>{0, nullptr};
+    } else{
+      size_t nr_subtrees = std::ceil(std::sqrt(nr_trees));
+      size = nr_subtrees;
+      summary = std::make_unique<Veb_tree>(nr_subtrees);
+      trees = std::vector<std::shared_ptr<Veb_tree>>{nr_subtrees, nullptr};
+    }
+  };
+
   ~Veb_tree() = default;
-    
-  size_t get_min() { return min; }
-  size_t get_max() { return max; }
-  size_t get_size() { return size; }
-
-    //Temporary, to be removed
-  Veb_tree* get_summary() { return summary.get(); }
-  Veb_tree* get_trees() { return trees.get(); }
-  bool get_is_empty() { return is_empty; }
-
-  void remove(size_t elem) {}
-  void pred(size_t elem) {}
-  void succ(size_t elem) {}
-    
-  //Veb_tree(const std::filesystem::path &path_to_bintree){}; 
-
-  //Kmer null_kmer{};
-  //size_t size() const { return 0;};
-  //void push(const Kmer &kmer){};
-  //void for_each(const std::function<void(Kmer &kmer)> &){};
-  //Kmer &get(const int i) { return null_kmer; };
-  //std::tuple<std::reference_wrapper<Kmer>,bool> find(const Kmer &kmer) { return std::make_tuple(std::ref(null_kmer), false); }
-  //int get_max_kmer_index() const { return INT_MAX; }
-  //int get_min_kmer_index() const { return 0; }
 
   size_t tree_group(size_t in){ return (in / size); }
   size_t tree_group_index(size_t in){ return (in % size); }
@@ -78,13 +64,20 @@ void insert(Veb_tree &t, size_t in) {
   }
   size_t c = t.tree_group(in);
   size_t i = t.tree_group_index(in);
-  if(t.trees[c].is_empty){
-    if(t.summary == nullptr) 
-      t.summary = std::make_unique<Veb_tree>(std::sqrt(t.size));
+  if(t.trees[c] == nullptr){
     insert(*t.summary, c);
   }
-  insert(t.trees[c], i);
+
+  if(t.trees[c] == nullptr)
+    t.trees[c] = std::make_shared<Veb_tree>(t.size);
+  insert(*t.trees[c], i);
   return;
   }
 
+size_t find(Veb_tree &t, size_t in) {
+  if(t.min == in) return t.min;
+  if(t.max == in) return t.max;
+  size_t c = t.tree_group(in);
+  find(*t.trees[c], in);
+}
 }
