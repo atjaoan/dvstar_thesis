@@ -3,10 +3,11 @@
 #include <functional>
 #include <filesystem>
 #include <limits.h>
-
+#include <exception>
 #include "vlmc_from_kmers/kmer.hpp"
 #include "optimize_cmp_kmers/read_in_kmer.hpp"
 #include "b_tree.hpp"
+#include "robin_hood.h"
 
 /*
   Stores VLMC (multiple k-mers) in a container. 
@@ -27,10 +28,7 @@ class VLMC_Container{
     virtual size_t size() const { return 0;};
     virtual void push(const RI_Kmer &kmer){};
     virtual RI_Kmer &get(const int i) { std::cout << "Hello from bad place" << std::endl; return null_kmer; };
-    virtual RI_Kmer find(const int idx) { 
-      std::cout << "Bad place" << std::endl; 
-      return null_kmer; 
-    }
+    virtual RI_Kmer find(const int idx) { std::cout << "Bad place" << std::endl; return null_kmer; }
     virtual int get_max_kmer_index() const { return INT_MAX; }
     virtual int get_min_kmer_index() const { return 0; }
 
@@ -315,6 +313,64 @@ class VLMC_B_tree : public VLMC_Container {
           f(left_v, right_v); 
         }
       });
+    }
+};
+
+/*
+  Storing Kmers in a unordered map (HashMap).
+*/
+class VLMC_hashmap : public VLMC_Container {
+
+  private: 
+    robin_hood::unordered_map<int, RI_Kmer> container{};
+
+  public: 
+    VLMC_hashmap() = default;
+    ~VLMC_hashmap() = default; 
+
+    VLMC_hashmap(const std::filesystem::path &path_to_bintree) {
+      std::ifstream ifs(path_to_bintree, std::ios::binary);
+      cereal::BinaryInputArchive archive(ifs);
+
+      Kmer kmer{};
+
+      while (ifs.peek() != EOF){
+        archive(kmer);
+        RI_Kmer ri_kmer{kmer};
+        push(ri_kmer);
+      }
+      ifs.close();
+    } 
+
+    size_t size() const override { return container.size(); }
+
+    void push(const RI_Kmer &kmer) override { container[kmer.integer_rep] = kmer; }
+
+    RI_Kmer &get(const int i) override { return container[i]; }
+
+    int get_max_kmer_index() const override { return container.size() - 1; }
+    int get_min_kmer_index() const override { return 0; }
+
+    RI_Kmer find(const int i_rep) override {
+      auto res = container.find(i_rep);
+      if (res != container.end()){
+        return res->second; 
+      }
+      return null_kmer; 
+    }
+
+    void iterate_kmers(VLMC_Container &left_kmers, VLMC_Container &right_kmers,
+    const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f,
+    const std::function<void(const RI_Kmer &left, const RI_Kmer &right)>
+        &f_not_shared) override {
+      for (auto &[i_rep, left_v] : container) {
+        auto right_v = right_kmers.find(i_rep); 
+        if (right_v.is_null) {
+          f_not_shared(left_v, right_v);
+        } else {
+          f(left_v, right_v); 
+        }
+      }
     }
 };
 

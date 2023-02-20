@@ -6,6 +6,25 @@ using matrix_t = Eigen::MatrixXd;
 using vlmc_c = container::Index_by_value;
 using cluster_c = container::Cluster_Container;
 
+void get_cluster_with_argument(container::Cluster_vector &cluster, std::filesystem::path path, parser::Vlmc_Rep vlmc_container){
+  if (vlmc_container==parser::Vlmc_Rep::vlmc_vector){
+    cluster::get_cluster<container::VLMC_vector>(path, cluster); 
+  } else if (vlmc_container==parser::Vlmc_Rep::vlmc_multi_vector){
+    cluster::get_cluster<container::Index_by_value>(path, cluster);
+  } else if (vlmc_container==parser::Vlmc_Rep::vlmc_sorted_vector){
+    cluster::get_cluster<container::VLMC_sorted_vector>(path, cluster);
+  } else if (vlmc_container==parser::Vlmc_Rep::vlmc_b_tree){
+    cluster::get_cluster<container::VLMC_B_tree>(path, cluster);
+  } else if (vlmc_container==parser::Vlmc_Rep::vlmc_hashmap){
+    cluster::get_cluster<container::VLMC_hashmap>(path, cluster);
+  } else {
+    std::cerr
+      << "Error: The vlmc representation '" << vlmc_container << "' is not one that can be used :( "
+      << std::endl;
+    return EXIT_FAILURE;
+  }
+}
+
 int main(int argc, char *argv[]){
   CLI::App app{"Distance comparison of either one directory or between two different directories."};
 
@@ -32,20 +51,7 @@ int main(int argc, char *argv[]){
   if(arguments.second_VLMC_path.empty()){
     if (arguments.cluster == parser::Cluster_Rep::cluster_vector){
       container::Cluster_vector cluster{};
-      if (arguments.vlmc==parser::Vlmc_Rep::vlmc_vector){
-        cluster::get_cluster<container::VLMC_vector>(arguments.first_VLMC_path, cluster); 
-      } else if (arguments.vlmc==parser::Vlmc_Rep::vlmc_multi_vector){
-        cluster::get_cluster<container::Index_by_value>(arguments.first_VLMC_path, cluster);
-      } else if (arguments.vlmc==parser::Vlmc_Rep::vlmc_sorted_vector){
-        cluster::get_cluster<container::VLMC_sorted_vector>(arguments.first_VLMC_path, cluster);
-      } else if (arguments.vlmc==parser::Vlmc_Rep::vlmc_b_tree){
-        cluster::get_cluster<container::VLMC_B_tree>(arguments.first_VLMC_path, cluster);
-      } else {
-        std::cerr
-          << "Error: vlmc representation is not one that can be used :( "
-          << std::endl;
-        return EXIT_FAILURE;
-      }
+      get_cluster_with_argument(cluster, arguments.first_VLMC_path, arguments.vlmc); 
       matrix_t distance_matrix = calculate::calculate_distances(cluster, distance_function, nr_cores_to_use);
       
       for (size_t i = 0; i < distance_matrix.rows(); i++)
@@ -66,24 +72,10 @@ int main(int argc, char *argv[]){
     if (arguments.cluster == parser::Cluster_Rep::cluster_vector){
       container::Cluster_vector left_cluster{};
       container::Cluster_vector right_cluster{};
-      if (arguments.vlmc==parser::Vlmc_Rep::vlmc_vector){
-        cluster::get_cluster<container::VLMC_vector>(arguments.first_VLMC_path, left_cluster); 
-        cluster::get_cluster<container::VLMC_vector>(arguments.first_VLMC_path, right_cluster); 
-      } else if (arguments.vlmc==parser::Vlmc_Rep::vlmc_multi_vector){
-        cluster::get_cluster<container::Index_by_value>(arguments.second_VLMC_path, left_cluster);
-        cluster::get_cluster<container::Index_by_value>(arguments.second_VLMC_path, right_cluster); 
-      } else if (arguments.vlmc==parser::Vlmc_Rep::vlmc_sorted_vector){
-        cluster::get_cluster<container::VLMC_sorted_vector>(arguments.second_VLMC_path, left_cluster);
-        cluster::get_cluster<container::VLMC_sorted_vector>(arguments.second_VLMC_path, right_cluster); 
-      } else if (arguments.vlmc==parser::Vlmc_Rep::vlmc_b_tree){
-        cluster::get_cluster<container::VLMC_B_tree>(arguments.second_VLMC_path, left_cluster);
-        cluster::get_cluster<container::VLMC_B_tree>(arguments.second_VLMC_path, right_cluster); 
-      } else {
-        std::cerr
-          << "Error: vlmc representation is not one that can be used :( "
-          << std::endl;
-        return EXIT_FAILURE;
-      }
+
+      get_cluster_with_argument(left_cluster, arguments.first_VLMC_path, arguments.vlmc);
+      get_cluster_with_argument(right_cluster, arguments.second_VLMC_path, arguments.vlmc);  
+
       matrix_t distance_matrix = calculate::calculate_distances(left_cluster, right_cluster, distance_function, nr_cores_to_use);
 
       for (size_t i = 0; i < distance_matrix.rows(); i++)
