@@ -6,19 +6,18 @@
 
 #include <iostream>
 
-#include "vlmc_from_kmers/kmer.hpp"
+#include "read_in_kmer.hpp"
 
 /*
   Stores VLMC (multiple k-mers) in a container. 
 */
 
-using Kmer = vlmc::VLMCKmer; 
 
 namespace veb{
  
 struct Veb_tree{
-  size_t min = INT_MAX;;
-  size_t max = INT_MIN;
+  container::RI_Kmer min;
+  container::RI_Kmer max;
   size_t size = 0;
   bool is_empty;
   std::unique_ptr<Veb_tree> summary;
@@ -26,14 +25,14 @@ struct Veb_tree{
 
   Veb_tree() = default;
   // srqt(nr_trees) = |U|
-  Veb_tree(size_t nr_trees) : is_empty{true} {
+  Veb_tree(size_t nr_trees) : is_empty{true}, min{INT_MAX}, max{INT_MIN} {
     if(nr_trees <= 2){
       summary = nullptr;
       size = 0;
       trees = std::vector<std::shared_ptr<Veb_tree>>{0, nullptr};
     } else{
       size_t nr_subtrees = std::ceil(std::sqrt(nr_trees));
-      size = nr_subtrees;
+      this->size = nr_trees;
       summary = std::make_unique<Veb_tree>(nr_subtrees);
       trees = std::vector<std::shared_ptr<Veb_tree>>{nr_subtrees, nullptr};
     }
@@ -45,7 +44,7 @@ struct Veb_tree{
   size_t tree_group_index(size_t in){ return (in % size); }
 };
 
-void insert(Veb_tree &t, size_t in) {
+void insert(Veb_tree &t, container::RI_Kmer in) {
   if(t.is_empty){
     t.min = in;
     t.max = in;
@@ -53,17 +52,17 @@ void insert(Veb_tree &t, size_t in) {
     return;
   }
   if(in < t.min){
-    int temp = t.min;
+    container::RI_Kmer temp = t.min;
     t.min = in;
     in = temp;
   } 
-  if (in >= t.max){
-    int temp = t.max;
+  if (!(in < t.max)){
+    container::RI_Kmer temp = t.max;
     t.max = in;
     in = temp;
   }
-  size_t c = t.tree_group(in);
-  size_t i = t.tree_group_index(in);
+  size_t c = t.tree_group(in.integer_rep);
+  size_t i = t.tree_group_index(in.integer_rep);
   if(t.trees[c] == nullptr){
     insert(*t.summary, c);
   }
@@ -74,10 +73,10 @@ void insert(Veb_tree &t, size_t in) {
   return;
   }
 
-size_t find(Veb_tree &t, size_t in) {
+container::RI_Kmer& find(Veb_tree &t, container::RI_Kmer in) {
   if(t.min == in) return t.min;
   if(t.max == in) return t.max;
-  size_t c = t.tree_group(in);
+  size_t c = t.tree_group(in.integer_rep);
   find(*t.trees[c], in);
 }
 }

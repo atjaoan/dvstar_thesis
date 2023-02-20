@@ -37,6 +37,7 @@ struct RI_Kmer{
         this->is_null = false;
         // this->background_rep = background_order_index(this->integer_rep, 0);  <- Should be implemented 
     }
+    RI_Kmer(const int temp) : integer_rep{temp} {}
     ~RI_Kmer() = default;
 
     int get_index_rep(const vlmc::VLMCKmer &kmer) {

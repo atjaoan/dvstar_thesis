@@ -8,3 +8,4 @@ make -j 8
 ./tests/parser_tests
 ./tests/vlmc_container_tests
 ./tests/read_in_kmer_tests
+./tests/veb_tree_tests
