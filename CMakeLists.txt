@@ -24,7 +24,7 @@ add_library(kmc_file STATIC submodules/KMC/kmc_api/kmc_file.cpp)
 add_library(kmer_api STATIC submodules/KMC/kmc_api/kmer_api.cpp)
 add_library(mmer STATIC submodules/KMC/kmc_api/mmer.cpp)
 set(KMC_Libraries TRUE)
-
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 # STXXL
 set(USE_BOOST OFF)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/submodules/stxxl)

@@ -6,6 +6,7 @@
 
 #include "vlmc_from_kmers/kmer.hpp"
 #include "optimize_cmp_kmers/read_in_kmer.hpp"
+#include "b_tree.hpp"
 
 /*
   Stores VLMC (multiple k-mers) in a container. 
@@ -138,7 +139,7 @@ class Index_by_value : public VLMC_Container {
     void push(const RI_Kmer &kmer) override {  
       int index = kmer.integer_rep;
       if(index > max_kmer_index){
-        container.resize(index + 10);
+        container.resize(index + ((2 + index) / 2));
         max_kmer_index = index;
       } else if (index < min_kmer_index){
         min_kmer_index = index;
@@ -242,7 +243,9 @@ class VLMC_sorted_vector : public VLMC_Container {
         &f_not_shared) override {
       size_t left_i = 0;
       size_t right_i = 0;  
-      while(left_i < left_kmers.size() && right_i < right_kmers.size()) {
+      size_t left_size = left_kmers.size();
+      size_t right_size = right_kmers.size();
+      while(left_i < left_size && right_i < right_size) {
         const RI_Kmer &left_kmer = left_kmers.get(left_i);
         const RI_Kmer &right_kmer = right_kmers.get(right_i);
         if (right_kmer == left_kmer) {
@@ -257,6 +260,61 @@ class VLMC_sorted_vector : public VLMC_Container {
           right_i++;
         }
       }
+    }
+};
+
+/*
+  Storing Kmers in a B-tree.
+*/
+
+class VLMC_B_tree : public VLMC_Container {
+
+  private: 
+    b_tree::BTree container{3};
+
+  public: 
+    VLMC_B_tree() = default;
+    ~VLMC_B_tree() = default; 
+
+    VLMC_B_tree(const std::filesystem::path &path_to_bintree) {
+      std::ifstream ifs(path_to_bintree, std::ios::binary);
+      cereal::BinaryInputArchive archive(ifs);
+
+      Kmer kmer{};
+
+      while (ifs.peek() != EOF){
+        archive(kmer);
+        RI_Kmer ri_kmer{kmer};
+        push(ri_kmer);
+      }
+      ifs.close();
+    } 
+
+    size_t size() const override { return 0; }
+
+    void push(const RI_Kmer &kmer) override { container.insert(kmer); }
+
+    RI_Kmer &get(const int i) override { return null_kmer; }
+
+    int get_max_kmer_index() const override { return -1; }
+    int get_min_kmer_index() const override { return 0; }
+
+    RI_Kmer find(const int i_rep) override {
+      return container.search(i_rep); 
+    }
+
+    void iterate_kmers(VLMC_Container &left_kmers, VLMC_Container &right_kmers,
+    const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f,
+    const std::function<void(const RI_Kmer &left, const RI_Kmer &right)>
+        &f_not_shared) override {
+      container.for_each([&](const RI_Kmer &left_v) {
+        RI_Kmer right_v = right_kmers.find(left_v.integer_rep);
+        if (right_v.is_null){
+          f_not_shared(left_v, right_v);
+        } else {
+          f(left_v, right_v); 
+        }
+      });
     }
 };
 

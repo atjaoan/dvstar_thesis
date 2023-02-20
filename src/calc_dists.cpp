@@ -38,6 +38,8 @@ int main(int argc, char *argv[]){
         cluster::get_cluster<container::Index_by_value>(arguments.first_VLMC_path, cluster);
       } else if (arguments.vlmc==parser::Vlmc_Rep::vlmc_sorted_vector){
         cluster::get_cluster<container::VLMC_sorted_vector>(arguments.first_VLMC_path, cluster);
+      } else if (arguments.vlmc==parser::Vlmc_Rep::vlmc_b_tree){
+        cluster::get_cluster<container::VLMC_B_tree>(arguments.first_VLMC_path, cluster);
       } else {
         std::cerr
           << "Error: vlmc representation is not one that can be used :( "
@@ -73,6 +75,9 @@ int main(int argc, char *argv[]){
       } else if (arguments.vlmc==parser::Vlmc_Rep::vlmc_sorted_vector){
         cluster::get_cluster<container::VLMC_sorted_vector>(arguments.second_VLMC_path, left_cluster);
         cluster::get_cluster<container::VLMC_sorted_vector>(arguments.second_VLMC_path, right_cluster); 
+      } else if (arguments.vlmc==parser::Vlmc_Rep::vlmc_b_tree){
+        cluster::get_cluster<container::VLMC_B_tree>(arguments.second_VLMC_path, left_cluster);
+        cluster::get_cluster<container::VLMC_B_tree>(arguments.second_VLMC_path, right_cluster); 
       } else {
         std::cerr
           << "Error: vlmc representation is not one that can be used :( "
