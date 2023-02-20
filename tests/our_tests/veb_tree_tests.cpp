@@ -49,11 +49,24 @@ TEST_F(VebTreeTest, InsertOne) {
   EXPECT_EQ(tree.get_trees()->get_size(), 0);
 }
 
-TEST_F(VebTreeTest, SummaryTreeAfterOneInsert) {
+TEST_F(VebTreeTest, SummaryTreeAfterTwoInsert) {
   veb::Veb_tree tree{16};
   veb::insert(tree, 1);
-  EXPECT_EQ(tree.get_min(), 1);
-  EXPECT_EQ(tree.get_max(), 1);
-  EXPECT_EQ(tree.get_size(), 16);
-  EXPECT_EQ(tree.get_trees()->get_size(), 0);
+  veb::insert(tree, 2);
+  EXPECT_NE(nullptr, tree.summary);
+  EXPECT_EQ(tree.summary->size, 4);
+  EXPECT_EQ(tree.summary->max, 0);
+  EXPECT_EQ(tree.summary->min, 0);
+}
+
+TEST_F(VebTreeTest, SubTreeAfterTwoInsert) {
+  veb::Veb_tree tree{16};
+  veb::insert(tree, 1);
+  veb::insert(tree, 0);
+  EXPECT_NE(nullptr, tree.summary);
+  EXPECT_EQ(0, tree.summary->min);
+  EXPECT_EQ(0, tree.summary->max);
+  EXPECT_EQ(tree.trees[0].min, 1);
+  EXPECT_EQ(tree.trees[0].max, 1);
+  EXPECT_EQ(tree.min, 0);
 }

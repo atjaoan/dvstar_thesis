@@ -60,30 +60,31 @@ struct Veb_tree{
 };
 
 void insert(Veb_tree &t, size_t in) {
-      if(t.is_empty){
-        t.min = in;
-        t.max = in;
-        t.is_empty = false;
-        return;
-      }
-      if(in < t.min){
-        int temp = t.min;
-        t.min = in;
-        in = temp;
-      } 
-      if (in >= t.max){
-        int temp = t.max;
-        t.max = in;
-        in = temp;
-      }
-      size_t c = t.tree_group(in);
-      size_t i = t.tree_group_index(in);
-      if(t.trees[c].get_is_empty()){
-        insert(*t.summary, c);
-        return;
-      }
-      insert(t.trees[c], i);
-      return;
-    }
+  if(t.is_empty){
+    t.min = in;
+    t.max = in;
+    t.is_empty = false;
+    return;
+  }
+  if(in < t.min){
+    int temp = t.min;
+    t.min = in;
+    in = temp;
+  } 
+  if (in >= t.max){
+    int temp = t.max;
+    t.max = in;
+    in = temp;
+  }
+  size_t c = t.tree_group(in);
+  size_t i = t.tree_group_index(in);
+  if(t.trees[c].is_empty){
+    if(t.summary == nullptr) 
+      t.summary = std::make_unique<Veb_tree>(std::sqrt(t.size));
+    insert(*t.summary, c);
+  }
+  insert(t.trees[c], i);
+  return;
+  }
 
 }
