@@ -36,6 +36,7 @@ class VLMC_Container(str, Enum):
     vlmc_vector = "vector"
     vlmc_multi_vector = "multi-vector"
     vlmc_sorted_vector = "sorted-vector"
+    vlmc_b_tree = "b-tree"
 
 def get_bintree_name(genome_path: str, threshold: float, min_count: int, max_depth: int):
     return os.path.splitext(genome_path)[0] + f"_{threshold}_{min_count}_{max_depth}.bintree"
@@ -231,6 +232,7 @@ def benchmark():
     stat(-1, Distance_Function.dvstar, genome_path)
     ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_multi_vector, 8)
     stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_sorted_vector, 8)
+    stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_b_tree, 8)
 
 @app.command()
 def record():
