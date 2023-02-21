@@ -56,8 +56,8 @@ matrix_t calculate_distances(
       matrix_t distances{cluster_left.size(), cluster_right.size()};
 
       auto fun = [&](size_t start_index, size_t stop_index) {
-      calculate_full_slice(start_index, stop_index, distances,
-                           cluster_left, cluster_right, distance_function);
+      calculate_full_slice(start_index, stop_index, std::ref(distances),
+                           std::ref(cluster_left), std::ref(cluster_right), distance_function);
       };
       //TODO use parallelize
       parallel::parallelize(cluster_left.size(), cluster_right.size(), fun, requested_cores);
