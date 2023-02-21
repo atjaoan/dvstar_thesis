@@ -92,7 +92,7 @@ double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
   double right_norm = 0.0;
 
   left.iterate_kmers(
-      left, right, [&](const Kmer &left_v, const Kmer &right_v) {
+      left, right, [&](auto &left_v, auto &right_v) {
         if (left_v.length <= background_order) {
           return;
         }
@@ -109,8 +109,7 @@ double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
           left_norm += std::pow(left_comp[i], 2.0);
           right_norm += std::pow(right_comp[i], 2.0);
         }
-      },
-      [](auto l, auto r) {});
+      });
 
   return normalise_dvstar(dot_product, left_norm, right_norm);
 }
