@@ -37,7 +37,7 @@ struct RI_Kmer{
         this->is_null = false;
         // this->background_rep = background_order_index(this->integer_rep, 0);  <- Should be implemented 
     }
-    RI_Kmer(const int temp) : integer_rep{temp}, is_null{true} {}
+    RI_Kmer(const int temp) : integer_rep{temp}, is_null{false} {}
     ~RI_Kmer() = default;
 
     int get_index_rep(const vlmc::VLMCKmer &kmer) {
@@ -83,6 +83,9 @@ struct RI_Kmer{
   };
   inline bool operator>=(const RI_Kmer &kmer) const {
     return this->integer_rep >= kmer.integer_rep;
+  };
+  inline bool operator<=(const RI_Kmer &kmer) const {
+    return this->integer_rep <= kmer.integer_rep;
   };
   inline bool operator==(const RI_Kmer &kmer) const {
     return this->integer_rep == kmer.integer_rep;
