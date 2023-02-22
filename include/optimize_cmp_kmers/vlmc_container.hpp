@@ -106,7 +106,7 @@ class Index_by_value : public VLMC_Container {
     std::vector<RI_Kmer> container{}; 
     int c_size = 0;
     int max_kmer_index = -1;
-    int min_kmer_index = INT_MAX;
+    int min_kmer_index = 0; // <- cant be set to MAX_INT when all kmers are inserted in order (0,1,2,3,4...)
     RI_Kmer null_kmer {};
 
   public: 
@@ -152,7 +152,7 @@ class Index_by_value : public VLMC_Container {
     RI_Kmer find(const int i_rep) override {
       if (i_rep <= max_kmer_index){
         return container[i_rep]; 
-      }
+      } 
       return null_kmer;
     }
 
