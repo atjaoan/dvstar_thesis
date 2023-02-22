@@ -8,6 +8,7 @@
 #include "optimize_cmp_kmers/read_in_kmer.hpp"
 #include "b_tree.hpp"
 #include "robin_hood.h"
+#include "veb_tree.hpp"
 
 /*
   Stores VLMC (multiple k-mers) in a container. 
@@ -538,5 +539,76 @@ class VLMC_multi_vector : public VLMC_Container {
 };
 */
 
-}
+class VLMC_Veb : public VLMC_Container {
 
+  private: 
+    veb::Veb_tree veb = veb::Veb_tree(10000);
+
+  public: 
+    VLMC_Veb() = default;
+    ~VLMC_Veb() = default; 
+
+    VLMC_Veb(const std::filesystem::path &path_to_bintree) {
+      std::ifstream ifs(path_to_bintree, std::ios::binary);
+      cereal::BinaryInputArchive archive(ifs);
+
+      Kmer kmer{};
+
+      while (ifs.peek() != EOF){
+        archive(kmer);
+        RI_Kmer ri_kmer{kmer};
+        push(ri_kmer);
+      }
+      ifs.close();
+    } 
+
+    size_t size() const override { return veb.size; }
+
+    void push(const RI_Kmer &kmer) override { 
+      if(veb.size < kmer.integer_rep){
+        std::cout << "Too enourmous kmer : " << kmer.integer_rep << std::endl;
+        return;
+      }
+      veb::insert(veb, kmer); 
+    }
+
+    RI_Kmer &get(const int i) override { return null_kmer; }
+
+    int get_max_kmer_index() const override { return veb.size - 1; }
+    int get_min_kmer_index() const override { return 0; }
+
+    RI_Kmer find(const int i_rep) override { return veb::find(veb, i_rep); }
+
+    void iterate_kmers(VLMC_Container &left_kmers, VLMC_Container &right_kmers,
+    const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f) override {
+      RI_Kmer left_kmer = left_kmers.find(0);
+      RI_Kmer right_kmer = right_kmers.find(0);
+
+      //while(!left_kmer.is_null && !right_kmer.is_null)
+
+      while(left_kmer.integer_rep != -1){
+        // Check if right_kmers has this succeeding left_kmer
+        right_kmer = right_kmers.find(left_kmer.integer_rep);
+        if(right_kmer.integer_rep != -1){
+          // if, apply f
+          f(left_kmer, right_kmer);
+        }
+        // Iterating left
+        left_kmer = veb::succ(veb, left_kmer);
+      }
+      // else continue
+      /*
+      for (size_t i = left_kmers.get_min_kmer_index() ; i <= left_kmers.get_max_kmer_index(); i++) {
+        const RI_Kmer &left_kmer = left_kmers.get(i);
+        if (left_kmer.is_null){
+          continue; 
+        }
+        auto right_kmer = right_kmers.find(left_kmer.integer_rep);
+        if (!right_kmer.is_null){
+          f(left_kmer, right_kmer);
+        } 
+      }
+      */
+    }
+};
+}

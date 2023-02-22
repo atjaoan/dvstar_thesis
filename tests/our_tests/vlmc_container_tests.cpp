@@ -105,3 +105,26 @@ TEST_F(VlmcContainerTest, UseDirectoryIndexByValue) {
   }
 }
 */
+TEST_F(VlmcContainerTest, TimingTest) {
+  int items = 6561;
+  container::VLMC_sorted_vector tree{};
+  auto null_kmer = container::RI_Kmer(-1);
+  std::chrono::steady_clock::time_point begin_insert = std::chrono::steady_clock::now();
+  for (size_t i = 0; i < items; i++){
+    auto kmer = container::RI_Kmer{i};
+    tree.push(kmer);
+  }
+  std::chrono::steady_clock::time_point end_insert = std::chrono::steady_clock::now();
+  auto insert_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end_insert - begin_insert).count();
+  std::cout << "Time insert : " << insert_time << " [nano sec]" << std::endl;
+  std::cout << "sec / items : " << insert_time / items << " [nano sec]" << std::endl;
+
+  auto begin_find = std::chrono::steady_clock::now();
+  for (size_t i = 0; i < items; i++){
+    tree.find(i);
+  }
+  auto end_find = std::chrono::steady_clock::now();
+  auto find_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end_find - begin_find).count();
+  std::cout << "Time find : " << find_time << " [nano sec]" << std::endl;
+  std::cout << "sec / items : " << find_time / items << " [nano sec]" << std::endl;
+}

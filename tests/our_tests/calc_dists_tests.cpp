@@ -32,7 +32,7 @@ protected:
   std::filesystem::path second_bintree{"../data/test_VLMCs/sequences_2.bintree"};
   std::filesystem::path third_bintree{"../data/test_VLMCs/sequences_3.bintree"};
 
-  std::filesystem::path path_to_bintrees{"../data/test_VLMCs"};
+  std::filesystem::path path_to_bintrees{"../data/very_small_test"};
 
   vlmc_c first_vlmc{first_bintree};
   vlmc_c second_vlmc{second_bintree};
@@ -110,6 +110,13 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
   auto left_cluster_h = cluster::get_cluster<container::VLMC_hashmap>(path_to_bintrees);
   auto right_cluster_h = cluster::get_cluster<container::VLMC_hashmap>(path_to_bintrees);
   matrix_t distances_hashmap = calculate::calculate_distances<container::VLMC_hashmap>(left_cluster_h, right_cluster_h, dist_func, 1);
+
+  // Veb Implementation - Currently too slow
+  //cluster_c left_cluster_veb{};
+  //cluster_c right_cluster_veb{};
+  //cluster::get_cluster<container::VLMC_Veb>(path_to_bintrees, left_cluster_veb);
+  //cluster::get_cluster<container::VLMC_Veb>(path_to_bintrees, right_cluster_veb);
+  //matrix_t distances_veb = calculate::calculate_distances(left_cluster_veb, right_cluster_veb, dist_func, 1);
   
   // Dvstar Original implementation 
   matrix_t distances_org_dvstar{distances_vector.cols(), distances_vector.rows()};
@@ -122,7 +129,6 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
     }
     x++;
   }
-
   for (int x = 0; x < distances_vector.cols(); x++){
     for (int y = 0; y < distances_vector.rows(); y++){
       if (x==y){
@@ -135,6 +141,7 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
         EXPECT_NEAR(distances_multi_vector(x,y), distances_vector(x,y), error_tolerance);
         EXPECT_NEAR(distances_org_dvstar(x,y), distances_multi_vector(x,y), error_tolerance);
         EXPECT_NEAR(distances_org_dvstar(x,y), distances_vector(x,y), error_tolerance);
+        //EXPECT_NEAR(distances_org_dvstar(x,y), distances_veb(x,y), error_tolerance);
       }
     }
   }
