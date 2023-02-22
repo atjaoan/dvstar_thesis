@@ -20,9 +20,10 @@ struct Veb_tree{
   container::RI_Kmer max;
   container::RI_Kmer null_kmer = container::RI_Kmer(-1);
   size_t size = 0;
-  bool is_empty;
-  std::shared_ptr<Veb_tree> summary;
-  std::vector<std::shared_ptr<Veb_tree>> trees;
+  size_t nr_subtrees = 0;
+  bool is_empty = true;
+  std::shared_ptr<Veb_tree> summary = nullptr;
+  std::vector<std::shared_ptr<Veb_tree>> trees{0, nullptr};
 
   Veb_tree() = default;
   // srqt(nr_trees) = |U|
@@ -32,9 +33,9 @@ struct Veb_tree{
       size = 0;
       trees = std::vector<std::shared_ptr<Veb_tree>>{0, nullptr};
     } else{
-      size_t nr_subtrees = std::ceil(std::sqrt(u));
+      this->nr_subtrees = std::ceil(std::sqrt(u));
       this->size = u;
-      summary = std::make_unique<Veb_tree>(nr_subtrees);
+      summary = std::make_shared<Veb_tree>(nr_subtrees);
       trees = std::vector<std::shared_ptr<Veb_tree>>{nr_subtrees, nullptr};
     }
   };
@@ -42,9 +43,9 @@ struct Veb_tree{
   ~Veb_tree() = default;
 
   size_t tree_group(size_t in){
-    if(std::sqrt(size) < 2) return 0;
-    return (in / std::sqrt(size)); }
-  size_t tree_group_index(size_t in){ return (in % (int)std::sqrt(size)); }
+    if(nr_subtrees < 2) return 0;
+    return (in / nr_subtrees); }
+  size_t tree_group_index(size_t in){ return (in % nr_subtrees); }
   //container::RI_Kmer tree_group(container::RI_Kmer in){ return (in / size); }
   //container::RI_Kmer tree_group_index(container::RI_Kmer in){ return (in % size); }
 };
@@ -71,7 +72,7 @@ void insert(Veb_tree &t, container::RI_Kmer in) {
   size_t i = t.tree_group_index(in.integer_rep);
 
   if(t.trees[c] == nullptr){
-    t.trees[c] = std::make_shared<Veb_tree>((int)std::sqrt(t.size));
+    t.trees[c] = std::make_shared<Veb_tree>(t.nr_subtrees);
   }
 
   if(t.trees[c]->is_empty){
@@ -99,7 +100,7 @@ container::RI_Kmer find(Veb_tree &t, container::RI_Kmer in) {
   auto ret_kmer = find(*t.trees[c], in);
   if(ret_kmer.integer_rep != in.integer_rep) return t.null_kmer;
 
-  ret_kmer.integer_rep += c*std::sqrt(t.size);
+  ret_kmer.integer_rep += c*t.nr_subtrees;
   return ret_kmer;
 }
 
@@ -117,7 +118,7 @@ container::RI_Kmer find(Veb_tree &t, int in) {
   auto ret_kmer = find(*t.trees[c], i);
   if(ret_kmer.integer_rep != in) return t.null_kmer;
 
-  ret_kmer.integer_rep += c*std::sqrt(t.size);
+  ret_kmer.integer_rep += c*t.nr_subtrees;
   return ret_kmer;
 }
 
@@ -140,7 +141,7 @@ container::RI_Kmer succ(Veb_tree&t, int in){
   if(i < t.trees[c]->max.integer_rep){
     in = i;
     auto ret_kmer = succ(*t.trees[c], in);
-    ret_kmer.integer_rep += c*std::sqrt(t.size);
+    ret_kmer.integer_rep += c*t.nr_subtrees;
     return ret_kmer; 
   } else{
     in = c;
@@ -149,7 +150,7 @@ container::RI_Kmer succ(Veb_tree&t, int in){
       return t.max;
     } else {
       auto ret_kmer = t.trees[c_prim.integer_rep]->min;
-      ret_kmer.integer_rep += c_prim.integer_rep*std::sqrt(t.size);
+      ret_kmer.integer_rep += c_prim.integer_rep*t.nr_subtrees;
       return ret_kmer;
     }
   }
@@ -174,7 +175,7 @@ container::RI_Kmer succ(Veb_tree&t, container::RI_Kmer in){
   if(i < t.trees[c]->max.integer_rep){
     in.integer_rep = i;
     auto ret_kmer = succ(*t.trees[c], in);
-    ret_kmer.integer_rep += c*std::sqrt(t.size);
+    ret_kmer.integer_rep += c*t.nr_subtrees;
     return ret_kmer; 
   } else{
     in.integer_rep = c;
@@ -183,7 +184,7 @@ container::RI_Kmer succ(Veb_tree&t, container::RI_Kmer in){
       return t.max;
     } else {
       auto ret_kmer = t.trees[c_prim.integer_rep]->min;
-      ret_kmer.integer_rep += c_prim.integer_rep*std::sqrt(t.size);
+      ret_kmer.integer_rep += c_prim.integer_rep*t.nr_subtrees;
       return ret_kmer;
     }
   }

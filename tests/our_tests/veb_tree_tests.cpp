@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <chrono>
 
 #include "vlmc_from_kmers/kmer.hpp"
 #include "veb_tree.hpp"
@@ -178,4 +179,38 @@ TEST_F(VebTreeTest, FailFindINT) {
   EXPECT_EQ(kmer0, veb::find(tree, kmer0.integer_rep));
   EXPECT_EQ(kmer1, veb::find(tree, kmer1.integer_rep));
   EXPECT_EQ(null_kmer, veb::find(tree, kmer3.integer_rep));
+}
+
+TEST_F(VebTreeTest, TimingTest) {
+  int items = 6561;
+  veb::Veb_tree tree{items};
+  auto null_kmer = container::RI_Kmer(-1);
+  std::chrono::steady_clock::time_point begin_insert = std::chrono::steady_clock::now();
+  for (size_t i = 0; i < items; i++){
+    auto kmer = container::RI_Kmer{i};
+    veb::insert(tree, kmer);
+  }
+  std::chrono::steady_clock::time_point end_insert = std::chrono::steady_clock::now();
+  auto insert_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end_insert - begin_insert).count();
+  std::cout << "Time insert : " << insert_time << " [nano sec]" << std::endl;
+  std::cout << "sec / items : " << insert_time / items << " [nano sec]" << std::endl;
+
+  auto begin_find = std::chrono::steady_clock::now();
+  for (size_t i = 0; i < items; i++){
+    veb::find(tree, i);
+  }
+  auto end_find = std::chrono::steady_clock::now();
+  auto find_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end_find - begin_find).count();
+  std::cout << "Time find : " << find_time << " [nano sec]" << std::endl;
+  std::cout << "sec / items : " << find_time / items << " [nano sec]" << std::endl;
+
+  auto begin_succ = std::chrono::steady_clock::now();
+  for (size_t i = 0; i < items; i++){
+    veb::succ(tree, i);
+  }
+  auto end_succ = std::chrono::steady_clock::now();
+  auto succ_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end_succ - begin_succ).count();
+  std::cout << "Time succ : " << succ_time << " [nano sec]" << std::endl;
+  std::cout << "sec / items : " << succ_time / items << " [nano sec]" << std::endl;
+
 }
