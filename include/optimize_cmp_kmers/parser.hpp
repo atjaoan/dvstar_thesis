@@ -15,7 +15,6 @@
 
 namespace parser {
 
-using cluster_c = container::Cluster_Container;
 using vlmc_c = container::VLMC_Container;
 
 enum Mode {

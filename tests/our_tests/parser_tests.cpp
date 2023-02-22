@@ -14,7 +14,6 @@
 
 using vlmc_c = container::VLMC_vector;
 using vlmc_t = container::VLMC_Container;
-using cluster_c = container::Cluster_vector;
 
 class ParserTests : public ::testing::Test {
 protected:

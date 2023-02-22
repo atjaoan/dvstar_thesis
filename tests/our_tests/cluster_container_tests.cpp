@@ -9,7 +9,7 @@
 #include "cluster_container.hpp"
 
 using vlmc_c = container::VLMC_vector;
-using cluster_c = container::Cluster_vector;
+using cluster_c = container::Cluster_Container<vlmc_c>;
 
 class ClusterContainerTest : public ::testing::Test {
 protected:
@@ -27,14 +27,14 @@ protected:
 
 TEST_F(ClusterContainerTest, AddToContainer) {
   cluster_c container {};
-  container.push(std::make_shared<vlmc_c>(first_vlmc));
-  container.push(std::make_shared<vlmc_c>(second_vlmc));
-  container.push(std::make_shared<vlmc_c>(third_vlmc));
+  container.push(first_vlmc);
+  container.push(second_vlmc);
+  container.push(third_vlmc);
   EXPECT_EQ(container.size(), 3);
 }
 
 TEST_F(ClusterContainerTest, VlmcSizeNonZeroAfterAddToContainer) {
   cluster_c container {};
-  container.push(std::make_shared<vlmc_c>(first_vlmc));
+  container.push(first_vlmc);
   EXPECT_GT(container.get(0).size(), 0);
 }

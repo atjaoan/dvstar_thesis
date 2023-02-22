@@ -98,6 +98,7 @@ class VLMC_vector : public VLMC_Container {
 /*
   Storing Kmers in a vector where the Kmer string is used as index.
 */
+
 class Index_by_value : public VLMC_Container {
 
   private: 
@@ -168,6 +169,7 @@ class Index_by_value : public VLMC_Container {
       }
     }
 };
+
 
 /*
   Storing Kmers in a sorted vector.
@@ -351,6 +353,114 @@ class VLMC_hashmap : public VLMC_Container {
       }
     }
 };
+
+
+/*
+  Storing Kmers in a vector where the Kmer string is used as index.
+*/
+/*
+class Index_by_value : public VLMC_Container {
+
+  private: 
+    const int max_idx = 100; 
+    std::array<RI_Kmer, 100> container_ibv{};
+    std::vector<RI_Kmer> container_sorted{};  
+    int max_kmer_index = -1;
+    int min_kmer_index = INT_MAX;
+    RI_Kmer null_kmer {};
+
+  public: 
+    Index_by_value() = default;
+    ~Index_by_value() = default; 
+
+    Index_by_value(const std::filesystem::path &path_to_bintree) {
+      std::ifstream ifs(path_to_bintree, std::ios::binary);
+      cereal::BinaryInputArchive archive(ifs);
+
+      Kmer input_kmer{};
+
+      while (ifs.peek() != EOF){
+        archive(input_kmer);
+        RI_Kmer ri_kmer {input_kmer};
+        push(ri_kmer);
+      }
+      ifs.close();
+      std::sort(container_sorted.begin(), container_sorted.end());
+    } 
+
+    size_t size() const override { return container_sorted.size(); }
+
+    void push(const RI_Kmer &kmer) override {  
+      int index = kmer.integer_rep;
+      if (index < max_idx){
+        container_ibv[index] = kmer; 
+      } else {
+        container_sorted.push_back(kmer); 
+      }
+      }
+
+    RI_Kmer &get(const int i) override { 
+      return container_sorted[i]; 
+    }
+
+    int get_max_kmer_index() const override { return max_kmer_index; }
+    int get_min_kmer_index() const override { return min_kmer_index; }
+
+    RI_Kmer find(const int i_rep) override {
+      if (i_rep < max_idx){
+        return container_ibv[i_rep]; 
+      } else {
+        int L = 0;
+        int R = size() - 1;
+        // if (i_rep < R){
+        //   R = i_rep;
+        // }
+        while (L <= R) {
+            int m = (L + R) / 2;
+            if (container_sorted[m].integer_rep < i_rep) {
+              L = m + 1;
+            } else if (container_sorted[m].integer_rep > i_rep) {
+              R = m - 1;
+            } else {
+              return container_sorted[m];
+            }
+        }
+      }
+      return null_kmer;
+    }
+
+    void iterate_kmers(VLMC_Container &left_kmers, VLMC_Container &right_kmers,
+    const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f) override {
+      for (size_t i = 0 ; i < max_idx; i++) {
+        const RI_Kmer &left_kmer = container_ibv[i];
+        if (left_kmer.is_null){
+          continue; 
+        }
+        auto right_kmer = right_kmers.find(left_kmer.integer_rep);
+        if (!right_kmer.is_null){
+          f(left_kmer, right_kmer);
+        }
+      }
+      size_t left_i = 0;
+      size_t right_i = 0;  
+      size_t left_size = left_kmers.size();
+      size_t right_size = right_kmers.size();
+      while(left_i < left_size && right_i < right_size) {
+        const RI_Kmer &left_kmer = container_sorted[left_i];
+        const RI_Kmer &right_kmer = right_kmers.get(right_i);
+        if (right_kmer == left_kmer) {
+          f(left_kmer, right_kmer);
+          left_i++;
+          right_i++;
+        } else if (left_kmer < right_kmer) {
+          left_i++;
+        } else {
+          right_i++;
+        }
+      }
+    }
+};
+*/
 
 /*
 class VLMC_multi_vector : public VLMC_Container {

@@ -31,20 +31,18 @@ protected:
 
 TEST_F(ParallelTest, SequentialEqParallel) {
   // auto distance_function = distance::dvstar;
-
-  container::Cluster_vector cluster{};
-  cluster::get_cluster<container::VLMC_vector>(first_directory, cluster);
+  auto cluster = cluster::get_cluster<container::VLMC_vector>(first_directory);
 
   matrix_t distances_parallel{cluster.size(), cluster.size()};
   matrix_t distances_sequantial{cluster.size(), cluster.size()};
 
   auto fun_parallel = [&](size_t start_index, size_t stop_index) {
-    calculate::calculate_full_slice(start_index, stop_index, distances_parallel,
+    calculate::calculate_full_slice<container::VLMC_vector>(start_index, stop_index, distances_parallel,
                            cluster, cluster, distance_function);
   };
 
   auto fun_sequential = [&](size_t start_index, size_t stop_index) {
-    calculate::calculate_full_slice(start_index, stop_index, distances_sequantial,
+    calculate::calculate_full_slice<container::VLMC_vector>(start_index, stop_index, distances_sequantial,
                            cluster, cluster, distance_function);
   };
 
@@ -57,19 +55,18 @@ TEST_F(ParallelTest, SequentialEqParallel) {
 TEST_F(ParallelTest, ReducedEqFullSlice) {
   // auto distance_function = distance::dvstar;
 
-  container::Cluster_vector cluster{};
-  cluster::get_cluster<container::VLMC_vector>(first_directory, cluster);
+  auto cluster = cluster::get_cluster<container::VLMC_vector>(first_directory);
 
   matrix_t distances_parallel{cluster.size(), cluster.size()};
   matrix_t distances_sequantial{cluster.size(), cluster.size()};
 
   auto fun_parallel = [&](size_t start_index, size_t stop_index) {
-    calculate::calculate_reduced_slice(start_index, stop_index, distances_parallel,
+    calculate::calculate_reduced_slice<container::VLMC_vector>(start_index, stop_index, distances_parallel,
                            cluster, cluster, distance_function);
   };
 
   auto fun_sequential = [&](size_t start_index, size_t stop_index) {
-    calculate::calculate_full_slice(start_index, stop_index, distances_sequantial,
+    calculate::calculate_full_slice<container::VLMC_vector>(start_index, stop_index, distances_sequantial,
                            cluster, cluster, distance_function);
   };
 

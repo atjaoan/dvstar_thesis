@@ -1,5 +1,7 @@
 #pragma once 
 
+#include <math.h>
+
 #include "vlmc_container.hpp"
 #include "read_in_kmer.hpp"
 #include "vlmc_from_kmers/kmer.hpp"
@@ -76,7 +78,7 @@ double normalise_dvstar(double dot_product, double left_norm,
     double dvstar = 0.5 * (1 - Dvstar);
 
     double angular_distance = 2 * std::acos(Dvstar) / M_PI;
-    if (std::isnan(angular_distance)) {
+    if (isnan(angular_distance)) {
       return 0.0;
     } else {
       return angular_distance;

@@ -22,7 +22,7 @@
 using matrix_t  = Eigen::MatrixXd;
 using vlmc_c = container::VLMC_vector;
 using vlmc_t = container::VLMC_Container;
-using cluster_c = container::Cluster_vector;
+using cluster_c = container::Cluster_Container<vlmc_c>;
 
 class CalcDistsTests : public ::testing::Test {
 protected:
@@ -50,7 +50,7 @@ protected:
 cluster_c create_cluster(vlmc_c &vlmc, size_t size) {
   cluster_c cluster{};
   for (size_t i = 0; i < size; i++){
-    cluster.push(std::make_shared<vlmc_c>(vlmc));
+    cluster.push(vlmc);
   }
   return cluster; 
 }
@@ -62,7 +62,7 @@ TEST_F(CalcDistsTests, SizeTwoDir) {
       cluster_c cluster_left = create_cluster(first_vlmc, x);
       cluster_c cluster_right = create_cluster(second_vlmc, y);
 
-      matrix_t distances = calculate::calculate_distances(cluster_left, cluster_right, dist_func, 1);
+      matrix_t distances = calculate::calculate_distances<vlmc_c>(cluster_left, cluster_right, dist_func, 1);
       EXPECT_EQ(distances.size(), x*y);
       EXPECT_EQ(distances.rows(), x);
       EXPECT_EQ(distances.cols(), y);
@@ -75,7 +75,7 @@ TEST_F(CalcDistsTests, AllValsTwoDir) {
     cluster_c cluster_left = create_cluster(first_vlmc, x);
     cluster_c cluster_right = create_cluster(second_vlmc, x);
 
-    matrix_t distances = calculate::calculate_distances(cluster_left, cluster_right, dist_func, 1);
+    matrix_t distances = calculate::calculate_distances<vlmc_c>(cluster_left, cluster_right, dist_func, 1);
 
     for (size_t row = 0; row < distances.rows(); row++){
       for (size_t col = 0; col < distances.cols(); col++){
@@ -87,39 +87,29 @@ TEST_F(CalcDistsTests, AllValsTwoDir) {
 
 TEST_F(CalcDistsTests, ValueCheckTwoDir){
   // Multi Vector Implementation
-  container::Cluster_vector left_cluster_mv{};
-  container::Cluster_vector right_cluster_mv{};
-  cluster::get_cluster<container::Index_by_value>(path_to_bintrees, left_cluster_mv);
-  cluster::get_cluster<container::Index_by_value>(path_to_bintrees, right_cluster_mv);
-  matrix_t distances_multi_vector = calculate::calculate_distances(left_cluster_mv, right_cluster_mv, dist_func, 1);
+  auto left_cluster_mv = cluster::get_cluster<container::Index_by_value>(path_to_bintrees);
+  auto right_cluster_mv = cluster::get_cluster<container::Index_by_value>(path_to_bintrees);
+  matrix_t distances_multi_vector = calculate::calculate_distances<container::Index_by_value>(left_cluster_mv, right_cluster_mv, dist_func, 1);
 
   // Vector Implementation
-  cluster_c left_cluster_v{};
-  cluster_c right_cluster_v{};
-  cluster::get_cluster<vlmc_c>(path_to_bintrees, left_cluster_v);
-  cluster::get_cluster<vlmc_c>(path_to_bintrees, right_cluster_v);
-  matrix_t distances_vector = calculate::calculate_distances(left_cluster_v, right_cluster_v, dist_func, 1);
+  auto left_cluster_v = cluster::get_cluster<vlmc_c>(path_to_bintrees);
+  auto right_cluster_v = cluster::get_cluster<vlmc_c>(path_to_bintrees);
+  matrix_t distances_vector = calculate::calculate_distances<vlmc_c>(left_cluster_v, right_cluster_v, dist_func, 1);
 
   // Sorted Vector Implementation
-  cluster_c left_cluster_s{};
-  cluster_c right_cluster_s{};
-  cluster::get_cluster<container::VLMC_sorted_vector>(path_to_bintrees, left_cluster_s);
-  cluster::get_cluster<container::VLMC_sorted_vector>(path_to_bintrees, right_cluster_s);
-  matrix_t distances_sorted_vector = calculate::calculate_distances(left_cluster_s, right_cluster_s, dist_func, 1);
+  auto left_cluster_s = cluster::get_cluster<container::VLMC_sorted_vector>(path_to_bintrees);
+  auto right_cluster_s = cluster::get_cluster<container::VLMC_sorted_vector>(path_to_bintrees);
+  matrix_t distances_sorted_vector = calculate::calculate_distances<container::VLMC_sorted_vector>(left_cluster_s, right_cluster_s, dist_func, 1);
 
   // B-tree Implementation
-  cluster_c left_cluster_b{};
-  cluster_c right_cluster_b{};
-  cluster::get_cluster<container::VLMC_B_tree>(path_to_bintrees, left_cluster_b);
-  cluster::get_cluster<container::VLMC_B_tree>(path_to_bintrees, right_cluster_b);
-  matrix_t distances_b_tree = calculate::calculate_distances(left_cluster_b, right_cluster_b, dist_func, 1);
+  auto left_cluster_b = cluster::get_cluster<container::VLMC_B_tree>(path_to_bintrees);
+  auto right_cluster_b = cluster::get_cluster<container::VLMC_B_tree>(path_to_bintrees);
+  matrix_t distances_b_tree = calculate::calculate_distances<container::VLMC_B_tree>(left_cluster_b, right_cluster_b, dist_func, 1);
 
   // HashMap Implementation
-  cluster_c left_cluster_h{};
-  cluster_c right_cluster_h{};
-  cluster::get_cluster<container::VLMC_hashmap>(path_to_bintrees, left_cluster_h);
-  cluster::get_cluster<container::VLMC_hashmap>(path_to_bintrees, right_cluster_h);
-  matrix_t distances_hashmap = calculate::calculate_distances(left_cluster_h, right_cluster_h, dist_func, 1);
+  auto left_cluster_h = cluster::get_cluster<container::VLMC_hashmap>(path_to_bintrees);
+  auto right_cluster_h = cluster::get_cluster<container::VLMC_hashmap>(path_to_bintrees);
+  matrix_t distances_hashmap = calculate::calculate_distances<container::VLMC_hashmap>(left_cluster_h, right_cluster_h, dist_func, 1);
   
   // Dvstar Original implementation 
   matrix_t distances_org_dvstar{distances_vector.cols(), distances_vector.rows()};

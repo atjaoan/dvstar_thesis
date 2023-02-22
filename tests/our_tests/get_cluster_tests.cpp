@@ -23,8 +23,7 @@ protected:
 
 
 TEST_F(GetClusterTest, ClusterGetWithVlmcVector) {
-  container::Cluster_vector container{};
-  cluster::get_cluster<VLMC_vector>(path_to_bintrees, container);
+  auto container = cluster::get_cluster<VLMC_vector>(path_to_bintrees);
 
   //std::cout << container.get(0).get(0).to_string() << std::endl;
   EXPECT_GT(container.size(), 0);
@@ -32,8 +31,7 @@ TEST_F(GetClusterTest, ClusterGetWithVlmcVector) {
 }
 
 TEST_F(GetClusterTest, ClusterGetWithVlmcMultiVector) {
-  container::Cluster_vector container{};
-  cluster::get_cluster<Index_by_value>(path_to_bintrees, container); 
+  auto container = cluster::get_cluster<Index_by_value>(path_to_bintrees); 
 
   EXPECT_GT(container.size(), 0);
   EXPECT_EQ(container.get(0).get(1).integer_rep, 1);

@@ -3,25 +3,53 @@
 #include "calc_dists.hpp"
 
 using matrix_t = Eigen::MatrixXd;
-using vlmc_c = container::Index_by_value;
-using cluster_c = container::Cluster_Container;
 
-void get_cluster_with_argument(container::Cluster_vector &cluster, std::filesystem::path path, parser::Vlmc_Rep vlmc_container){
+matrix_t calculate_cluster_distance(parser::cli_arguments arguments, parser::Vlmc_Rep vlmc_container, size_t nr_cores_to_use){
   if (vlmc_container==parser::Vlmc_Rep::vlmc_vector){
-    cluster::get_cluster<container::VLMC_vector>(path, cluster); 
+    auto distance_function = parser::parse_distance_function(arguments.dist_fn, arguments.background_order);
+    auto cluster = cluster::get_cluster<container::VLMC_vector>(arguments.first_VLMC_path);
+    if (arguments.second_VLMC_path.empty()){
+      return calculate::calculate_distances<container::VLMC_vector>(cluster, distance_function, nr_cores_to_use);
+    } else {
+      auto cluster_to = cluster::get_cluster<container::VLMC_vector>(arguments.second_VLMC_path);
+      return calculate::calculate_distances<container::VLMC_vector>(cluster, cluster_to, distance_function, nr_cores_to_use);
+    }
   } else if (vlmc_container==parser::Vlmc_Rep::vlmc_multi_vector){
-    cluster::get_cluster<container::Index_by_value>(path, cluster);
+    auto distance_function = parser::parse_distance_function(arguments.dist_fn, arguments.background_order);
+    auto cluster = cluster::get_cluster<container::Index_by_value>(arguments.first_VLMC_path);
+    if (arguments.second_VLMC_path.empty()){
+      return calculate::calculate_distances<container::Index_by_value>(cluster, distance_function, nr_cores_to_use);
+    } else {
+      auto cluster_to = cluster::get_cluster<container::Index_by_value>(arguments.second_VLMC_path);
+      return calculate::calculate_distances<container::Index_by_value>(cluster, cluster_to, distance_function, nr_cores_to_use);
+    }
   } else if (vlmc_container==parser::Vlmc_Rep::vlmc_sorted_vector){
-    cluster::get_cluster<container::VLMC_sorted_vector>(path, cluster);
+    auto distance_function = parser::parse_distance_function(arguments.dist_fn, arguments.background_order);
+    auto cluster = cluster::get_cluster<container::VLMC_sorted_vector>(arguments.first_VLMC_path);
+    if (arguments.second_VLMC_path.empty()){
+      return calculate::calculate_distances<container::VLMC_sorted_vector>(cluster, distance_function, nr_cores_to_use);
+    } else {
+      auto cluster_to = cluster::get_cluster<container::VLMC_sorted_vector>(arguments.second_VLMC_path);
+      return calculate::calculate_distances<container::VLMC_sorted_vector>(cluster, cluster_to, distance_function, nr_cores_to_use);
+    }
   } else if (vlmc_container==parser::Vlmc_Rep::vlmc_b_tree){
-    cluster::get_cluster<container::VLMC_B_tree>(path, cluster);
+    auto distance_function = parser::parse_distance_function(arguments.dist_fn, arguments.background_order);
+    auto cluster = cluster::get_cluster<container::VLMC_B_tree>(arguments.first_VLMC_path);
+    if (arguments.second_VLMC_path.empty()){
+      return calculate::calculate_distances<container::VLMC_B_tree>(cluster, distance_function, nr_cores_to_use);
+    } else {
+      auto cluster_to = cluster::get_cluster<container::VLMC_B_tree>(arguments.second_VLMC_path);
+      return calculate::calculate_distances<container::VLMC_B_tree>(cluster, cluster_to, distance_function, nr_cores_to_use);
+    }
   } else if (vlmc_container==parser::Vlmc_Rep::vlmc_hashmap){
-    cluster::get_cluster<container::VLMC_hashmap>(path, cluster);
-  } else {
-    std::cerr
-      << "Error: The vlmc representation '" << vlmc_container << "' is not one that can be used :( "
-      << std::endl;
-    return EXIT_FAILURE;
+    auto distance_function = parser::parse_distance_function(arguments.dist_fn, arguments.background_order);
+    auto cluster = cluster::get_cluster<container::VLMC_hashmap>(arguments.first_VLMC_path);
+    if (arguments.second_VLMC_path.empty()){
+      return calculate::calculate_distances<container::VLMC_hashmap>(cluster, distance_function, nr_cores_to_use);
+    } else {
+      auto cluster_to = cluster::get_cluster<container::VLMC_hashmap>(arguments.second_VLMC_path);
+      return calculate::calculate_distances<container::VLMC_hashmap>(cluster, cluster_to, distance_function, nr_cores_to_use);
+    }
   }
 }
 
@@ -45,53 +73,18 @@ int main(int argc, char *argv[]){
         << std::endl;
     return EXIT_FAILURE;
   }
-  auto distance_function = parser::parse_distance_function(arguments.dist_fn, arguments.background_order);
+
   size_t nr_cores_to_use = parser::parse_dop(arguments.dop);
-  
-  if(arguments.second_VLMC_path.empty()){
-    if (arguments.cluster == parser::Cluster_Rep::cluster_vector){
-      container::Cluster_vector cluster{};
-      get_cluster_with_argument(cluster, arguments.first_VLMC_path, arguments.vlmc); 
-      matrix_t distance_matrix = calculate::calculate_distances(cluster, distance_function, nr_cores_to_use);
+
+  matrix_t distance_matrix = calculate_cluster_distance(arguments, arguments.vlmc, nr_cores_to_use);
       
-      for (size_t i = 0; i < distance_matrix.rows(); i++)
-      {
-        for (size_t j = 0; j < distance_matrix.cols(); j++)
-        {
-          std::cout << distance_matrix(i,j) << " ";
-        }
-        std::cout << std::endl;
-      }
-    } else {
-      std::cerr
-        << "Error: cluster representation is not one that can be used :( "
-        << std::endl;
-      return EXIT_FAILURE;
+  for (size_t i = 0; i < distance_matrix.rows(); i++)
+  {
+    for (size_t j = 0; j < distance_matrix.cols(); j++)
+    {
+      std::cout << distance_matrix(i,j) << " ";
     }
-  } else {
-    if (arguments.cluster == parser::Cluster_Rep::cluster_vector){
-      container::Cluster_vector left_cluster{};
-      container::Cluster_vector right_cluster{};
-
-      get_cluster_with_argument(left_cluster, arguments.first_VLMC_path, arguments.vlmc);
-      get_cluster_with_argument(right_cluster, arguments.second_VLMC_path, arguments.vlmc);  
-
-      matrix_t distance_matrix = calculate::calculate_distances(left_cluster, right_cluster, distance_function, nr_cores_to_use);
-
-      for (size_t i = 0; i < distance_matrix.rows(); i++)
-      {
-        for (size_t j = 0; j < distance_matrix.cols(); j++)
-        {
-          std::cout << distance_matrix(i,j) << " ";
-        }
-        std::cout << std::endl;
-      }
-    } else {
-      std::cerr
-        << "Error: cluster representation is not one that can be used :( "
-        << std::endl;
-      return EXIT_FAILURE;
-    }
+    std::cout << std::endl;
   }
 
   return EXIT_SUCCESS;

@@ -6,11 +6,11 @@
 namespace calculate {
 
 using matrix_t  = Eigen::MatrixXd;
-using vlmc_c    = container::VLMC_Container;
-using cluster_c = container::Cluster_Container;   
+using vlmc_c    = container::VLMC_Container;  
 
+template <typename VC>
 void calculate_reduced_slice(size_t start_index, size_t stop_index, matrix_t &distances,
-                     cluster_c &cluster_left, cluster_c &cluster_right,
+                     container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
                      const std::function<double(vlmc_c &, vlmc_c &)> &fun) {
   size_t y_bound = 1;
   for (size_t i = start_index; i < stop_index; i++) {
@@ -21,8 +21,9 @@ void calculate_reduced_slice(size_t start_index, size_t stop_index, matrix_t &di
   }
 }
 
+template <typename VC>
 void calculate_full_slice(size_t start_index, size_t stop_index, matrix_t &distances,
-                     cluster_c &cluster_left, cluster_c &cluster_right,
+                     container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
                      const std::function<double(vlmc_c &, vlmc_c &)> &fun) {
   for (size_t i = start_index; i < stop_index; i++) {
     for (size_t j = 0; j < cluster_right.size(); j++) {
@@ -32,14 +33,15 @@ void calculate_full_slice(size_t start_index, size_t stop_index, matrix_t &dista
 }
 
 // Inter-directory distances
+template <typename VC> 
 matrix_t calculate_distances(
-    cluster_c &cluster, std::function<double(vlmc_c &, vlmc_c &)> &distance_function,
+    container::Cluster_Container<VC> &cluster, std::function<double(vlmc_c &, vlmc_c &)> &distance_function,
     size_t requested_cores){
 
   matrix_t distances{cluster.size(), cluster.size()};
 
   auto fun = [&](size_t start_index, size_t stop_index) {
-    calculate_reduced_slice(start_index, stop_index, distances,
+    calculate_reduced_slice<VC>(start_index, stop_index, distances,
                            cluster, cluster, distance_function);
   };
   //TODO use parallelize
@@ -48,15 +50,16 @@ matrix_t calculate_distances(
 }
 
 // For two different dirs
+template <typename VC>
 matrix_t calculate_distances(
-    cluster_c &cluster_left, cluster_c &cluster_right,
+    container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
     std::function<double(vlmc_c &, vlmc_c &)> &distance_function,
     size_t requested_cores){
 
       matrix_t distances{cluster_left.size(), cluster_right.size()};
 
       auto fun = [&](size_t start_index, size_t stop_index) {
-      calculate_full_slice(start_index, stop_index, std::ref(distances),
+      calculate_full_slice<VC>(start_index, stop_index, std::ref(distances),
                            std::ref(cluster_left), std::ref(cluster_right), distance_function);
       };
       //TODO use parallelize
