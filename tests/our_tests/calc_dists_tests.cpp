@@ -120,6 +120,13 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
   cluster::get_cluster<container::VLMC_hashmap>(path_to_bintrees, left_cluster_h);
   cluster::get_cluster<container::VLMC_hashmap>(path_to_bintrees, right_cluster_h);
   matrix_t distances_hashmap = calculate::calculate_distances(left_cluster_h, right_cluster_h, dist_func, 1);
+
+  // Veb Implementation
+  cluster_c left_cluster_veb{};
+  cluster_c right_cluster_veb{};
+  cluster::get_cluster<container::VLMC_Veb>(path_to_bintrees, left_cluster_veb);
+  cluster::get_cluster<container::VLMC_Veb>(path_to_bintrees, right_cluster_veb);
+  matrix_t distances_veb = calculate::calculate_distances(left_cluster_veb, right_cluster_veb, dist_func, 1);
   
   // Dvstar Original implementation 
   matrix_t distances_org_dvstar{distances_vector.cols(), distances_vector.rows()};
@@ -145,6 +152,7 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
         EXPECT_NEAR(distances_multi_vector(x,y), distances_vector(x,y), error_tolerance);
         EXPECT_NEAR(distances_org_dvstar(x,y), distances_multi_vector(x,y), error_tolerance);
         EXPECT_NEAR(distances_org_dvstar(x,y), distances_vector(x,y), error_tolerance);
+        //EXPECT_NEAR(distances_org_dvstar(x,y), distances_veb(x,y), error_tolerance);
       }
     }
   }

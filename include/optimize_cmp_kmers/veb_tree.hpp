@@ -21,7 +21,7 @@ struct Veb_tree{
   container::RI_Kmer null_kmer = container::RI_Kmer(-1);
   size_t size = 0;
   bool is_empty;
-  std::unique_ptr<Veb_tree> summary;
+  std::shared_ptr<Veb_tree> summary;
   std::vector<std::shared_ptr<Veb_tree>> trees;
 
   Veb_tree() = default;

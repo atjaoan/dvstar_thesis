@@ -432,7 +432,7 @@ class VLMC_multi_vector : public VLMC_Container {
 class VLMC_Veb : public VLMC_Container {
 
   private: 
-    veb::Veb_tree veb{(int)std::pow(5,4)};
+    veb::Veb_tree veb = veb::Veb_tree(10000);
 
   public: 
     VLMC_Veb() = default;
@@ -454,7 +454,13 @@ class VLMC_Veb : public VLMC_Container {
 
     size_t size() const override { return veb.size; }
 
-    void push(const RI_Kmer &kmer) override { veb::insert(veb, kmer); }
+    void push(const RI_Kmer &kmer) override { 
+      if(veb.size < kmer.integer_rep){
+        std::cout << "Too enourmous kmer : " << kmer.integer_rep << std::endl;
+        return;
+      }
+      veb::insert(veb, kmer); 
+    }
 
     RI_Kmer &get(const int i) override { return null_kmer; }
 
@@ -467,9 +473,20 @@ class VLMC_Veb : public VLMC_Container {
     const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f) override {
       RI_Kmer left_kmer = left_kmers.find(0);
       RI_Kmer right_kmer = right_kmers.find(0);
-      if (!right_kmer.is_null){
+
+      //while(!left_kmer.is_null && !right_kmer.is_null)
+
+      while(left_kmer.integer_rep != -1){
+        // Check if right_kmers has this succeeding left_kmer
+        right_kmer = right_kmers.find(left_kmer.integer_rep);
+        if(right_kmer.integer_rep != -1){
+          // if, apply f
           f(left_kmer, right_kmer);
+        }
+        // Iterating left
+        left_kmer = veb::succ(veb, left_kmer);
       }
+      // else continue
       /*
       for (size_t i = left_kmers.get_min_kmer_index() ; i <= left_kmers.get_max_kmer_index(); i++) {
         const RI_Kmer &left_kmer = left_kmers.get(i);
