@@ -42,7 +42,6 @@ matrix_t calculate_distances(
     calculate_reduced_slice(start_index, stop_index, distances,
                            cluster, cluster, distance_function);
   };
-  //TODO use parallelize
   parallel::parallelize(cluster.size(), fun, requested_cores);
   return distances; 
 }
@@ -59,7 +58,6 @@ matrix_t calculate_distances(
       calculate_full_slice(start_index, stop_index, std::ref(distances),
                            std::ref(cluster_left), std::ref(cluster_right), distance_function);
       };
-      //TODO use parallelize
       parallel::parallelize(cluster_left.size(), cluster_right.size(), fun, requested_cores);
       // parallel::sequential(cluster_left.size(), cluster_right.size(), fun, requested_cores);
       return distances; 

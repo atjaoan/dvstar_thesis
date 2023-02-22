@@ -9,7 +9,7 @@
 #include "read_in_kmer.hpp"
 
 /*
-  Stores VLMC (multiple k-mers) in a container. 
+  Stores VLMC (multiple k-mers) in a van Emde Boas tree. 
 */
 
 
@@ -72,7 +72,6 @@ void insert(Veb_tree &t, container::RI_Kmer in) {
 
   if(t.trees[c] == nullptr){
     t.trees[c] = std::make_shared<Veb_tree>((int)std::sqrt(t.size));
-    
   }
 
   if(t.trees[c]->is_empty){
@@ -88,12 +87,72 @@ void insert(Veb_tree &t, container::RI_Kmer in) {
 container::RI_Kmer find(Veb_tree &t, container::RI_Kmer in) {
   if(t.min == in) return t.min;
   if(t.max == in) return t.max;
+
+  if(t.size < in.integer_rep) return t.null_kmer;
+  
   size_t c = t.tree_group(in.integer_rep);
   size_t i = t.tree_group_index(in.integer_rep);
+
+  if(t.trees[c] == nullptr) return t.null_kmer;
+
   in.integer_rep = i;
   auto ret_kmer = find(*t.trees[c], in);
+  if(ret_kmer.integer_rep != in.integer_rep) return t.null_kmer;
+
   ret_kmer.integer_rep += c*std::sqrt(t.size);
   return ret_kmer;
+}
+
+container::RI_Kmer find(Veb_tree &t, int in) {
+  if(t.min.integer_rep == in) return t.min;
+  if(t.max.integer_rep == in) return t.max;
+
+  if(t.size < in) return t.null_kmer;
+
+  size_t c = t.tree_group(in);
+  size_t i = t.tree_group_index(in);
+
+  if(t.trees[c] == nullptr) return t.null_kmer;
+
+  auto ret_kmer = find(*t.trees[c], i);
+  if(ret_kmer.integer_rep != in) return t.null_kmer;
+
+  ret_kmer.integer_rep += c*std::sqrt(t.size);
+  return ret_kmer;
+}
+
+container::RI_Kmer succ(Veb_tree&t, int in){
+  if(t.is_empty) {
+    return t.null_kmer;
+  }
+  if(in < t.min.integer_rep) {
+    return t.min;
+  }
+  if(t.size <= 2){
+    return t.max;
+  }
+
+  size_t c = t.tree_group(in);
+  size_t i = t.tree_group_index(in);
+  if(t.trees[c] == nullptr){
+    return t.max;
+  }
+  if(i < t.trees[c]->max.integer_rep){
+    in = i;
+    auto ret_kmer = succ(*t.trees[c], in);
+    ret_kmer.integer_rep += c*std::sqrt(t.size);
+    return ret_kmer; 
+  } else{
+    in = c;
+    auto c_prim = succ(*t.summary, in);
+    if(c_prim.is_null) {
+      return t.max;
+    } else {
+      auto ret_kmer = t.trees[c_prim.integer_rep]->min;
+      ret_kmer.integer_rep += c_prim.integer_rep*std::sqrt(t.size);
+      return ret_kmer;
+    }
+  }
 }
 
 container::RI_Kmer succ(Veb_tree&t, container::RI_Kmer in){
