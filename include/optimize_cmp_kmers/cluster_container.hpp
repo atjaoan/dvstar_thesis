@@ -14,14 +14,14 @@ namespace container {
 template <typename VC> 
 class Cluster_Container {
 
-  using vlmc_container = container::VLMC_Container;
-
   private: 
     std::vector<VC> container{};
 
   public: 
     Cluster_Container() = default;
     ~Cluster_Container() = default; 
+
+    Cluster_Container(const size_t i) : container{i} { }
 
     size_t size() const { return container.size(); }
 
@@ -33,7 +33,11 @@ class Cluster_Container {
       }
     }
 
-    vlmc_container &get(const int i) { return container[i]; }
+    VLMC_Container &get(const int i) { return container[i]; }
+
+    VC &operator[](size_t index){ return container[index]; }
+
+    const VC &operator[](size_t index) const { return container[index]; }
 
 };
 }

@@ -4,52 +4,31 @@
 
 using matrix_t = Eigen::MatrixXd;
 
-matrix_t calculate_cluster_distance(parser::cli_arguments arguments, parser::Vlmc_Rep vlmc_container, size_t nr_cores_to_use){
+template <typename VC>
+matrix_t calculate_cluster_distance(parser::cli_arguments arguments, const size_t nr_cores){
+  auto distance_function = parser::parse_distance_function(arguments.dist_fn, arguments.background_order);
+  auto cluster = cluster::get_cluster<VC>(arguments.first_VLMC_path, nr_cores);
+  if (arguments.second_VLMC_path.empty()){
+    return calculate::calculate_distances<VC>(cluster, distance_function, nr_cores);
+  } else {
+    auto cluster_to = cluster::get_cluster<VC>(arguments.second_VLMC_path, nr_cores);
+    return calculate::calculate_distances<VC>(cluster, cluster_to, distance_function, nr_cores);
+  }
+}
+
+matrix_t apply_container(parser::cli_arguments arguments, parser::Vlmc_Rep vlmc_container, const size_t nr_cores){
   if (vlmc_container==parser::Vlmc_Rep::vlmc_vector){
-    auto distance_function = parser::parse_distance_function(arguments.dist_fn, arguments.background_order);
-    auto cluster = cluster::get_cluster<container::VLMC_vector>(arguments.first_VLMC_path);
-    if (arguments.second_VLMC_path.empty()){
-      return calculate::calculate_distances<container::VLMC_vector>(cluster, distance_function, nr_cores_to_use);
-    } else {
-      auto cluster_to = cluster::get_cluster<container::VLMC_vector>(arguments.second_VLMC_path);
-      return calculate::calculate_distances<container::VLMC_vector>(cluster, cluster_to, distance_function, nr_cores_to_use);
-    }
+    return calculate_cluster_distance<container::VLMC_vector>(arguments, nr_cores);
   } else if (vlmc_container==parser::Vlmc_Rep::vlmc_multi_vector){
-    auto distance_function = parser::parse_distance_function(arguments.dist_fn, arguments.background_order);
-    auto cluster = cluster::get_cluster<container::Index_by_value>(arguments.first_VLMC_path);
-    if (arguments.second_VLMC_path.empty()){
-      return calculate::calculate_distances<container::Index_by_value>(cluster, distance_function, nr_cores_to_use);
-    } else {
-      auto cluster_to = cluster::get_cluster<container::Index_by_value>(arguments.second_VLMC_path);
-      return calculate::calculate_distances<container::Index_by_value>(cluster, cluster_to, distance_function, nr_cores_to_use);
-    }
+    return calculate_cluster_distance<container::Index_by_value>(arguments, nr_cores);
   } else if (vlmc_container==parser::Vlmc_Rep::vlmc_sorted_vector){
-    auto distance_function = parser::parse_distance_function(arguments.dist_fn, arguments.background_order);
-    auto cluster = cluster::get_cluster<container::VLMC_sorted_vector>(arguments.first_VLMC_path);
-    if (arguments.second_VLMC_path.empty()){
-      return calculate::calculate_distances<container::VLMC_sorted_vector>(cluster, distance_function, nr_cores_to_use);
-    } else {
-      auto cluster_to = cluster::get_cluster<container::VLMC_sorted_vector>(arguments.second_VLMC_path);
-      return calculate::calculate_distances<container::VLMC_sorted_vector>(cluster, cluster_to, distance_function, nr_cores_to_use);
-    }
+    return calculate_cluster_distance<container::VLMC_sorted_vector>(arguments, nr_cores);
   } else if (vlmc_container==parser::Vlmc_Rep::vlmc_b_tree){
-    auto distance_function = parser::parse_distance_function(arguments.dist_fn, arguments.background_order);
-    auto cluster = cluster::get_cluster<container::VLMC_B_tree>(arguments.first_VLMC_path);
-    if (arguments.second_VLMC_path.empty()){
-      return calculate::calculate_distances<container::VLMC_B_tree>(cluster, distance_function, nr_cores_to_use);
-    } else {
-      auto cluster_to = cluster::get_cluster<container::VLMC_B_tree>(arguments.second_VLMC_path);
-      return calculate::calculate_distances<container::VLMC_B_tree>(cluster, cluster_to, distance_function, nr_cores_to_use);
-    }
+    return calculate_cluster_distance<container::VLMC_B_tree>(arguments, nr_cores);
   } else if (vlmc_container==parser::Vlmc_Rep::vlmc_hashmap){
-    auto distance_function = parser::parse_distance_function(arguments.dist_fn, arguments.background_order);
-    auto cluster = cluster::get_cluster<container::VLMC_hashmap>(arguments.first_VLMC_path);
-    if (arguments.second_VLMC_path.empty()){
-      return calculate::calculate_distances<container::VLMC_hashmap>(cluster, distance_function, nr_cores_to_use);
-    } else {
-      auto cluster_to = cluster::get_cluster<container::VLMC_hashmap>(arguments.second_VLMC_path);
-      return calculate::calculate_distances<container::VLMC_hashmap>(cluster, cluster_to, distance_function, nr_cores_to_use);
-    }
+    return calculate_cluster_distance<container::VLMC_hashmap>(arguments, nr_cores);
+  } else if (vlmc_container==parser::Vlmc_Rep::vlmc_combo){
+    return calculate_cluster_distance<container::VLMC_Combo>(arguments, nr_cores);
   }
 }
 
@@ -74,9 +53,9 @@ int main(int argc, char *argv[]){
     return EXIT_FAILURE;
   }
 
-  size_t nr_cores_to_use = parser::parse_dop(arguments.dop);
+  size_t nr_cores = parser::parse_dop(arguments.dop);
 
-  matrix_t distance_matrix = calculate_cluster_distance(arguments, arguments.vlmc, nr_cores_to_use);
+  matrix_t distance_matrix = apply_container(arguments, arguments.vlmc, nr_cores);
       
   for (size_t i = 0; i < distance_matrix.rows(); i++)
   {

@@ -366,12 +366,11 @@ class VLMC_hashmap : public VLMC_Container {
 class VLMC_Combo : public VLMC_Container {
 
   private: 
-    const int max_idx = 4096; 
-    std::array<RI_Kmer, 4096> container_ibv{};
+    int max_idx = 2048; 
+    std::array<RI_Kmer, 2048> container_ibv{};
     std::vector<RI_Kmer> container_sorted{};  
     int max_kmer_index = -1;
-    int min_kmer_index = INT_MAX;
-    RI_Kmer null_kmer {};
+    int min_kmer_index = 0;
 
   public: 
     VLMC_Combo() = default;
@@ -401,7 +400,7 @@ class VLMC_Combo : public VLMC_Container {
       } else {
         container_sorted.push_back(kmer); 
       }
-      }
+    }
 
     RI_Kmer &get(const int i) override { 
       return container_sorted[i]; 
@@ -416,9 +415,6 @@ class VLMC_Combo : public VLMC_Container {
       } else {
         int L = 0;
         int R = size() - 1;
-        // if (i_rep < R){
-        //   R = i_rep;
-        // }
         while (L <= R) {
             int m = (L + R) / 2;
             if (container_sorted[m].integer_rep < i_rep) {
@@ -464,82 +460,6 @@ class VLMC_Combo : public VLMC_Container {
       }
     }
 };
-
-/*
-class VLMC_multi_vector : public VLMC_Container {
-
-  private: 
-    std::vector<Kmer> container{}; 
-    int c_size = 0;
-    int max_kmer_index = 0;
-    int min_kmer_index = INT_MAX;
-
-  public: 
-    VLMC_multi_vector() = default;
-    ~VLMC_multi_vector() = default; 
-
-    VLMC_multi_vector(const std::filesystem::path &path_to_bintree) {
-      std::ifstream ifs(path_to_bintree, std::ios::binary);
-      cereal::BinaryInputArchive archive(ifs);
-
-      Kmer kmer{};
-
-      while (ifs.peek() != EOF){
-        archive(kmer);
-        push(kmer);
-      }
-      ifs.close();
-      
-    } 
-
-    size_t size() const override { return c_size; }
-
-    void push(const Kmer &kmer) override { 
-      int index = get_index_rep(kmer);
-      if(index > max_kmer_index){
-        container.resize(index + 10);
-        max_kmer_index = index;
-      } else if (index < min_kmer_index){
-        min_kmer_index = index;
-      }
-      //Must be done after resize (resize invalidades all iterators)
-      container[index] = kmer; 
-      c_size = c_size + 1;
-      }
-
-    void for_each(const std::function<void(Kmer &kmer)> &f) override {
-      for (auto kmer : container){
-        f(kmer);
-      }
-    }
-
-    Kmer &get(const int i) override { return container[i]; }
-
-    int get_max_kmer_index() const override { return max_kmer_index; }
-    int get_min_kmer_index() const override { return min_kmer_index; }
-
-    std::tuple<std::reference_wrapper<Kmer>,bool> find(const Kmer &kmer) override {
-      auto index = get_index_rep(kmer);
-      if (index <= max_kmer_index){
-        if (container[index]==kmer){
-          return std::make_tuple(std::ref(container[index]), true);
-        }
-      }
-      return std::make_tuple(std::ref(null_kmer), false); 
-    }
-
-    int get_index_rep(const RI_Kmer &kmer) {
-      int integer_value = 0;
-      int offset = 1;
-      for (int i = kmer.length - 1; i >= 0; i--) {
-        auto kmer_2_bits = kmer.extract2bits(i) + 1;
-        integer_value += (kmer_2_bits * offset);
-        offset *= 4;
-      }
-      return integer_value;
-    }
-};
-*/
 
 class VLMC_Veb : public VLMC_Container {
 
