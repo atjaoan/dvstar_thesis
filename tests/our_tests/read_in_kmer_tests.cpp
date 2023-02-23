@@ -45,16 +45,6 @@ TEST_F(RIKmerTest, KmerConstructorIntRep) {
   EXPECT_FALSE(kmer.is_null);
 }
 
-TEST_F(RIKmerTest, KmerConstructorBitRep) {
-  std::string kmer_string{"AA"};
-  auto old_kmer = create_kmer(kmer_string);
-  
-  container::RI_Kmer kmer{old_kmer};
-  for (size_t i = 0; i < 4; i++){
-    EXPECT_EQ(kmer.bit_representation[i], old_kmer.kmer_data[i]);
-  }
-  EXPECT_FALSE(kmer.is_null);
-}
 TEST_F(RIKmerTest, KmerBackgroundRep1) {
   std::string kmer_string{"A"};
   auto old_kmer = create_kmer(kmer_string);

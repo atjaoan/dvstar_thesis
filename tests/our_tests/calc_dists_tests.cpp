@@ -32,7 +32,7 @@ protected:
   std::filesystem::path second_bintree{"../data/test_VLMCs/sequences_2.bintree"};
   std::filesystem::path third_bintree{"../data/test_VLMCs/sequences_3.bintree"};
 
-  std::filesystem::path path_to_bintrees{"../data/very_small_test"};
+  std::filesystem::path path_to_bintrees{"../data/test_VLMCs"};
 
   vlmc_c first_vlmc{first_bintree};
   vlmc_c second_vlmc{second_bintree};

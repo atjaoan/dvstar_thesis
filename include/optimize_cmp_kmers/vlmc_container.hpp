@@ -107,6 +107,7 @@ class Index_by_value : public VLMC_Container {
     int c_size = 0;
     int max_kmer_index = -1;
     int min_kmer_index = 0; // <- cant be set to MAX_INT when all kmers are inserted in order (0,1,2,3,4...)
+    int container_size = -1; 
     RI_Kmer null_kmer {};
 
   public: 
@@ -132,9 +133,12 @@ class Index_by_value : public VLMC_Container {
 
     void push(const RI_Kmer &kmer) override {  
       int index = kmer.integer_rep;
-      if(index > max_kmer_index){
-        container.resize(index + ((2 + index) / 2));
+      if(index > container_size){
+        container.resize((index + 1) * 2);
         max_kmer_index = index;
+        container_size = (index + 1) * 2;
+      } else if (index > max_kmer_index) {
+        max_kmer_index = index; 
       } else if (index < min_kmer_index){
         min_kmer_index = index;
       }
@@ -359,22 +363,21 @@ class VLMC_hashmap : public VLMC_Container {
 /*
   Storing Kmers in a vector where the Kmer string is used as index.
 */
-/*
-class Index_by_value : public VLMC_Container {
+class VLMC_Combo : public VLMC_Container {
 
   private: 
-    const int max_idx = 100; 
-    std::array<RI_Kmer, 100> container_ibv{};
+    const int max_idx = 4096; 
+    std::array<RI_Kmer, 4096> container_ibv{};
     std::vector<RI_Kmer> container_sorted{};  
     int max_kmer_index = -1;
     int min_kmer_index = INT_MAX;
     RI_Kmer null_kmer {};
 
   public: 
-    Index_by_value() = default;
-    ~Index_by_value() = default; 
+    VLMC_Combo() = default;
+    ~VLMC_Combo() = default; 
 
-    Index_by_value(const std::filesystem::path &path_to_bintree) {
+    VLMC_Combo(const std::filesystem::path &path_to_bintree) {
       std::ifstream ifs(path_to_bintree, std::ios::binary);
       cereal::BinaryInputArchive archive(ifs);
 
@@ -461,7 +464,6 @@ class Index_by_value : public VLMC_Container {
       }
     }
 };
-*/
 
 /*
 class VLMC_multi_vector : public VLMC_Container {
