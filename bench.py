@@ -34,7 +34,7 @@ class Build_Parameter(str, Enum):
 
 class VLMC_Container(str, Enum):
     vlmc_vector = "vector"
-    vlmc_multi_vector = "multi-vector"
+    vlmc_indexing = "indexing"
     vlmc_sorted_vector = "sorted-vector"
     vlmc_b_tree = "b-tree"
     vlmc_hashmap = "hashmap"

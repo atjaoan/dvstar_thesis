@@ -87,14 +87,14 @@ TEST_F(CalcDistsTests, AllValsTwoDir) {
 
 TEST_F(CalcDistsTests, ValueCheckTwoDir){
   // Multi Vector Implementation
-  auto left_cluster_mv = cluster::get_cluster<container::Index_by_value>(path_to_bintrees, 1, 0);
-  auto right_cluster_mv = cluster::get_cluster<container::Index_by_value>(path_to_bintrees, 1, 0);
-  matrix_t distances_multi_vector = calculate::calculate_distances<container::Index_by_value>(left_cluster_mv, right_cluster_mv, dist_func, 1);
+  auto left_cluster_mv = cluster::get_cluster<container::VLMC_Indexing>(path_to_bintrees, 1, 0);
+  auto right_cluster_mv = cluster::get_cluster<container::VLMC_Indexing>(path_to_bintrees, 1, 0);
+  matrix_t distances_indexing = calculate::calculate_distances<container::VLMC_Indexing>(left_cluster_mv, right_cluster_mv, dist_func, 1);
 
   // Vector Implementation
-  auto left_cluster_v = cluster::get_cluster<vlmc_c>(path_to_bintrees, 1, 0);
-  auto right_cluster_v = cluster::get_cluster<vlmc_c>(path_to_bintrees, 1, 0);
-  matrix_t distances_vector = calculate::calculate_distances<vlmc_c>(left_cluster_v, right_cluster_v, dist_func, 1);
+  auto left_cluster_v = cluster::get_cluster<container::VLMC_vector>(path_to_bintrees, 1, 0);
+  auto right_cluster_v = cluster::get_cluster<container::VLMC_vector>(path_to_bintrees, 1, 0);
+  matrix_t distances_vector = calculate::calculate_distances<container::VLMC_vector>(left_cluster_v, right_cluster_v, dist_func, 1);
 
   // Sorted Vector Implementation
   auto left_cluster_s = cluster::get_cluster<container::VLMC_sorted_vector>(path_to_bintrees, 1, 0);
@@ -138,12 +138,12 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
   for (int x = 0; x < distances_vector.cols(); x++){
     for (int y = 0; y < distances_vector.rows(); y++){
       if (x==y){
-        EXPECT_NEAR(0.0, distances_multi_vector(x,y), error_tolerance);
         EXPECT_NEAR(0.0, distances_vector(x,y), error_tolerance);
+        EXPECT_NEAR(0.0, distances_indexing(x,y), error_tolerance);
       } else { 
         EXPECT_NEAR(distances_org_dvstar(x,y), distances_vector(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_sorted_vector(x,y), error_tolerance);
-        EXPECT_NEAR(distances_vector(x,y), distances_multi_vector(x,y), error_tolerance);
+        EXPECT_NEAR(distances_vector(x,y), distances_indexing(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_b_tree(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_hashmap(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_combo(x,y), error_tolerance);

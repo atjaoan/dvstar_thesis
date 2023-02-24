@@ -39,9 +39,9 @@ enum Cluster_Rep {
   cluster_vector
 };
 
-enum Vlmc_Rep {
+enum VLMC_Rep {
   vlmc_vector, 
-  vlmc_multi_vector,
+  vlmc_indexing,
   vlmc_sorted_vector,
   vlmc_b_tree,
   vlmc_hashmap,
@@ -56,7 +56,7 @@ struct cli_arguments {
   std::filesystem::path out_path{};
   size_t dop {1};
   Cluster_Rep cluster{Cluster_Rep::cluster_vector};
-  Vlmc_Rep vlmc{Vlmc_Rep::vlmc_vector}; 
+  VLMC_Rep vlmc{VLMC_Rep::vlmc_vector}; 
   size_t background_order {0}; 
 };
 
@@ -91,13 +91,13 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
       {"dvstar", Distance_function::dvstar},
   };
 
-  std::map<std::string, Vlmc_Rep> vlmc_rep_map{
-      {"vector", Vlmc_Rep::vlmc_vector},
-      {"multi-vector", Vlmc_Rep::vlmc_multi_vector},
-      {"sorted-vector", Vlmc_Rep::vlmc_sorted_vector},
-      {"b-tree", Vlmc_Rep::vlmc_b_tree},
-      {"hashmap", Vlmc_Rep::vlmc_hashmap},
-      {"combo", Vlmc_Rep::vlmc_combo},
+  std::map<std::string, VLMC_Rep> VLMC_Rep_map{
+      {"vector", VLMC_Rep::vlmc_vector},
+      {"indexing", VLMC_Rep::vlmc_indexing},
+      {"sorted-vector", VLMC_Rep::vlmc_sorted_vector},
+      {"b-tree", VLMC_Rep::vlmc_b_tree},
+      {"hashmap", VLMC_Rep::vlmc_hashmap},
+      {"combo", VLMC_Rep::vlmc_combo},
   };
 
   std::map<std::string, Cluster_Rep> cluster_rep_map{
@@ -129,7 +129,7 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
 
   app.add_option("-v,--vlmc-rep", arguments.vlmc,
                  "Vlmc container representation to use.")
-      ->transform(CLI::CheckedTransformer(vlmc_rep_map, CLI::ignore_case));
+      ->transform(CLI::CheckedTransformer(VLMC_Rep_map, CLI::ignore_case));
 
   app.add_option("-c,--cluster-rep", arguments.cluster,
                  "Cluster container representation to use.")

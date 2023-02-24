@@ -215,7 +215,7 @@ int main(int argc, char *argv[]){
   // int num_items = 1500;
 
   // run_timer<container::VLMC_vector>("Vector");
-  run_timer<container::Index_by_value>("Index by Value");
+  run_timer<container::VLMC_Indexing>("Indexing");
   run_timer<container::VLMC_sorted_vector>("Sorted Vector");
   run_timer<container::VLMC_B_tree>("B-tree");
   run_timer<container::VLMC_hashmap>("Hashmap");

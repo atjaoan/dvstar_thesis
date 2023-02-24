@@ -100,7 +100,7 @@ class VLMC_vector : public VLMC_Container {
   Storing Kmers in a vector where the Kmer string is used as index.
 */
 
-class Index_by_value : public VLMC_Container { 
+class VLMC_Indexing : public VLMC_Container { 
 
   private: 
     std::vector<RI_Kmer> container{}; 
@@ -110,10 +110,10 @@ class Index_by_value : public VLMC_Container {
     int container_size = -1; 
 
   public: 
-    Index_by_value(const int initial_size = 50) : container(initial_size), container_size{initial_size} {}
-    ~Index_by_value() = default; 
+    VLMC_Indexing(const int initial_size = 50) : container(initial_size), container_size{initial_size} {}
+    ~VLMC_Indexing() = default; 
 
-    Index_by_value(const std::filesystem::path &path_to_bintree, const int initial_size = 50) 
+    VLMC_Indexing(const std::filesystem::path &path_to_bintree, const int initial_size = 50) 
       : container(initial_size), container_size{initial_size} {
       std::ifstream ifs(path_to_bintree, std::ios::binary);
       cereal::BinaryInputArchive archive(ifs);
