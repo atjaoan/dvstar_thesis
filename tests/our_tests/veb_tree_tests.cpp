@@ -92,7 +92,7 @@ TEST_F(VebTreeTest, FindOnTwoInsertINT) {
   EXPECT_EQ(kmer0, veb::find(tree, kmer0.integer_rep));
 }
 
-TEST_F(VebTreeTest, FindOnFiveInsert) {
+TEST_F(VebTreeTest, FindOnFourInsert) {
   veb::Veb_tree tree{4};
   auto kmer0 = container::RI_Kmer{0};
   auto kmer1 = container::RI_Kmer{1};
@@ -103,7 +103,6 @@ TEST_F(VebTreeTest, FindOnFiveInsert) {
   veb::insert(tree, kmer2);
   veb::insert(tree, kmer3);
   
-  //std::cout << "Tree min " << tree.min.integer_rep << std::endl;
   //std::cout << "Tree max " << tree.max.integer_rep << std::endl;
   //std::cout << "Summary min " << tree.summary->min.integer_rep << std::endl;
   //std::cout << "Summary max " << tree.summary->max.integer_rep << std::endl;
@@ -117,7 +116,7 @@ TEST_F(VebTreeTest, FindOnFiveInsert) {
   EXPECT_EQ(kmer3, veb::find(tree, kmer3));
 }
 
-TEST_F(VebTreeTest, FindOneSucc) {
+TEST_F(VebTreeTest, FindThreeSucc) {
   veb::Veb_tree tree{4};
   auto kmer0 = container::RI_Kmer{0};
   auto kmer1 = container::RI_Kmer{1};
@@ -181,36 +180,37 @@ TEST_F(VebTreeTest, FailFindINT) {
   EXPECT_EQ(null_kmer, veb::find(tree, kmer3.integer_rep));
 }
 
-TEST_F(VebTreeTest, TimingTest) {
-  int items = 6561;
+TEST_F(VebTreeTest, CheckMany) {
+  for (size_t j = 10; j < 16; j++)
+  {
+  
+  int items = j;
   veb::Veb_tree tree{items};
-  auto null_kmer = container::RI_Kmer(-1);
-  std::chrono::steady_clock::time_point begin_insert = std::chrono::steady_clock::now();
-  for (size_t i = 0; i < items; i++){
+
+  for (size_t i = 0; i < items / 2; i++){
     auto kmer = container::RI_Kmer{i};
     veb::insert(tree, kmer);
   }
-  std::chrono::steady_clock::time_point end_insert = std::chrono::steady_clock::now();
-  auto insert_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end_insert - begin_insert).count();
-  std::cout << "Time insert : " << insert_time << " [nano sec]" << std::endl;
-  std::cout << "sec / items : " << insert_time / items << " [nano sec]" << std::endl;
 
-  auto begin_find = std::chrono::steady_clock::now();
-  for (size_t i = 0; i < items; i++){
-    veb::find(tree, i);
+  int failed_finding_succ = 0;
+  int found_nonexistent_succ = 0;
+
+  for (size_t i = 0; i < items / 2 - 1; i++){
+    container::RI_Kmer located = veb::succ(tree, i);
+    if(located.integer_rep != i + 1){
+      std::cout << "located : " << located.integer_rep << " should be : " << i+1 << std::endl;
+      std::cout << "Failed at j = " << j << std::endl;
+      std::cout << "With nr subtrees : " << std::ceil(std::sqrt(j)) << std::endl;
+      failed_finding_succ++;
+    }
   }
-  auto end_find = std::chrono::steady_clock::now();
-  auto find_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end_find - begin_find).count();
-  std::cout << "Time find : " << find_time << " [nano sec]" << std::endl;
-  std::cout << "sec / items : " << find_time / items << " [nano sec]" << std::endl;
-
-  auto begin_succ = std::chrono::steady_clock::now();
-  for (size_t i = 0; i < items; i++){
-    veb::succ(tree, i);
+  for (size_t i = items / 2 + 1; i < items; i++){
+    container::RI_Kmer located = veb::succ(tree, i);
+    if(located.integer_rep != -1){
+      found_nonexistent_succ++;
+    }
   }
-  auto end_succ = std::chrono::steady_clock::now();
-  auto succ_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end_succ - begin_succ).count();
-  std::cout << "Time succ : " << succ_time << " [nano sec]" << std::endl;
-  std::cout << "sec / items : " << succ_time / items << " [nano sec]" << std::endl;
-
+  EXPECT_EQ(0, failed_finding_succ);
+  EXPECT_EQ(0, found_nonexistent_succ);
+  }
 }
