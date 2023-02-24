@@ -32,6 +32,23 @@ get_components(const Kmer &left, const Kmer &left_background,
               right_probs[3] / std::sqrt(right_probs_background[3])}};
 }
 
+std::array<std::array<double, 4>, 2>
+get_components(const Kmer &left, const Kmer &right) {
+  auto left_probs = left.next_char_prob;
+  auto right_probs = right.next_char_prob;
+
+  return {std::array<double, 4>{
+              left_probs[0],
+              left_probs[1],
+              left_probs[2],
+              left_probs[3]},
+          std::array<double, 4>{
+              right_probs[0],
+              right_probs[1],
+              right_probs[2],
+              right_probs[3]}};
+}
+
 std::string get_background_context(const std::string &state,
                                    const size_t background_order) {
   if (state.size() <= background_order) {
@@ -99,12 +116,16 @@ double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
           return;
         }
         const auto background_context = left_v.background_order_index(left_v.integer_rep, background_order);
-
+        
+        //Old
         auto left_kmer_background = left.find(background_context);
         auto right_kmer_background = right.find(background_context);
 
         auto [left_comp, right_comp] = get_components(
             left_v, left_kmer_background, right_v, right_kmer_background);
+        
+        // New
+        //auto [left_comp, right_comp] = get_components(left_v, right_v);
 
         for (int i = 0; i < 4; i++) { 
           dot_product += left_comp[i] * right_comp[i];

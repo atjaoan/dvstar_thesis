@@ -96,3 +96,7 @@ TEST_F(VlmcContainerTest, AddManyReadInKmerToIndexByValue) {
     EXPECT_EQ(kmer, container.get(kmer.integer_rep));
   }
 }
+
+TEST_F(VlmcContainerTest, CopyNextCharProbIntoCahe) {
+  container::VLMC_Indexing container(path_bintree, 50, 1);
+}

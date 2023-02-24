@@ -121,33 +121,37 @@ class VLMC_Indexing : public VLMC_Container {
       cereal::BinaryInputArchive archive(ifs);
 
       Kmer input_kmer{};
-      // cached_context = pointer to array which for each A, C, T, G has the next char probs
-      //auto cached_contexts = std::make_unique<std::array<std::array<double, 4>, 4>>;
-      //auto test_arr = std::make_unique<std::array<double, 4>>;
-      //if(background_order == 1)
-        //auto cached_contexts = std::make_unique<std::array<std::array<float, 4>, 4>>;
-      
+      // cached_context : pointer to array which for each A, C, T, G has the next char probs
+      auto cached_context = std::make_unique<double[]>(std::pow(4,background_order+1));
 
       while (ifs.peek() != EOF){
 
         archive(input_kmer);
         RI_Kmer ri_kmer {input_kmer}; 
         
-        //if(ri_kmer.length <= background_order){
-          //std::copy(std::begin(ri_kmer.next_char_prob), std::end(ri_kmer.next_char_prob), std::begin(cached_contexts));
-          //test_arr = *ri_kmer.next_char_prob;
+        if(ri_kmer.length <= background_order){
+          int offset = ri_kmer.integer_rep / 4;
+          for(int i = 0; i < 4; i++)
+            cached_context[offset + i] = ri_kmer.next_char_prob[i];
           //for (size_t i = 0; i < 4; i++)
-          //{
-          //  std::cout << cached_contexts + i << std::endl;
-          //}
-          
-        //}
-
+          //  std::cout << "Offset : " << offset << " " << cached_context[offset + i] << std::endl;
+          //std::cout << "Integer rep : " << ri_kmer.integer_rep << std::endl;
+        } 
         push(ri_kmer);
       }
       ifs.close();
 
-
+      // Second pass - Comment this and select in dvstar.hpp row 120 to 128 to use old or new implementation. 
+      //for (size_t i = min_kmer_index; i < max_kmer_index; i++){
+      //  RI_Kmer kmer = container[i];
+      //  if(kmer == null_kmer) continue;
+      //  int offset = kmer.integer_rep / 4;
+      //  kmer.next_char_prob[0] /= std::sqrt(cached_context[offset + 0]);
+      //  kmer.next_char_prob[1] /= std::sqrt(cached_context[offset + 1]);
+      //  kmer.next_char_prob[2] /= std::sqrt(cached_context[offset + 2]);
+      //  kmer.next_char_prob[3] /= std::sqrt(cached_context[offset + 3]);
+      //}
+      
     } 
 
     size_t size() const override { return c_size; }
