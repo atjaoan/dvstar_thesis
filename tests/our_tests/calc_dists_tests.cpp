@@ -87,33 +87,33 @@ TEST_F(CalcDistsTests, AllValsTwoDir) {
 
 TEST_F(CalcDistsTests, ValueCheckTwoDir){
   // Multi Vector Implementation
-  auto left_cluster_mv = cluster::get_cluster<container::Index_by_value>(path_to_bintrees, 1);
-  auto right_cluster_mv = cluster::get_cluster<container::Index_by_value>(path_to_bintrees, 1);
+  auto left_cluster_mv = cluster::get_cluster<container::Index_by_value>(path_to_bintrees, 1, 0);
+  auto right_cluster_mv = cluster::get_cluster<container::Index_by_value>(path_to_bintrees, 1, 0);
   matrix_t distances_multi_vector = calculate::calculate_distances<container::Index_by_value>(left_cluster_mv, right_cluster_mv, dist_func, 1);
 
   // Vector Implementation
-  auto left_cluster_v = cluster::get_cluster<vlmc_c>(path_to_bintrees, 1);
-  auto right_cluster_v = cluster::get_cluster<vlmc_c>(path_to_bintrees, 1);
+  auto left_cluster_v = cluster::get_cluster<vlmc_c>(path_to_bintrees, 1, 0);
+  auto right_cluster_v = cluster::get_cluster<vlmc_c>(path_to_bintrees, 1, 0);
   matrix_t distances_vector = calculate::calculate_distances<vlmc_c>(left_cluster_v, right_cluster_v, dist_func, 1);
 
   // Sorted Vector Implementation
-  auto left_cluster_s = cluster::get_cluster<container::VLMC_sorted_vector>(path_to_bintrees, 1);
-  auto right_cluster_s = cluster::get_cluster<container::VLMC_sorted_vector>(path_to_bintrees, 1);
+  auto left_cluster_s = cluster::get_cluster<container::VLMC_sorted_vector>(path_to_bintrees, 1, 0);
+  auto right_cluster_s = cluster::get_cluster<container::VLMC_sorted_vector>(path_to_bintrees, 1, 0);
   matrix_t distances_sorted_vector = calculate::calculate_distances<container::VLMC_sorted_vector>(left_cluster_s, right_cluster_s, dist_func, 1);
 
   // B-tree Implementation
-  auto left_cluster_b = cluster::get_cluster<container::VLMC_B_tree>(path_to_bintrees, 1);
-  auto right_cluster_b = cluster::get_cluster<container::VLMC_B_tree>(path_to_bintrees, 1);
+  auto left_cluster_b = cluster::get_cluster<container::VLMC_B_tree>(path_to_bintrees, 1, 0);
+  auto right_cluster_b = cluster::get_cluster<container::VLMC_B_tree>(path_to_bintrees, 1, 0);
   matrix_t distances_b_tree = calculate::calculate_distances<container::VLMC_B_tree>(left_cluster_b, right_cluster_b, dist_func, 1);
 
   // HashMap Implementation
-  auto left_cluster_h = cluster::get_cluster<container::VLMC_hashmap>(path_to_bintrees, 1);
-  auto right_cluster_h = cluster::get_cluster<container::VLMC_hashmap>(path_to_bintrees, 1);
+  auto left_cluster_h = cluster::get_cluster<container::VLMC_hashmap>(path_to_bintrees, 1, 0);
+  auto right_cluster_h = cluster::get_cluster<container::VLMC_hashmap>(path_to_bintrees, 1, 0);
   matrix_t distances_hashmap = calculate::calculate_distances<container::VLMC_hashmap>(left_cluster_h, right_cluster_h, dist_func, 1);
 
   // Combination of Index by value & sorted vector Implementation
-  auto left_cluster_c = cluster::get_cluster<container::VLMC_Combo>(path_to_bintrees, 1);
-  auto right_cluster_c = cluster::get_cluster<container::VLMC_Combo>(path_to_bintrees, 1);
+  auto left_cluster_c = cluster::get_cluster<container::VLMC_Combo>(path_to_bintrees, 1, 0);
+  auto right_cluster_c = cluster::get_cluster<container::VLMC_Combo>(path_to_bintrees, 1, 0);
   matrix_t distances_combo = calculate::calculate_distances<container::VLMC_Combo>(left_cluster_c, right_cluster_c, dist_func, 1);
 
 

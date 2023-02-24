@@ -17,7 +17,7 @@ using recursive_directory_iterator = std::filesystem::recursive_directory_iterat
 namespace cluster{
   
 template <typename VC>  
-container::Cluster_Container<VC> get_cluster(const std::filesystem::path &directory, const size_t nr_cores_to_use){
+container::Cluster_Container<VC> get_cluster(const std::filesystem::path &directory, const size_t nr_cores_to_use, const size_t background_order){
   std::vector<std::filesystem::path> paths{};
 
   for (const auto& dir_entry : recursive_directory_iterator(directory)) {

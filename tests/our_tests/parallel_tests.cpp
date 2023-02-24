@@ -31,7 +31,7 @@ protected:
 
 TEST_F(ParallelTest, SequentialEqParallel) {
   // auto distance_function = distance::dvstar;
-  auto cluster = cluster::get_cluster<container::VLMC_vector>(first_directory, 1);
+  auto cluster = cluster::get_cluster<container::VLMC_vector>(first_directory, 1, 0);
 
   matrix_t distances_parallel{cluster.size(), cluster.size()};
   matrix_t distances_sequantial{cluster.size(), cluster.size()};
@@ -55,7 +55,7 @@ TEST_F(ParallelTest, SequentialEqParallel) {
 TEST_F(ParallelTest, ReducedEqFullSlice) {
   // auto distance_function = distance::dvstar;
 
-  auto cluster = cluster::get_cluster<container::VLMC_vector>(first_directory, 1);
+  auto cluster = cluster::get_cluster<container::VLMC_vector>(first_directory, 1, 0);
 
   matrix_t distances_parallel{cluster.size(), cluster.size()};
   matrix_t distances_sequantial{cluster.size(), cluster.size()};
