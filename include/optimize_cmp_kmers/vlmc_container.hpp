@@ -8,6 +8,7 @@
 #include "optimize_cmp_kmers/read_in_kmer.hpp"
 #include "b_tree.hpp"
 #include "robin_hood.h"
+#include "unordered_dense.h"
 #include "veb_tree.hpp"
 
 /*
@@ -310,7 +311,7 @@ class VLMC_B_tree : public VLMC_Container {
 class VLMC_hashmap : public VLMC_Container {
 
   private: 
-    robin_hood::unordered_map<int, RI_Kmer> container{};
+    ankerl::unordered_dense::map<int, RI_Kmer> container{};
 
   public: 
     VLMC_hashmap() = default;
