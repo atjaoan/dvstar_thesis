@@ -178,7 +178,3 @@ TEST_F(CalcDistsTests, AllValsOneDir) {
   }
 }
 
-TEST_F(CalcDistsTests, ValueCheckOneDir){
-  EXPECT_EQ(0,0);
-}
-
