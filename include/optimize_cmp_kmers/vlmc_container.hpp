@@ -100,7 +100,7 @@ class VLMC_vector : public VLMC_Container {
   Storing Kmers in a vector where the Kmer string is used as index.
 */
 
-class Index_by_value : public VLMC_Container {
+class Index_by_value : public VLMC_Container { 
 
   private: 
     std::vector<RI_Kmer> container{}; 
@@ -108,13 +108,13 @@ class Index_by_value : public VLMC_Container {
     int max_kmer_index = -1;
     int min_kmer_index = 0; // <- cant be set to MAX_INT when all kmers are inserted in order (0,1,2,3,4...)
     int container_size = -1; 
-    RI_Kmer null_kmer {};
 
   public: 
-    Index_by_value() = default;
+    Index_by_value(const int initial_size = 50) : container(initial_size), container_size{initial_size} {}
     ~Index_by_value() = default; 
 
-    Index_by_value(const std::filesystem::path &path_to_bintree) {
+    Index_by_value(const std::filesystem::path &path_to_bintree, const int initial_size = 50) 
+      : container(initial_size), container_size{initial_size} {
       std::ifstream ifs(path_to_bintree, std::ios::binary);
       cereal::BinaryInputArchive archive(ifs);
 
@@ -122,18 +122,17 @@ class Index_by_value : public VLMC_Container {
 
       while (ifs.peek() != EOF){
         archive(input_kmer);
-        RI_Kmer ri_kmer {input_kmer};
+        RI_Kmer ri_kmer {input_kmer}; 
         push(ri_kmer);
       }
       ifs.close();
-      
     } 
 
     size_t size() const override { return c_size; }
 
     void push(const RI_Kmer &kmer) override {  
       int index = kmer.integer_rep;
-      if(index > container_size){
+      if(index >= container_size){
         container.resize((index + 1) * 2);
         max_kmer_index = index;
         container_size = (index + 1) * 2;

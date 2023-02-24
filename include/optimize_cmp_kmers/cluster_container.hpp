@@ -21,7 +21,7 @@ class Cluster_Container {
     Cluster_Container() = default;
     ~Cluster_Container() = default; 
 
-    Cluster_Container(const size_t i) : container{i} { }
+    Cluster_Container(const size_t i) : container(i) { }
 
     size_t size() const { return container.size(); }
 
