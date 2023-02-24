@@ -34,7 +34,7 @@ class Build_Parameter(str, Enum):
 
 class VLMC_Container(str, Enum):
     vlmc_vector = "vector"
-    vlmc_multi_vector = "multi-vector"
+    vlmc_indexing = "indexing"
     vlmc_sorted_vector = "sorted-vector"
     vlmc_b_tree = "b-tree"
     vlmc_hashmap = "hashmap"
@@ -222,7 +222,7 @@ def stat(set_size: int = -1, dist_func: Distance_Function = Distance_Function.dv
 
 @app.command()
 def stat_new(set_size: int = -1, dist_func: Distance_Function = Distance_Function.dvstar, 
-        genome_path: str = "data/human_VLMCs", vlmc_container: VLMC_Container = VLMC_Container.vlmc_multi_vector, nr_cores: int = 1):
+        genome_path: str = "data/human_VLMCs", vlmc_container: VLMC_Container = VLMC_Container.vlmc_combo, nr_cores: int = 1):
     timing_results = our_calculate_distances(dist_func.value, set_size, genome_path, vlmc_container.value, nr_cores)
 
     th, min, max = get_parameter_from_bintree(os.listdir(genome_path)[0])
@@ -236,6 +236,7 @@ def benchmark():
     ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_multi_vector, 8)
     stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_sorted_vector, 8)
     stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8)
+    stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_hashmap, 8)
 
 @app.command()
 def record():

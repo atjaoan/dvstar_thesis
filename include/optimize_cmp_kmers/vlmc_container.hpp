@@ -9,6 +9,7 @@
 #include "optimize_cmp_kmers/read_in_kmer.hpp"
 #include "b_tree.hpp"
 #include "robin_hood.h"
+#include "unordered_dense.h"
 #include "veb_tree.hpp"
 
 /*
@@ -101,7 +102,7 @@ class VLMC_vector : public VLMC_Container {
   Storing Kmers in a vector where the Kmer string is used as index.
 */
 
-class Index_by_value : public VLMC_Container { 
+class VLMC_Indexing : public VLMC_Container { 
 
   private: 
     std::vector<RI_Kmer> container{}; 
@@ -111,10 +112,10 @@ class Index_by_value : public VLMC_Container {
     int container_size = -1; 
 
   public: 
-    Index_by_value(const int initial_size = 50) : container(initial_size), container_size{initial_size} {}
-    ~Index_by_value() = default; 
+    VLMC_Indexing(const int initial_size = 50) : container(initial_size), container_size{initial_size} {}
+    ~VLMC_Indexing() = default; 
 
-    Index_by_value(const std::filesystem::path &path_to_bintree, const int initial_size = 50, const size_t background_order = 0) 
+    VLMC_Indexing(const std::filesystem::path &path_to_bintree, const int initial_size = 50, const size_t background_order = 0) 
       : container(initial_size), container_size{initial_size} {
       std::ifstream ifs(path_to_bintree, std::ios::binary);
       cereal::BinaryInputArchive archive(ifs);
@@ -331,7 +332,7 @@ class VLMC_B_tree : public VLMC_Container {
 class VLMC_hashmap : public VLMC_Container {
 
   private: 
-    robin_hood::unordered_map<int, RI_Kmer> container{};
+    ankerl::unordered_dense::map<int, RI_Kmer> container{};
 
   public: 
     VLMC_hashmap() = default;

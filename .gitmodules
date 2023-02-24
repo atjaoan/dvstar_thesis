@@ -22,3 +22,6 @@
 [submodule "submodules/eigen"]
 	path = submodules/eigen
 	url = git@gitlab.com:libeigen/eigen.git
+[submodule "submodules/unordered_dense"]
+	path = submodules/unordered_dense
+	url = https://github.com/martinus/unordered_dense.git

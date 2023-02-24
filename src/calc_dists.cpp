@@ -16,18 +16,18 @@ matrix_t calculate_cluster_distance(parser::cli_arguments arguments, const size_
   }
 }
 
-matrix_t apply_container(parser::cli_arguments arguments, parser::Vlmc_Rep vlmc_container, const size_t nr_cores){
-  if (vlmc_container==parser::Vlmc_Rep::vlmc_vector){
+matrix_t apply_container(parser::cli_arguments arguments, parser::VLMC_Rep vlmc_container, const size_t nr_cores){
+  if (vlmc_container==parser::VLMC_Rep::vlmc_vector){
     return calculate_cluster_distance<container::VLMC_vector>(arguments, nr_cores);
-  } else if (vlmc_container==parser::Vlmc_Rep::vlmc_multi_vector){
-    return calculate_cluster_distance<container::Index_by_value>(arguments, nr_cores);
-  } else if (vlmc_container==parser::Vlmc_Rep::vlmc_sorted_vector){
+  } else if (vlmc_container==parser::VLMC_Rep::vlmc_indexing){
+    return calculate_cluster_distance<container::VLMC_Indexing>(arguments, nr_cores);
+  } else if (vlmc_container==parser::VLMC_Rep::vlmc_sorted_vector){
     return calculate_cluster_distance<container::VLMC_sorted_vector>(arguments, nr_cores);
-  } else if (vlmc_container==parser::Vlmc_Rep::vlmc_b_tree){
+  } else if (vlmc_container==parser::VLMC_Rep::vlmc_b_tree){
     return calculate_cluster_distance<container::VLMC_B_tree>(arguments, nr_cores);
-  } else if (vlmc_container==parser::Vlmc_Rep::vlmc_hashmap){
+  } else if (vlmc_container==parser::VLMC_Rep::vlmc_hashmap){
     return calculate_cluster_distance<container::VLMC_hashmap>(arguments, nr_cores);
-  } else if (vlmc_container==parser::Vlmc_Rep::vlmc_combo){
+  } else if (vlmc_container==parser::VLMC_Rep::vlmc_combo){
     return calculate_cluster_distance<container::VLMC_Combo>(arguments, nr_cores);
   }
 }
