@@ -90,9 +90,10 @@ TEST_F(VlmcContainerTest, AddManyReadInKmerToIndexByValue) {
     container::RI_Kmer new_kmer{created};
     in_kmers.push_back(new_kmer);
     container.push(new_kmer);
-  }
+  } 
+
   for(auto kmer : in_kmers){
-    EXPECT_EQ(container.get(kmer.integer_rep), kmer);
+    EXPECT_EQ(kmer, container.get(kmer.integer_rep));
   }
 }
 /*
