@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <limits.h>
 #include <exception>
+#include <algorithm>
 #include "vlmc_from_kmers/kmer.hpp"
 #include "optimize_cmp_kmers/read_in_kmer.hpp"
 #include "b_tree.hpp"
@@ -23,7 +24,7 @@ class VLMC_Container{
   public:
     VLMC_Container() = default;
     ~VLMC_Container() = default;
-    VLMC_Container(const std::filesystem::path &path_to_bintree){}; 
+    VLMC_Container(const std::filesystem::path &path_to_bintree, const size_t background_order){}; 
 
     RI_Kmer null_kmer{};
     virtual size_t size() const { return 0;};
@@ -49,7 +50,7 @@ class VLMC_vector : public VLMC_Container {
     VLMC_vector() = default;
     ~VLMC_vector() = default; 
 
-    VLMC_vector(const std::filesystem::path &path_to_bintree) {
+    VLMC_vector(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
       std::ifstream ifs(path_to_bintree, std::ios::binary);
       cereal::BinaryInputArchive archive(ifs);
 
@@ -113,19 +114,39 @@ class Index_by_value : public VLMC_Container {
     Index_by_value(const int initial_size = 50) : container(initial_size), container_size{initial_size} {}
     ~Index_by_value() = default; 
 
-    Index_by_value(const std::filesystem::path &path_to_bintree, const int initial_size = 50) 
+    Index_by_value(const std::filesystem::path &path_to_bintree, const int initial_size = 50, const size_t background_order = 0) 
       : container(initial_size), container_size{initial_size} {
       std::ifstream ifs(path_to_bintree, std::ios::binary);
       cereal::BinaryInputArchive archive(ifs);
 
       Kmer input_kmer{};
+      // cached_context = pointer to array which for each A, C, T, G has the next char probs
+      //auto cached_contexts = std::make_unique<std::array<std::array<double, 4>, 4>>;
+      //auto test_arr = std::make_unique<std::array<double, 4>>;
+      //if(background_order == 1)
+        //auto cached_contexts = std::make_unique<std::array<std::array<float, 4>, 4>>;
+      
 
       while (ifs.peek() != EOF){
+
         archive(input_kmer);
         RI_Kmer ri_kmer {input_kmer}; 
+        
+        //if(ri_kmer.length <= background_order){
+          //std::copy(std::begin(ri_kmer.next_char_prob), std::end(ri_kmer.next_char_prob), std::begin(cached_contexts));
+          //test_arr = *ri_kmer.next_char_prob;
+          //for (size_t i = 0; i < 4; i++)
+          //{
+          //  std::cout << cached_contexts + i << std::endl;
+          //}
+          
+        //}
+
         push(ri_kmer);
       }
       ifs.close();
+
+
     } 
 
     size_t size() const override { return c_size; }
@@ -187,7 +208,7 @@ class VLMC_sorted_vector : public VLMC_Container {
     VLMC_sorted_vector() = default;
     ~VLMC_sorted_vector() = default; 
 
-    VLMC_sorted_vector(const std::filesystem::path &path_to_bintree) {
+    VLMC_sorted_vector(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
       std::ifstream ifs(path_to_bintree, std::ios::binary);
       cereal::BinaryInputArchive archive(ifs);
 
@@ -266,7 +287,7 @@ class VLMC_B_tree : public VLMC_Container {
     VLMC_B_tree() = default;
     ~VLMC_B_tree() = default; 
 
-    VLMC_B_tree(const std::filesystem::path &path_to_bintree) {
+    VLMC_B_tree(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
       std::ifstream ifs(path_to_bintree, std::ios::binary);
       cereal::BinaryInputArchive archive(ifs);
 
@@ -316,7 +337,7 @@ class VLMC_hashmap : public VLMC_Container {
     VLMC_hashmap() = default;
     ~VLMC_hashmap() = default; 
 
-    VLMC_hashmap(const std::filesystem::path &path_to_bintree) {
+    VLMC_hashmap(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
       std::ifstream ifs(path_to_bintree, std::ios::binary);
       cereal::BinaryInputArchive archive(ifs);
 
@@ -375,7 +396,7 @@ class VLMC_Combo : public VLMC_Container {
     VLMC_Combo() = default;
     ~VLMC_Combo() = default; 
 
-    VLMC_Combo(const std::filesystem::path &path_to_bintree) {
+    VLMC_Combo(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
       std::ifstream ifs(path_to_bintree, std::ios::binary);
       cereal::BinaryInputArchive archive(ifs);
 
@@ -469,7 +490,7 @@ class VLMC_Veb : public VLMC_Container {
     VLMC_Veb() = default;
     ~VLMC_Veb() = default; 
 
-    VLMC_Veb(const std::filesystem::path &path_to_bintree) {
+    VLMC_Veb(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
       std::ifstream ifs(path_to_bintree, std::ios::binary);
       cereal::BinaryInputArchive archive(ifs);
 

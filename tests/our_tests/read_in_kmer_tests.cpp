@@ -144,3 +144,11 @@ TEST_F(RIKmerTest, showIntRep) {
   }
 
 }
+/*
+TEST_F(RIKmerTest, RI_KmerTester) {
+  std::array<double, 4> input_counts = {3,6,8,9};
+  int sum_children = std::accumulate(input_counts.begin(), input_counts.end(), 1 * 4);
+  container::RI_Kmer tester = container::RI_Kmer(input_counts, 1);
+  EXPECT_EQ(30, sum_children);
+}
+*/

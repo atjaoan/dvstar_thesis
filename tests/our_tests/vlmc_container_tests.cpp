@@ -129,3 +129,11 @@ TEST_F(VlmcContainerTest, TimingTest) {
   std::cout << "Time find : " << find_time << " [nano sec]" << std::endl;
   std::cout << "sec / items : " << find_time / items << " [nano sec]" << std::endl;
 }
+/*
+TEST_F(VlmcContainerTest, VLMC_IndexingCaching) {
+  container::Index_by_value container{};
+  container::RI_Kmer in_kmer{created};
+  container.push(in_kmer);
+  EXPECT_EQ(container.get(1), in_kmer);
+}
+*/

@@ -37,6 +37,21 @@ struct RI_Kmer{
         this->is_null = false;
         // this->background_rep = background_order_index(this->integer_rep, 0);  <- Should be implemented 
     }
+    // Used in testing
+    
+    RI_Kmer(const std::array<double, 4>& next_counts, const int len){
+        this->length = len;
+        int pseudo_count_amount = 1;
+        double child_count = std::accumulate(next_counts.begin(), next_counts.end(), pseudo_count_amount * 4);
+        this->next_char_prob = {(double(next_counts[0]) + pseudo_count_amount) / child_count,
+               (double(next_counts[1]) + pseudo_count_amount) / child_count,
+               (double(next_counts[2]) + pseudo_count_amount) / child_count,
+               (double(next_counts[3]) + pseudo_count_amount) / child_count};
+        this->integer_rep = -1;
+        this->is_null = false;
+        // this->background_rep = background_order_index(this->integer_rep, 0);  <- Should be implemented 
+    }
+    
     
     RI_Kmer(const int temp) : integer_rep{temp}, is_null{false} {}
     ~RI_Kmer() = default;
