@@ -464,7 +464,7 @@ class VLMC_Combo : public VLMC_Container {
 class VLMC_Veb : public VLMC_Container {
 
   private: 
-    veb::Veb_tree veb = veb::Veb_tree(10000);
+    veb::Veb_tree veb = veb::Veb_tree(1500);
 
   public: 
     VLMC_Veb() = default;
@@ -501,36 +501,41 @@ class VLMC_Veb : public VLMC_Container {
 
     RI_Kmer find(const int i_rep) override { return veb::find(veb, i_rep); }
 
+    //RI_Kmer successor(const int i_rep) { return veb::succ(veb, i_rep); }
+
     void iterate_kmers(VLMC_Container &left_kmers, VLMC_Container &right_kmers,
     const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f) override {
       RI_Kmer left_kmer = left_kmers.find(0);
       RI_Kmer right_kmer = right_kmers.find(0);
-
-      //while(!left_kmer.is_null && !right_kmer.is_null)
-
-      while(left_kmer.integer_rep != -1){
-        // Check if right_kmers has this succeeding left_kmer
-        right_kmer = right_kmers.find(left_kmer.integer_rep);
-        if(right_kmer.integer_rep != -1){
-          // if, apply f
-          f(left_kmer, right_kmer);
-        }
-        // Iterating left
-        left_kmer = veb::succ(veb, left_kmer);
-      }
-      // else continue
       /*
-      for (size_t i = left_kmers.get_min_kmer_index() ; i <= left_kmers.get_max_kmer_index(); i++) {
-        const RI_Kmer &left_kmer = left_kmers.get(i);
-        if (left_kmer.is_null){
-          continue; 
+      for (size_t i = 0; i < 50 - 1; i++){
+        RI_Kmer located = veb::succ(veb, i);
+        if(located.integer_rep != i+1){
+          std::cout << i << std::endl;
         }
-        auto right_kmer = right_kmers.find(left_kmer.integer_rep);
-        if (!right_kmer.is_null){
-          f(left_kmer, right_kmer);
-        } 
       }
       */
+      //RI_Kmer kmer2 = RI_Kmer(2); 
+      //auto located = veb::succ(veb, kmer2);
+      //std::cout << kmer2.integer_rep << " : " << located.integer_rep << std::endl;
+      
+      while(right_kmer.integer_rep != -1){
+        //std::cout << left_kmer.integer_rep << " : " << right_kmer.integer_rep << std::endl;
+        // Check if right_kmers has this succeeding left_kmer
+        // if, apply f
+        if(left_kmer.integer_rep != -1)
+          f(left_kmer, right_kmer);
+        // Iterating left
+        //std::cout << "Succ of " << left_kmer.integer_rep << " is " << left_kmers.successor(left_kmer.integer_rep).integer_rep << std::endl;
+        left_kmer = veb::succ(veb, left_kmer);
+        if(left_kmer.integer_rep == -1){
+          std::cout << "End" << std::endl;
+          //f(left_kmer, right_kmer);
+          return;
+        }
+        right_kmer = right_kmers.find(left_kmer.integer_rep);
+      }
+      
     }
 };
 }
