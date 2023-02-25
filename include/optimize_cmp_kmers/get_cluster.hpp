@@ -28,7 +28,7 @@ container::Cluster_Container<VC> get_cluster(const std::filesystem::path &direct
 
   auto fun = [&](size_t start_index, size_t stop_index) {
     for (int index = start_index; index < stop_index; index++){
-      cluster[index] = VC{paths[index]};
+      cluster[index] = VC(paths[index], background_order);
     }
   };
 

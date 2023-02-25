@@ -123,9 +123,9 @@ double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
 
         auto [left_comp, right_comp] = get_components(
             left_v, left_kmer_background, right_v, right_kmer_background);
-        
+
         // New
-        //auto [left_comp, right_comp] = get_components(left_v, right_v);
+        // auto [left_comp, right_comp] = get_components(left_v, right_v);
 
         for (int i = 0; i < 4; i++) { 
           dot_product += left_comp[i] * right_comp[i];

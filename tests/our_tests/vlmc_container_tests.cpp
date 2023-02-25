@@ -98,5 +98,10 @@ TEST_F(VlmcContainerTest, AddManyReadInKmerToIndexByValue) {
 }
 
 TEST_F(VlmcContainerTest, CopyNextCharProbIntoCahe) {
-  container::VLMC_Indexing container(path_bintree, 50, 1);
+  std::cout << "Background order 0" << std::endl; 
+  container::VLMC_Indexing container0(path_bintree, 0, 50);
+  std::cout << "Background order 1" << std::endl; 
+  container::VLMC_Indexing container1(path_bintree, 1, 50);
+  std::cout << "Background order 2" << std::endl; 
+  container::VLMC_Indexing container2(path_bintree, 2, 50);
 }
