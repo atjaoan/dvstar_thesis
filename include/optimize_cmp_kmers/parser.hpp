@@ -61,14 +61,14 @@ struct cli_arguments {
 };
 
 std::function<double(vlmc_c &, vlmc_c &)>
-parse_distance_function(parser::Distance_function dist_fn, size_t background_order) {
-  if (dist_fn == parser::Distance_function::dvstar) {
+parse_distance_function(cli_arguments arguments) {
+  if (arguments.dist_fn == parser::Distance_function::dvstar) {
     auto fun = [&](auto &left, auto &right) {
-      return distance::dvstar(left, right, background_order);
+      return distance::dvstar(left, right, arguments.background_order);
     };
     return fun; 
   } 
-  else if (dist_fn ==  parser::Distance_function::kl) {
+  else if (arguments.dist_fn ==  parser::Distance_function::kl) {
     return distance::kl; 
   }  
   throw std::invalid_argument("Invalid distance function name.");
