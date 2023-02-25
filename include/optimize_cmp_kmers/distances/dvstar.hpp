@@ -120,7 +120,6 @@ double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
         //Old
         auto left_kmer_background = left.find(background_context);
         auto right_kmer_background = right.find(background_context);
-
         auto [left_comp, right_comp] = get_components(
             left_v, left_kmer_background, right_v, right_kmer_background);
 

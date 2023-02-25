@@ -235,6 +235,23 @@ class VLMC_sorted_vector : public VLMC_Container {
       ifs.close();
 
       std::sort(container.begin(), container.end());
+
+      // Second pass - Comment this and select in dvstar.hpp row 120 to 128 to use old or new implementation. 
+      // for (size_t i = 0; i < size(); i++){
+      //   RI_Kmer kmer = container[i];
+      //   if(kmer == null_kmer) continue;
+      //   if(kmer.length <= background_order) continue; 
+      //   int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
+      //   // int offset = (background_idx - offset_to_remove) * 4;
+      //   RI_Kmer background_kmer = find(background_idx);
+      //   double tmp[4];
+      //   std::copy(std::begin(kmer.next_char_prob), std::end(kmer.next_char_prob), std::begin(tmp));
+      //   tmp[0] /= std::sqrt(background_kmer.next_char_prob[0]);
+      //   tmp[1] /= std::sqrt(background_kmer.next_char_prob[1]);
+      //   tmp[2] /= std::sqrt(background_kmer.next_char_prob[2]);
+      //   tmp[3] /= std::sqrt(background_kmer.next_char_prob[3]);
+      //   std::copy(std::begin(tmp), std::end(tmp), std::begin(container[i].next_char_prob));
+      // }
     } 
 
     size_t size() const override { return container.size(); }
