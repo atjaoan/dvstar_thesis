@@ -211,6 +211,37 @@ void benchmark_read_in_kmer(){
   std::cout << "Integer_rep time : " << total_integer_rep / 1000 << " [micro sec], Avg : " << total_integer_rep / count << " [nano sec]" << std::endl;  
 }
 
+void benchmark_container_inv_sqrt(){
+  std::filesystem::path path{"../data/one_human_VLMCs/human_genome_1.bintree"};
+
+  auto begin_old = std::chrono::steady_clock::now();
+  //old
+  container::VLMC_sorted_vector(path, 1, false);
+
+  auto end_old = std::chrono::steady_clock::now();
+  auto time_old = std::chrono::duration_cast<std::chrono::microseconds>(end_old - begin_old).count();
+
+  auto begin_new = std::chrono::steady_clock::now();
+  //new
+  container::VLMC_sorted_vector(path, 1, true);
+
+  auto end_new = std::chrono::steady_clock::now();
+  auto time_new = std::chrono::duration_cast<std::chrono::microseconds>(end_new - begin_new).count();
+  
+  std::cout << std::endl;
+  std::string descriptive_string = "Time to construct sorted vector (eigen 1/sqrt)";
+  int string_length = descriptive_string.length() + 24; 
+  std::cout << std::string(string_length, '-') << std::endl;
+  std::cout << "|           " << descriptive_string << "           |" << std::endl; 
+  std::cout << std::string(string_length, '-') << std::endl; 
+  std::cout << "Total time for old : " << time_old << " [micro sec]" << std::endl;  
+  std::cout << "Total time for eigen : " << time_new << " [micro sec]" << std::endl; 
+  Eigen::Vector4f a, b;
+  asm("#it begins here!");
+  a += b;
+  asm("#it ends here!");
+}
+
 void benchmark_kmer_comparison(){
   int nr_kmers = 0;
 
@@ -274,4 +305,5 @@ int main(int argc, char *argv[]){
   //run_timer(num_items, container::VLMC_Veb{}, "Veb-tree");
   benchmark_read_in_kmer();
   benchmark_kmer_comparison();
+  benchmark_container_inv_sqrt();
 }
