@@ -145,13 +145,12 @@ TEST_F(DvstarTests, EqualDistance_indexing) {
 }
 
 TEST_F(DvstarTests, TestBackgroundOrder) {
-  container::VLMC_vector first_vlmc_vector{first_bintree};
-  container::VLMC_vector second_vlmc_vector{second_bintree};
-
-  container::VLMC_Indexing first_vlmc_indexing{first_bintree};
-  container::VLMC_Indexing second_vlmc_indexing{second_bintree};
-
   for (int order = 0; order < 5; order++){
+    container::VLMC_vector first_vlmc_vector{first_bintree, order};
+    container::VLMC_vector second_vlmc_vector{second_bintree, order};
+    container::VLMC_Indexing first_vlmc_indexing{first_bintree, order};
+    container::VLMC_Indexing second_vlmc_indexing{second_bintree, order};
+
     auto dist_vector = distance::dvstar(first_vlmc_vector, second_vlmc_vector, order);
     auto dist_indexing = distance::dvstar(first_vlmc_indexing, second_vlmc_indexing, order);
     auto old_dvstar_implementation = vlmc::dvstar(first_bintree, second_bintree, order);

@@ -18,6 +18,7 @@ protected:
   void SetUp() override {}
 
   std::filesystem::path path_bintree{"../data/test_VLMCs/sequences_1.bintree"};
+  std::filesystem::path path_corner_case{"../data/medium_test/sequences_951.fasta.bintree"};
   //container::VLMC_vector vec_from_path {path_bintree};
 };
 
@@ -104,4 +105,9 @@ TEST_F(VlmcContainerTest, CopyNextCharProbIntoCahe) {
   container::VLMC_Indexing container1(path_bintree, 1, 50);
   std::cout << "Background order 2" << std::endl; 
   container::VLMC_Indexing container2(path_bintree, 2, 50);
+}
+
+TEST_F(VlmcContainerTest, EmptyBintreeTest) {
+  container::VLMC_sorted_vector container_s(path_corner_case, 0);
+  container::VLMC_Indexing container_idx(path_corner_case, 0);
 }
