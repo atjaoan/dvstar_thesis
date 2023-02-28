@@ -70,7 +70,7 @@ def dvstar_build(genome_path: Path, out_path: Path, threshold: float, min_count:
         )
         subprocess.run(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-def calculate_distances(dist_func: str, set_size: int, genome_path: str) -> subprocess.CompletedProcess:
+def calculate_distances(dist_func: str, set_size: int, genome_path: str, background_order: int) -> subprocess.CompletedProcess:
     args = (
         "perf",
         "stat",
@@ -81,12 +81,14 @@ def calculate_distances(dist_func: str, set_size: int, genome_path: str) -> subp
         "-n",
         dist_func,
         "-a",
-        str(set_size)
+        str(set_size),
+        "-b",
+        str(background_order)
     )
 
     return subprocess.run(args, capture_output=True, text=True)
 
-def our_calculate_distances(dist_func: str, set_size: int, genome_path: str, vlmc_container: str, nr_cores: int) -> subprocess.CompletedProcess:
+def our_calculate_distances(dist_func: str, set_size: int, genome_path: str, vlmc_container: str, nr_cores: int, background_order: int) -> subprocess.CompletedProcess:
     args = (
         "perf",
         "stat",
@@ -101,7 +103,9 @@ def our_calculate_distances(dist_func: str, set_size: int, genome_path: str, vlm
         "-v",
         vlmc_container,
         "-n",
-        str(nr_cores)
+        str(nr_cores),
+        "-b",
+        str(background_order)
     )
 
     return subprocess.run(args, capture_output=True, text=True)
@@ -213,8 +217,8 @@ def dvstar_cmp_mem():
 
 @app.command()
 def stat(set_size: int = -1, dist_func: Distance_Function = Distance_Function.dvstar, 
-        genome_path: str = "data/human_VLMCs"):
-    timing_results = calculate_distances(dist_func.value, -1, genome_path)
+        genome_path: str = "data/human_VLMCs", background_order: int = 0):
+    timing_results = calculate_distances(dist_func.value, -1, genome_path, background_order)
 
     th, min, max = get_parameter_from_bintree(os.listdir(genome_path)[0])
 
@@ -222,8 +226,9 @@ def stat(set_size: int = -1, dist_func: Distance_Function = Distance_Function.dv
 
 @app.command()
 def stat_new(set_size: int = -1, dist_func: Distance_Function = Distance_Function.dvstar, 
-        genome_path: str = "data/human_VLMCs", vlmc_container: VLMC_Container = VLMC_Container.vlmc_combo, nr_cores: int = 1):
-    timing_results = our_calculate_distances(dist_func.value, set_size, genome_path, vlmc_container.value, nr_cores)
+        genome_path: str = "data/human_VLMCs", vlmc_container: VLMC_Container = VLMC_Container.vlmc_combo, nr_cores: int = 1,
+        background_order: int = 0):
+    timing_results = our_calculate_distances(dist_func.value, set_size, genome_path, vlmc_container.value, nr_cores, background_order)
 
     th, min, max = get_parameter_from_bintree(os.listdir(genome_path)[0])
 
@@ -231,11 +236,12 @@ def stat_new(set_size: int = -1, dist_func: Distance_Function = Distance_Functio
 
 @app.command()
 def benchmark():
+    background_order = 2
     genome_path = "data/medium_test"
-    stat(-1, Distance_Function.dvstar, genome_path)
+    stat(-1, Distance_Function.dvstar, genome_path, background_order)
     ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_multi_vector, 8)
-    stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_sorted_vector, 8)
-    stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8)
+    stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_sorted_vector, 8, background_order)
+    stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order)
     ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_hashmap, 8)
 
 @app.command()
