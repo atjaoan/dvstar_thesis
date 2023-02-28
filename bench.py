@@ -231,12 +231,12 @@ def stat_new(set_size: int = -1, dist_func: Distance_Function = Distance_Functio
 
 @app.command()
 def benchmark():
-    genome_path = "data/human_VLMCs"
+    genome_path = "data/medium_test"
     stat(-1, Distance_Function.dvstar, genome_path)
     ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_multi_vector, 8)
     stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_sorted_vector, 8)
     stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8)
-    stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_hashmap, 8)
+    ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_hashmap, 8)
 
 @app.command()
 def record():

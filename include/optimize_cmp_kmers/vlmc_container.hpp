@@ -55,14 +55,42 @@ class VLMC_vector : public VLMC_Container {
       std::ifstream ifs(path_to_bintree, std::ios::binary);
       cereal::BinaryInputArchive archive(ifs);
 
-      Kmer kmer{};
+      Kmer input_kmer{};
+      // cached_context : pointer to array which for each A, C, T, G has the next char probs
+      auto cached_context = std::make_unique<double[]>(std::pow(4,background_order+1));
+      auto offset_to_remove = 0; 
+      for (int i = 0; i < background_order; i++){
+        offset_to_remove += std::pow(4, i); 
+      }
 
       while (ifs.peek() != EOF){
-        archive(kmer);
-        RI_Kmer ri_kmer{kmer};
-        push(ri_kmer);
+        archive(input_kmer);
+        RI_Kmer ri_kmer{input_kmer};
+
+        if(ri_kmer.length <= background_order){
+          if (ri_kmer.length + 1 > background_order){
+            int offset = (ri_kmer.integer_rep - offset_to_remove) * 4; 
+            for(int i = 0; i < 4; i++) {
+              cached_context[offset + i] = ri_kmer.next_char_prob[i];
+            }
+          }
+        } else {
+          push(ri_kmer);
+        }
       }
       ifs.close();
+
+      // Second pass - Comment this and select in dvstar.hpp row 120 to 128 to use old or new implementation. 
+      for (size_t i = 0; i <= get_max_kmer_index(); i++){
+        auto kmer = get(i);
+        if(kmer.is_null) continue; 
+        int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
+        int offset = (background_idx - offset_to_remove) * 4;
+        get(i).next_char_prob[0] /= std::sqrt(cached_context[offset + 0]);
+        get(i).next_char_prob[1] /= std::sqrt(cached_context[offset + 1]);
+        get(i).next_char_prob[2] /= std::sqrt(cached_context[offset + 2]);
+        get(i).next_char_prob[3] /= std::sqrt(cached_context[offset + 3]);
+      }
     } 
 
     RI_Kmer* begin(){
@@ -115,16 +143,16 @@ class VLMC_Indexing : public VLMC_Container {
   private: 
     std::vector<RI_Kmer> container{}; 
     int c_size = 0;
-    int max_kmer_index = -1;
+    int max_kmer_index = 0;
     int min_kmer_index = 0; // <- cant be set to MAX_INT when all kmers are inserted in order (0,1,2,3,4...)
     int container_size = -1; 
 
   public: 
-    VLMC_Indexing(const int initial_size = 50) : container(initial_size), container_size{initial_size} {}
+    VLMC_Indexing(const int initial_size = 50) : container(initial_size, null_kmer), container_size{initial_size} {}
     ~VLMC_Indexing() = default; 
 
     VLMC_Indexing(const std::filesystem::path &path_to_bintree, const size_t background_order = 0, const int initial_size = 50) 
-      : container(initial_size), container_size{initial_size} {
+      : container(initial_size, null_kmer), container_size{initial_size} {
       std::ifstream ifs(path_to_bintree, std::ios::binary);
       cereal::BinaryInputArchive archive(ifs);
 
@@ -138,36 +166,32 @@ class VLMC_Indexing : public VLMC_Container {
 
       while (ifs.peek() != EOF){
         archive(input_kmer);
-        RI_Kmer ri_kmer {input_kmer}; 
-        
-        // if(ri_kmer.length <= background_order){
-        //   if (ri_kmer.length + 1 > background_order){
-        //     int offset = (ri_kmer.integer_rep - offset_to_remove) * 4; 
-        //     for(int i = 0; i < 4; i++) {
-        //       cached_context[offset + i] = ri_kmer.next_char_prob[i];
-        //     }
-        //   }
-        // } else {
-        //   push(ri_kmer);
-        // }
+        RI_Kmer ri_kmer{input_kmer};
 
-        push(ri_kmer);
+        if(ri_kmer.length <= background_order){
+          if (ri_kmer.length + 1 > background_order){
+            int offset = (ri_kmer.integer_rep - offset_to_remove) * 4; 
+            for(int i = 0; i < 4; i++) {
+              cached_context[offset + i] = ri_kmer.next_char_prob[i];
+            }
+          }
+        } else {
+          push(ri_kmer);
+        }
       }
       ifs.close();
 
       // Second pass - Comment this and select in dvstar.hpp row 120 to 128 to use old or new implementation. 
-      // for (size_t i = min_kmer_index; i < max_kmer_index; i++){
-      //   RI_Kmer kmer = container[i];
-      //   if(kmer == null_kmer) continue;
-      //   int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
-      //   int offset = (background_idx - offset_to_remove) * 4;
-      //   // std::cout << "Previous values are : [" << kmer.next_char_prob[0] << "," << kmer.next_char_prob[1] << "," << kmer.next_char_prob[2] << "," << kmer.next_char_prob[3] << "]" << std::endl;
-      //   kmer.next_char_prob[0] /= std::sqrt(cached_context[offset + 0]);
-      //   kmer.next_char_prob[1] /= std::sqrt(cached_context[offset + 1]);
-      //   kmer.next_char_prob[2] /= std::sqrt(cached_context[offset + 2]);
-      //   kmer.next_char_prob[3] /= std::sqrt(cached_context[offset + 3]);
-      //   // std::cout << "New values are : [" << kmer.next_char_prob[0] << "," << kmer.next_char_prob[1] << "," << kmer.next_char_prob[2] << "," << kmer.next_char_prob[3] << "]" << std::endl;
-      // }
+      for (size_t i = 0; i <= get_max_kmer_index(); i++){
+        auto kmer = get(i);
+        if(kmer.is_null) continue;
+        int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
+        int offset = (background_idx - offset_to_remove) * 4; 
+        get(i).next_char_prob[0] /= std::sqrt(cached_context[offset + 0]);
+        get(i).next_char_prob[1] /= std::sqrt(cached_context[offset + 1]);
+        get(i).next_char_prob[2] /= std::sqrt(cached_context[offset + 2]);
+        get(i).next_char_prob[3] /= std::sqrt(cached_context[offset + 3]);
+      }
     } 
 
     size_t size() const override { return c_size; }
@@ -175,7 +199,7 @@ class VLMC_Indexing : public VLMC_Container {
     void push(const RI_Kmer &kmer) override {  
       int index = kmer.integer_rep;
       if(index >= container_size){
-        container.resize((index + 1) * 2);
+        container.resize((index + 1) * 2, null_kmer);
         max_kmer_index = index;
         container_size = (index + 1) * 2;
       } else if (index > max_kmer_index) {
@@ -233,33 +257,44 @@ class VLMC_sorted_vector : public VLMC_Container {
       std::ifstream ifs(path_to_bintree, std::ios::binary);
       cereal::BinaryInputArchive archive(ifs);
 
-      Kmer kmer{};
+      Kmer input_kmer{};
+      // cached_context : pointer to array which for each A, C, T, G has the next char probs
+      auto cached_context = std::make_unique<double[]>(std::pow(4,background_order+1));
+      auto offset_to_remove = 0; 
+      for (int i = 0; i < background_order; i++){
+        offset_to_remove += std::pow(4, i); 
+      }
 
       while (ifs.peek() != EOF){
-        archive(kmer);
-        RI_Kmer ri_kmer{kmer};
-        push(ri_kmer);
+        archive(input_kmer);
+        RI_Kmer ri_kmer{input_kmer};
+
+        if(ri_kmer.length <= background_order){
+          if (ri_kmer.length + 1 > background_order){
+            int offset = (ri_kmer.integer_rep - offset_to_remove) * 4; 
+            for(int i = 0; i < 4; i++) {
+              cached_context[offset + i] = ri_kmer.next_char_prob[i];
+            }
+          }
+        } else {
+          push(ri_kmer);
+        }
       }
       ifs.close();
 
       std::sort(container.begin(), container.end());
 
       // Second pass - Comment this and select in dvstar.hpp row 120 to 128 to use old or new implementation. 
-      // for (size_t i = 0; i < size(); i++){
-      //   RI_Kmer kmer = container[i];
-      //   if(kmer == null_kmer) continue;
-      //   if(kmer.length <= background_order) continue; 
-      //   int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
-      //   // int offset = (background_idx - offset_to_remove) * 4;
-      //   RI_Kmer background_kmer = find(background_idx);
-      //   double tmp[4];
-      //   std::copy(std::begin(kmer.next_char_prob), std::end(kmer.next_char_prob), std::begin(tmp));
-      //   tmp[0] /= std::sqrt(background_kmer.next_char_prob[0]);
-      //   tmp[1] /= std::sqrt(background_kmer.next_char_prob[1]);
-      //   tmp[2] /= std::sqrt(background_kmer.next_char_prob[2]);
-      //   tmp[3] /= std::sqrt(background_kmer.next_char_prob[3]);
-      //   std::copy(std::begin(tmp), std::end(tmp), std::begin(container[i].next_char_prob));
-      // }
+      for (size_t i = 0; i < size(); i++){
+        auto kmer = get(i);
+        if(kmer.is_null) continue; 
+        int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
+        int offset = (background_idx - offset_to_remove) * 4;
+        get(i).next_char_prob[0] /= std::sqrt(cached_context[offset + 0]);
+        get(i).next_char_prob[1] /= std::sqrt(cached_context[offset + 1]);
+        get(i).next_char_prob[2] /= std::sqrt(cached_context[offset + 2]);
+        get(i).next_char_prob[3] /= std::sqrt(cached_context[offset + 3]);
+      }
     } 
 
     size_t size() const override { return container.size(); }
@@ -427,7 +462,7 @@ class VLMC_Combo : public VLMC_Container {
     int max_idx = 2048; 
     std::array<RI_Kmer, 2048> container_ibv{};
     std::vector<RI_Kmer> container_sorted{};  
-    int max_kmer_index = -1;
+    int max_kmer_index = 0;
     int min_kmer_index = 0;
 
   public: 
@@ -439,14 +474,53 @@ class VLMC_Combo : public VLMC_Container {
       cereal::BinaryInputArchive archive(ifs);
 
       Kmer input_kmer{};
+      // cached_context : pointer to array which for each A, C, T, G has the next char probs
+      auto cached_context = std::make_unique<double[]>(std::pow(4,background_order+1));
+      auto offset_to_remove = 0; 
+      for (int i = 0; i < background_order; i++){
+        offset_to_remove += std::pow(4, i); 
+      }
 
       while (ifs.peek() != EOF){
         archive(input_kmer);
-        RI_Kmer ri_kmer {input_kmer};
-        push(ri_kmer);
+        RI_Kmer ri_kmer{input_kmer};
+
+        if(ri_kmer.length <= background_order){
+          if (ri_kmer.length + 1 > background_order){
+            int offset = (ri_kmer.integer_rep - offset_to_remove) * 4; 
+            for(int i = 0; i < 4; i++) {
+              cached_context[offset + i] = ri_kmer.next_char_prob[i];
+            }
+          }
+        } else {
+          push(ri_kmer);
+        }
       }
       ifs.close();
+
       std::sort(container_sorted.begin(), container_sorted.end());
+
+      // Second pass - Comment this and select in dvstar.hpp row 120 to 128 to use old or new implementation. 
+      for (size_t i = 0; i < max_idx; i++){
+        auto kmer = container_ibv[i];
+        if(kmer.is_null) continue; 
+        int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
+        int offset = (background_idx - offset_to_remove) * 4;
+        container_ibv[i].next_char_prob[0] /= std::sqrt(cached_context[offset + 0]);
+        container_ibv[i].next_char_prob[1] /= std::sqrt(cached_context[offset + 1]);
+        container_ibv[i].next_char_prob[2] /= std::sqrt(cached_context[offset + 2]);
+        container_ibv[i].next_char_prob[3] /= std::sqrt(cached_context[offset + 3]);
+      }
+      for (size_t i = 0; i < size(); i++){
+        auto kmer = get(i);
+        if(kmer.is_null) continue; 
+        int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
+        int offset = (background_idx - offset_to_remove) * 4;
+        get(i).next_char_prob[0] /= std::sqrt(cached_context[offset + 0]);
+        get(i).next_char_prob[1] /= std::sqrt(cached_context[offset + 1]);
+        get(i).next_char_prob[2] /= std::sqrt(cached_context[offset + 2]);
+        get(i).next_char_prob[3] /= std::sqrt(cached_context[offset + 3]);
+      }
     } 
 
     size_t size() const override { return container_sorted.size(); }

@@ -112,19 +112,19 @@ double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
 
   left.iterate_kmers(
       left, right, [&](auto &left_v, auto &right_v) {
-        if (left_v.length <= background_order) {
+        if (left_v.length <= background_order) { // <- This can be removed with the new get_component
           return;
         }
         const auto background_context = left_v.background_order_index(left_v.integer_rep, background_order);
         
         //Old
-        auto left_kmer_background = left.find(background_context);
-        auto right_kmer_background = right.find(background_context);
-        auto [left_comp, right_comp] = get_components(
-            left_v, left_kmer_background, right_v, right_kmer_background);
+        // auto left_kmer_background = left.find(background_context);
+        // auto right_kmer_background = right.find(background_context);
+        // auto [left_comp, right_comp] = get_components(
+        //     left_v, left_kmer_background, right_v, right_kmer_background);
 
         // New
-        // auto [left_comp, right_comp] = get_components(left_v, right_v);
+        auto [left_comp, right_comp] = get_components(left_v, right_v);
 
         for (int i = 0; i < 4; i++) { 
           dot_product += left_comp[i] * right_comp[i];
@@ -132,7 +132,7 @@ double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
           right_norm += std::pow(right_comp[i], 2.0);
         }
       });
-
+      
   return normalise_dvstar(dot_product, left_norm, right_norm);
 }
 }

@@ -60,11 +60,7 @@ void iterate_kmers_f(VC left, VC right){
     if (left_v.length <= background_order) {
       return;
     }
-    const auto background_context = left_v.background_order_index(left_v.integer_rep, background_order);
-    auto left_kmer_background = left.find(background_context);
-    auto right_kmer_background = right.find(background_context);
-    auto [left_comp, right_comp] = distance::get_components(
-        left_v, left_kmer_background, right_v, right_kmer_background);
+    auto [left_comp, right_comp] = distance::get_components(left_v, right_v);
     for (int i = 0; i < 4; i++) { 
       dot_product += left_comp[i] * right_comp[i];
       left_norm += std::pow(left_comp[i], 2.0);
@@ -268,9 +264,9 @@ int main(int argc, char *argv[]){
   // run_timer<container::VLMC_vector>("Vector");
   run_timer<container::VLMC_Indexing>("Indexing");
   run_timer<container::VLMC_sorted_vector>("Sorted Vector");
-  run_timer<container::VLMC_B_tree>("B-tree");
-  run_timer<container::VLMC_hashmap>("Hashmap");
-  run_timer<container::VLMC_Combo>("Combo");
+  // run_timer<container::VLMC_B_tree>("B-tree");
+  // run_timer<container::VLMC_hashmap>("Hashmap");
+  // run_timer<container::VLMC_Combo>("Combo");
   //run_timer(num_items, container::VLMC_Veb{}, "Veb-tree");
   benchmark_read_in_kmer();
   benchmark_kmer_comparison();
