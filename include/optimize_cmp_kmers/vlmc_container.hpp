@@ -65,6 +65,14 @@ class VLMC_vector : public VLMC_Container {
       ifs.close();
     } 
 
+    RI_Kmer* begin(){
+      return &container[0];
+    }
+
+    RI_Kmer* end(){
+      return begin() + container.size();
+    }
+
     size_t size() const override { return container.size(); }
 
     void push(const RI_Kmer &kmer) override { container.push_back(kmer); }

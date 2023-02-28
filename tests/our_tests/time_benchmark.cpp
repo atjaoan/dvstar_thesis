@@ -94,8 +94,8 @@ std::tuple<std::vector<RI_Kmer>, int> get_kmer_vector(std::filesystem::path path
 
 template <typename VC> 
 void run_timer(std::string container){
-  std::filesystem::path path_fst{"/home/holmse/thesis/dvstar_thesis/data/one_human_VLMCs/human_genome_1.bintree"};
-  std::filesystem::path path_snd{"/home/holmse/thesis/dvstar_thesis/data/one_human_VLMCs/human_genome_2.bintree"};
+  std::filesystem::path path_fst{"../data/one_human_VLMCs/human_genome_1.bintree"};
+  std::filesystem::path path_snd{"../data/one_human_VLMCs/human_genome_2.bintree"};
 
   auto fst = get_kmer_vector(path_fst);
   auto snd = get_kmer_vector(path_snd);
@@ -192,7 +192,7 @@ void benchmark_read_in_kmer(){
   int total_integer_rep = 0; 
   int count = 0; 
 
-  std::filesystem::path path{"/home/holmse/thesis/dvstar_thesis/data/one_human_VLMCs/human_genome_1.bintree"};
+  std::filesystem::path path{"../data/one_human_VLMCs/human_genome_1.bintree"};
   std::ifstream ifs(path, std::ios::binary);
   cereal::BinaryInputArchive archive(ifs);
   Kmer kmer{};
@@ -211,6 +211,57 @@ void benchmark_read_in_kmer(){
   std::cout << "Integer_rep time : " << total_integer_rep / 1000 << " [micro sec], Avg : " << total_integer_rep / count << " [nano sec]" << std::endl;  
 }
 
+void benchmark_kmer_comparison(){
+  int nr_kmers = 0;
+
+  std::filesystem::path path{"../data/one_human_VLMCs/human_genome_1.bintree"};
+  std::ifstream ifs(path, std::ios::binary);
+  cereal::BinaryInputArchive archive(ifs);
+
+  Kmer old_kmer{};
+
+  auto begin_old_comp = std::chrono::steady_clock::now();
+
+  std::vector<Kmer> old_kmers{};
+  while (ifs.peek() != EOF){
+    archive(old_kmer);
+    old_kmers.push_back(old_kmer);
+    nr_kmers++;
+  }
+  ifs.close();
+
+  for(auto first_kmer : old_kmers){
+    for(auto second_kmer : old_kmers){
+      // Compare two old kmers;
+      auto test_old = first_kmer < second_kmer;
+
+    }
+  }
+  auto end_old_comp = std::chrono::steady_clock::now();
+  auto old_kmer_comp_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end_old_comp - begin_old_comp).count();
+
+  auto begin_our_comp = std::chrono::steady_clock::now();
+
+  container::VLMC_vector our_kmers{path};
+  for(auto first_kmer : our_kmers){
+    for(auto second_kmer : our_kmers){
+      auto test_our = first_kmer < second_kmer;
+    }
+  }
+
+  auto end_our_comp = std::chrono::steady_clock::now();
+  auto our_kmer_comp_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end_our_comp - begin_our_comp).count();
+  
+  std::cout << std::endl;
+  std::string descriptive_string = "Time to compare < operator";
+  int string_length = descriptive_string.length() + 24; 
+  std::cout << std::string(string_length, '-') << std::endl;
+  std::cout << "|           " << descriptive_string << "           |" << std::endl; 
+  std::cout << std::string(string_length, '-') << std::endl; 
+  std::cout << "Total time for old : " << old_kmer_comp_time << " [nano sec], Avg : " << old_kmer_comp_time / nr_kmers << " [nano sec]" << std::endl;  
+  std::cout << "Total time for our : " << our_kmer_comp_time << " [nano sec], Avg : " << our_kmer_comp_time / nr_kmers << " [nano sec]" << std::endl;  
+}
+
 int main(int argc, char *argv[]){
   // int num_items = 1500;
 
@@ -221,6 +272,6 @@ int main(int argc, char *argv[]){
   run_timer<container::VLMC_hashmap>("Hashmap");
   run_timer<container::VLMC_Combo>("Combo");
   //run_timer(num_items, container::VLMC_Veb{}, "Veb-tree");
-
   benchmark_read_in_kmer();
+  benchmark_kmer_comparison();
 }
