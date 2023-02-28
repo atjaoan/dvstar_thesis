@@ -236,8 +236,8 @@ def stat_new(set_size: int = -1, dist_func: Distance_Function = Distance_Functio
 
 @app.command()
 def benchmark():
-    background_order = 2
-    genome_path = "data/medium_test"
+    background_order = 0
+    genome_path = "data/human_VLMCs"
     stat(-1, Distance_Function.dvstar, genome_path, background_order)
     ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_multi_vector, 8)
     stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_sorted_vector, 8, background_order)
