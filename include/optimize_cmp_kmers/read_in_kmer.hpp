@@ -1,5 +1,5 @@
 #pragma once 
-#include <Eigen/Dense>
+#include <Eigen/Core>
 #include <functional>
 #include <memory>
 #include <filesystem>
@@ -23,7 +23,7 @@ struct RI_Kmer{
     // int background_rep; <- Should be implemented 
     std::array<double,4> next_char_prob{};
     // To replace next_char_prob array with eigen array
-    Eigen::Array4d next_test{0.0, 0.0, 0.0, 0.0};
+    Eigen::Array<float, 4, 1> next_test{0.0, 0.0, 0.0, 0.0};
     bool is_null = true;
 
     RI_Kmer() = default;

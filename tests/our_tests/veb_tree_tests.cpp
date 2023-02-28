@@ -14,6 +14,29 @@
 #include "cluster_container.hpp"
 #include "../read_helper.hpp"
 
+void print_tree(veb::Veb_tree &t, int depth){
+  std::cout << "Min at depth " << depth << " : " << t.min.integer_rep <<std::endl;
+  std::cout << "Max at depth " << depth << " : " << t.max.integer_rep <<std::endl;
+  if(t.summary != nullptr){
+    std::cout << "Summary min at depth " << depth << " : " << t.summary->min.integer_rep <<std::endl;
+    std::cout << "Summary max at depth " << depth << " : " << t.summary->max.integer_rep <<std::endl;
+  }
+  std::cout << "Size of t : " << t.size << std::endl;
+  std::cout << "t.nr_subtrees : " << t.nr_subtrees << std::endl;
+  std::cout << "Subtrees " <<std::endl;
+  if(t.trees[0] == nullptr){
+    std::cout << "t.trees is null" << std::endl;
+  //  return;
+  }
+  for (int i = 0; i < t.trees.size(); i++)
+  {
+    if(t.trees[i] != nullptr){
+      std::cout << "Subtree : " << i << std::endl;
+      print_tree(*t.trees[i], depth);
+    }
+  }
+}
+
 class VebTreeTest : public ::testing::Test {
 protected:
   void SetUp() override {}
@@ -98,8 +121,14 @@ TEST_F(VebTreeTest, FindOnFourInsert) {
   auto kmer1 = container::RI_Kmer{1};
   auto kmer2 = container::RI_Kmer{2};
   auto kmer3 = container::RI_Kmer{3};
+  //std::cout << "----- Insert 0 -----" << std::endl;
+  //print_tree(tree, 0);
   veb::insert(tree, kmer0);
+  //std::cout << "----- Insert 1 -----" << std::endl;
+  //print_tree(tree, 0);
   veb::insert(tree, kmer1);
+  //std::cout << "----- Insert 2 -----" << std::endl;
+  //print_tree(tree, 0);
   veb::insert(tree, kmer2);
   veb::insert(tree, kmer3);
   
@@ -179,6 +208,33 @@ TEST_F(VebTreeTest, FailFindINT) {
   EXPECT_EQ(kmer1, veb::find(tree, kmer1.integer_rep));
   EXPECT_EQ(null_kmer, veb::find(tree, kmer3.integer_rep));
 }
+/*
+TEST_F(VebTreeTest, Sized10) {
+  veb::Veb_tree tree{10};
+  auto kmer0 = container::RI_Kmer{0};
+  auto kmer1 = container::RI_Kmer{1};
+  auto kmer2 = container::RI_Kmer{2};
+  auto kmer3 = container::RI_Kmer{3};
+  auto null_kmer = container::RI_Kmer(-1);
+  print_tree(tree, 0);
+  veb::insert(tree, kmer0);
+  std::cout << "----- Insert 0 -----" << std::endl;
+  print_tree(tree, 0);
+  veb::insert(tree, kmer1);
+  std::cout << "----- Insert 1 -----" << std::endl;
+  print_tree(tree, 0);
+  veb::insert(tree, kmer2);
+  std::cout << "----- Insert 2 -----" << std::endl;
+  print_tree(tree, 0);
+  veb::insert(tree, kmer3);
+  std::cout << "----- Insert 3 -----" << std::endl;
+  print_tree(tree, 0);
+  EXPECT_EQ(kmer1, veb::succ(tree, kmer0));
+  EXPECT_EQ(kmer2, veb::succ(tree, kmer1));
+  //EXPECT_EQ(kmer2, veb::find(tree, kmer2));
+  //EXPECT_EQ(kmer3, veb::succ(tree, kmer2));
+}
+*/
 /* Failes - Needs to be fixed, check nr_trees = 4
 TEST_F(VebTreeTest, CheckMany) {
   for (size_t j = 10; j < 16; j++)

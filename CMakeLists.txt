@@ -25,7 +25,7 @@ add_library(kmc_file STATIC submodules/KMC/kmc_api/kmc_file.cpp)
 add_library(kmer_api STATIC submodules/KMC/kmc_api/kmer_api.cpp)
 add_library(mmer STATIC submodules/KMC/kmc_api/mmer.cpp)
 set(KMC_Libraries TRUE)
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O4 -march=native")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native")
 # STXXL
 set(USE_BOOST OFF)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/submodules/stxxl)
@@ -46,7 +46,6 @@ set(INCLUDE_DIRS ${STXXL_INCLUDE_DIRS} "${PROJECT_SOURCE_DIR}/submodules/stxxl/i
                                          "${PROJECT_SOURCE_DIR}/submodules/unordered_dense/include/ankerl")
 
 include_directories("${INCLUDE_DIRS}")
-
 
 if(NOT MAIN_PROJECT)
     set(CountVLMC_INCLUDE_DIRS ${INCLUDE_DIRS} PARENT_SCOPE)

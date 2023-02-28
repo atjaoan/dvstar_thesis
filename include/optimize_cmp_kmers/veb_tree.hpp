@@ -30,9 +30,9 @@ struct Veb_tree{
   Veb_tree(size_t u) : is_empty{true}, min{INT_MAX}, max{-1} {
     if(u <= 2){
       nr_subtrees = 0;
-      size = 0;
+      size = 2;
       summary = nullptr;
-      trees = std::vector<std::shared_ptr<Veb_tree>>{1, nullptr};
+      trees = std::vector<std::shared_ptr<Veb_tree>>{2, nullptr};
     } else{
       this->nr_subtrees = std::ceil(std::sqrt(u));
       this->size = u;
@@ -44,7 +44,7 @@ struct Veb_tree{
   ~Veb_tree() = default;
 
   size_t tree_group(size_t in){
-    if(nr_subtrees < 2) return 0;
+    if(nr_subtrees < 2) return in;
     return (in / nr_subtrees); }
   size_t tree_group_index(size_t in){
     if(nr_subtrees < 2) return in % 2;
@@ -67,16 +67,17 @@ void insert(Veb_tree &t, container::RI_Kmer in) {
   if(in >= t.max){
     t.max = in;
   }
-  if(t.size < 2) return;
+  if(t.nr_subtrees == 0) { return;}
 
   size_t c = t.tree_group(in.integer_rep);
   size_t i = t.tree_group_index(in.integer_rep);
   
   if(t.trees[c] == nullptr){
+    //std::cout << "New tree at index  " << c << " with i " << i << std::endl;
     t.trees[c] = std::make_shared<Veb_tree>(t.nr_subtrees);
   }
 
-  if(t.trees[c]->is_empty){
+  if(t.trees[c]->is_empty && t.summary != nullptr){
     in.integer_rep = c;
     insert(*t.summary, in);
   }
@@ -161,6 +162,7 @@ container::RI_Kmer succ(Veb_tree&t, int in){
 }
 
 container::RI_Kmer succ(Veb_tree&t, container::RI_Kmer in){
+  //std::cout << "succ with in = " << in.integer_rep << std::endl; 
   if(in >= t.max) {
     return t.null_kmer;
   }
@@ -177,10 +179,13 @@ container::RI_Kmer succ(Veb_tree&t, container::RI_Kmer in){
   size_t c = t.tree_group(in.integer_rep);
   size_t i = t.tree_group_index(in.integer_rep);
   if(t.trees[c] == nullptr){
+    //std::cout << "tmax at c : " << c << " with nr_subtrees : " << t.nr_subtrees << std::endl;
+    //std::cout << "trees[1] null? " <<  (t.trees[1] == nullptr) << std::endl;
     return t.max;
   }
-  if(i < t.trees[c]->max.integer_rep){
+  if(t.trees[c] != nullptr && i < t.trees[c]->max.integer_rep){
     in.integer_rep = i;
+    //std::cout << "checking in subtree " << c  << " with i : " << i << std::endl; 
     auto ret_kmer = succ(*t.trees[c], in);
     ret_kmer.integer_rep += c*t.nr_subtrees;
     return ret_kmer; 

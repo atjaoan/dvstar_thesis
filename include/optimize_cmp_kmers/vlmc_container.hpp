@@ -283,7 +283,6 @@ class VLMC_sorted_vector : public VLMC_Container {
       ifs.close();
 
       std::sort(container.begin(), container.end());
-<<<<<<< HEAD
       if (!use_new){
         std::cout << "Using old" << std::endl;
         // Second pass - Comment this and select in dvstar.hpp row 120 to 128 to use old or new implementation. 
@@ -314,19 +313,6 @@ class VLMC_sorted_vector : public VLMC_Container {
            RI_Kmer background_kmer = find(background_idx);
            container[i].next_test *= background_kmer.next_test.rsqrt();
          }
-=======
-
-      // Second pass - Comment this and select in dvstar.hpp row 120 to 128 to use old or new implementation. 
-      for (size_t i = 0; i < size(); i++){
-        auto kmer = get(i);
-        if(kmer.is_null) continue; 
-        int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
-        int offset = (background_idx - offset_to_remove) * 4;
-        get(i).next_char_prob[0] /= std::sqrt(cached_context[offset + 0]);
-        get(i).next_char_prob[1] /= std::sqrt(cached_context[offset + 1]);
-        get(i).next_char_prob[2] /= std::sqrt(cached_context[offset + 2]);
-        get(i).next_char_prob[3] /= std::sqrt(cached_context[offset + 3]);
->>>>>>> main
       }
     } 
 

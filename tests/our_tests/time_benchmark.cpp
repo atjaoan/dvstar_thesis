@@ -232,10 +232,6 @@ void benchmark_container_inv_sqrt(){
   std::cout << std::string(string_length, '-') << std::endl; 
   std::cout << "Total time for old : " << time_old << " [micro sec]" << std::endl;  
   std::cout << "Total time for eigen : " << time_new << " [micro sec]" << std::endl; 
-  Eigen::Vector4f a, b;
-  asm("#it begins here!");
-  a += b;
-  asm("#it ends here!");
 }
 
 void benchmark_kmer_comparison(){
