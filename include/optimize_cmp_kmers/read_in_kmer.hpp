@@ -31,11 +31,13 @@ struct RI_Kmer{
     RI_Kmer(const vlmc::VLMCKmer &old_kmer){
         this->length = old_kmer.length;
         double child_count = std::accumulate(old_kmer.next_symbol_counts.begin(), old_kmer.next_symbol_counts.end(), pseudo_count_amount * 4);
-        this->next_char_prob = {(double(old_kmer.next_symbol_counts[0]) + pseudo_count_amount) / child_count,
+        this->next_char_prob = {
+               (double(old_kmer.next_symbol_counts[0]) + pseudo_count_amount) / child_count,
                (double(old_kmer.next_symbol_counts[1]) + pseudo_count_amount) / child_count,
                (double(old_kmer.next_symbol_counts[2]) + pseudo_count_amount) / child_count,
                (double(old_kmer.next_symbol_counts[3]) + pseudo_count_amount) / child_count};
-        this->next_test = {(double(old_kmer.next_symbol_counts[0]) + pseudo_count_amount) / child_count,
+        this->next_test = {
+               (double(old_kmer.next_symbol_counts[0]) + pseudo_count_amount) / child_count,
                (double(old_kmer.next_symbol_counts[1]) + pseudo_count_amount) / child_count,
                (double(old_kmer.next_symbol_counts[2]) + pseudo_count_amount) / child_count,
                (double(old_kmer.next_symbol_counts[3]) + pseudo_count_amount) / child_count};
