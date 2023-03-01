@@ -271,9 +271,7 @@ class VLMC_sorted_vector : public VLMC_Container {
         if(ri_kmer.length <= background_order){
           if (ri_kmer.length + 1 > background_order){
             int offset = ri_kmer.integer_rep - offset_to_remove; 
-            for(int i = 0; i < 4; i++) {
-              cached_context(offset, i) = ri_kmer.next_char_prob(i);
-            }
+            cached_context.row(offset) = ri_kmer.next_char_prob;
           }
         } else {
           push(ri_kmer);
