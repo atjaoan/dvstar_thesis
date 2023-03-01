@@ -30,17 +30,12 @@ struct RI_Kmer{
 
     RI_Kmer(const vlmc::VLMCKmer &old_kmer){
         this->length = old_kmer.length;
-        double child_count = std::accumulate(old_kmer.next_symbol_counts.begin(), old_kmer.next_symbol_counts.end(), pseudo_count_amount * 4);
-        //this->next_char_prob = {
-        //       (double(old_kmer.next_symbol_counts[0]) + pseudo_count_amount) / child_count,
-        //       (double(old_kmer.next_symbol_counts[1]) + pseudo_count_amount) / child_count,
-        //       (double(old_kmer.next_symbol_counts[2]) + pseudo_count_amount) / child_count,
-        //       (double(old_kmer.next_symbol_counts[3]) + pseudo_count_amount) / child_count};
-        this->next_char_prob = {
-               (double(old_kmer.next_symbol_counts[0]) + pseudo_count_amount) / child_count,
-               (double(old_kmer.next_symbol_counts[1]) + pseudo_count_amount) / child_count,
-               (double(old_kmer.next_symbol_counts[2]) + pseudo_count_amount) / child_count,
-               (double(old_kmer.next_symbol_counts[3]) + pseudo_count_amount) / child_count};
+        Eigen::Array4d tmp = {old_kmer.next_symbol_counts[0], 
+                              old_kmer.next_symbol_counts[1],
+                              old_kmer.next_symbol_counts[2],
+                              old_kmer.next_symbol_counts[3]};
+        double child_count = tmp.sum() + 4;
+        this->next_char_prob = (tmp + pseudo_count_amount) / child_count;
         this->integer_rep = get_index_rep(old_kmer);
         this->is_null = false;
         // this->background_rep = background_order_index(this->integer_rep, 0);  <- Should be implemented 
