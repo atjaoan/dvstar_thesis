@@ -46,7 +46,6 @@ void prettyPrint(size_t insert_time_fst, size_t insert_time_snd, size_t find_tim
   std::cout << "Total time : " << dvstar_time / 1000 << " [micro sec] " << std::endl; 
   std::cout << "Sec / item : " << dvstar_time / (items_fst + items_snd) << " [nano sec] " << std::endl;
   std::cout << std::endl; 
-  std::cout << "Items in first = " << items_fst << ", items in second = " << items_snd << std::endl;
 }
 
 template <typename VC>
@@ -67,6 +66,8 @@ void iterate_kmers_f(VC left, VC right){
       right_norm += std::pow(right_comp[i], 2.0);
     }
   });
+
+  std::cout << "Dot product = " << dot_product << ", left norm = " << left_norm << ", right norm = " << right_norm << std::endl; 
 }
 
 std::tuple<std::vector<RI_Kmer>, int> get_kmer_vector(std::filesystem::path path){
@@ -113,14 +114,14 @@ void run_timer(std::string container){
 
   auto begin_find_fst = std::chrono::steady_clock::now();
   for (int i = 0; i < kmers_fst.size(); i++){
-    vlmc_fst.find(kmers_fst[i].integer_rep);
+    kmers_fst[i] = vlmc_fst.find(kmers_fst[i].integer_rep);
   }
   auto end_find_fst = std::chrono::steady_clock::now();
   auto find_time_fst = std::chrono::duration_cast<std::chrono::nanoseconds>(end_find_fst - begin_find_fst).count();
 
   auto begin_find_snd = std::chrono::steady_clock::now();
   for (int i = 0; i < kmers_snd.size(); i++){
-    vlmc_snd.find(kmers_snd[i].integer_rep);
+    kmers_snd[i] = vlmc_snd.find(kmers_snd[i].integer_rep);
   }
   auto end_find_snd = std::chrono::steady_clock::now();
   auto find_time_snd = std::chrono::duration_cast<std::chrono::nanoseconds>(end_find_snd - begin_find_snd).count();
@@ -134,6 +135,17 @@ void run_timer(std::string container){
   distance::dvstar(vlmc_fst, vlmc_snd, 0.0);
   auto end_dvstar = std::chrono::steady_clock::now();
   auto dvstar_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end_dvstar - begin_dvstar).count();
+
+  auto items_fst_sum = 0; 
+  auto items_snd_sum = 0; 
+  for (int i = 0; i < kmers_fst.size(); i++){
+    items_fst_sum += kmers_fst[i].integer_rep; 
+  }
+  for (int i = 0; i < kmers_snd.size(); i++){
+    items_snd_sum += kmers_snd[i].integer_rep; 
+  }
+
+  std::cout << "Items in first = " << items_fst << " sums up to " << items_fst_sum << ", items in second = " << items_snd << " sums up to " << items_snd_sum << std::endl;
   
   prettyPrint(insert_time_fst, insert_time_snd, find_time_fst, find_time_snd, iterate_time, dvstar_time, items_fst, items_snd, container);
 }
@@ -291,10 +303,10 @@ int main(int argc, char *argv[]){
   // run_timer<container::VLMC_vector>("Vector");
   run_timer<container::VLMC_Indexing>("Indexing");
   run_timer<container::VLMC_sorted_vector>("Sorted Vector");
-  // run_timer<container::VLMC_B_tree>("B-tree");
-  // run_timer<container::VLMC_hashmap>("Hashmap");
-  // run_timer<container::VLMC_Combo>("Combo");
-  //run_timer(num_items, container::VLMC_Veb{}, "Veb-tree");
+  run_timer<container::VLMC_B_tree>("B-tree");
+  run_timer<container::VLMC_hashmap>("Hashmap");
+  run_timer<container::VLMC_Combo>("Combo");
+  // run_timer(num_items, container::VLMC_Veb{}, "Veb-tree");
   benchmark_read_in_kmer();
   benchmark_kmer_comparison();
   benchmark_container_inv_sqrt();
