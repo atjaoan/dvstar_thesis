@@ -5,6 +5,7 @@ project (CountVLMC CXX)
 add_definitions(-w)
 
 option(CountVLMC_COMPILE_TESTS "To compile tests, specify -DCountVLMC_COMPILE_TESTS=ON")
+option(COMPILE_OLD "To compile original dvstar implementation, specify -DCOMPILE_OLD=ON")
 
 set(MAIN_PROJECT OFF)
 if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
@@ -63,11 +64,13 @@ target_include_directories(CountVLMC INTERFACE
         $<INSTALL_INTERFACE:include/>)
 
 if(MAIN_PROJECT)
-    add_executable(dvstar src/build_vlmc.cpp include/vlmc_from_kmers/context_archive.hpp include/vlmc_from_kmers/estimators.hpp include/vlmc_from_kmers/sequencing_adjustment.hpp)
+    if(COMPILE_OLD)
+        add_executable(dvstar src/build_vlmc.cpp include/vlmc_from_kmers/context_archive.hpp include/vlmc_from_kmers/estimators.hpp include/vlmc_from_kmers/sequencing_adjustment.hpp)
+        target_link_libraries(dvstar Threads::Threads)
+        target_link_libraries(dvstar ${CountVLMC_LIBRARIES})
+    endif()
     add_executable(dist src/calc_dists.cpp)
     add_executable(time_benchmark tests/our_tests/time_benchmark.cpp)
-    target_link_libraries(dvstar Threads::Threads)
-    target_link_libraries(dvstar ${CountVLMC_LIBRARIES})
     target_link_libraries(dist ${CountVLMC_LIBRARIES})
     target_link_libraries(time_benchmark ${CountVLMC_LIBRARIES})
 
