@@ -111,11 +111,14 @@ double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
   double right_norm = 0.0;
 
   auto dvstar_fun = [&](auto &left_v, auto &right_v) {
-      for (int i = 0; i < 4; i++) { 
-        dot_product += left_v.next_char_prob[i] * right_v.next_char_prob[i];
-        left_norm += std::pow(left_v.next_char_prob[i], 2.0);
-        right_norm += std::pow(right_v.next_char_prob[i], 2.0);
-      }
+    dot_product += (left_v.next_char_prob * right_v.next_char_prob).sum();
+    left_norm += left_v.next_char_prob.square().sum();
+    right_norm += right_v.next_char_prob.square().sum();
+    //for (int i = 0; i < 4; i++) { 
+    //  dot_product += left_v.next_char_prob[i] * right_v.next_char_prob[i];
+    //  left_norm += std::pow(left_v.next_char_prob[i], 2.0);
+    //  right_norm += std::pow(right_v.next_char_prob[i], 2.0);
+    //}
     };
 
   if (left.size() < right.size()){
@@ -123,29 +126,6 @@ double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
   } else {
     right.iterate_kmers(right, left, dvstar_fun);
   }
-
-  // left.iterate_kmers(
-  //     left, right, [&](auto &left_v, auto &right_v) {
-  //       if (left_v.length <= background_order) { // <- This can be removed with the new get_component
-  //         return;
-  //       }
-  //       const auto background_context = left_v.background_order_index(left_v.integer_rep, background_order);
-  //       
-  //       //Old
-  //       // auto left_kmer_background = left.find(background_context);
-  //       // auto right_kmer_background = right.find(background_context);
-  //       // auto [left_comp, right_comp] = get_components(
-  //       //     left_v, left_kmer_background, right_v, right_kmer_background);
-// 
-  //       // New
-  //       auto [left_comp, right_comp] = get_components(left_v, right_v);
-// 
-  //       for (int i = 0; i < 4; i++) { 
-  //         dot_product += left_comp[i] * right_comp[i];
-  //         left_norm += std::pow(left_comp[i], 2.0);
-  //         right_norm += std::pow(right_comp[i], 2.0);
-  //       }
-  //     });
       
   return normalise_dvstar(dot_product, left_norm, right_norm);
 }
