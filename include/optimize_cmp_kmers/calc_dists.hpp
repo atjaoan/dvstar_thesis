@@ -1,4 +1,4 @@
-#include <Eigen/Dense>
+#include <Eigen/Core>
 #include "cluster_container.hpp"
 #include "vlmc_container.hpp"
 #include "parallel.hpp"

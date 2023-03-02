@@ -44,10 +44,8 @@ struct Veb_tree{
   ~Veb_tree() = default;
 
   size_t tree_group(size_t in){
-    if(nr_subtrees < 2) return in;
     return (in / nr_subtrees); }
   size_t tree_group_index(size_t in){
-    if(nr_subtrees < 2) return in % 2;
    return in % nr_subtrees; 
   }
 };
@@ -67,7 +65,7 @@ void insert(Veb_tree &t, container::RI_Kmer in) {
   if(in >= t.max){
     t.max = in;
   }
-  if(t.nr_subtrees == 0) { return;}
+  if(t.nr_subtrees == 0) { return; }
 
   size_t c = t.tree_group(in.integer_rep);
   size_t i = t.tree_group_index(in.integer_rep);
@@ -81,7 +79,7 @@ void insert(Veb_tree &t, container::RI_Kmer in) {
     in.integer_rep = c;
     insert(*t.summary, in);
   }
-
+  std::cout << "i =  " << i << std::endl;
   in.integer_rep = i;
   insert(*t.trees[c], in);
   return;
