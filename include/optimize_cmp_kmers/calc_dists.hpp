@@ -1,4 +1,6 @@
 #include <Eigen/Dense>
+#include <chrono> 
+
 #include "cluster_container.hpp"
 #include "vlmc_container.hpp"
 #include "parallel.hpp"
@@ -22,14 +24,29 @@ void calculate_reduced_slice(size_t start_index, size_t stop_index, matrix_t &di
 }
 
 template <typename VC>
+void calculate_full_slice_rec(size_t start_index_left, size_t stop_index_left, size_t start_index_right, size_t stop_index_right, matrix_t &distances,
+                     container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
+                     const std::function<double(vlmc_c &, vlmc_c &)> &fun) {
+  auto diff_left = stop_index_left - start_index_left;
+  auto diff_right = stop_index_right - start_index_right;
+  if (diff_left == 1 && diff_right == 1){
+    distances(start_index_left, start_index_right) = fun(cluster_left.get(start_index_left), cluster_right.get(start_index_right));
+  } else if (diff_right > diff_left){
+    auto new_right_index = (stop_index_right + start_index_right) / 2;
+    calculate_full_slice_rec(start_index_left, stop_index_left, start_index_right, new_right_index, distances, cluster_left, cluster_right, fun);
+    calculate_full_slice_rec(start_index_left, stop_index_left, new_right_index, stop_index_right, distances, cluster_left, cluster_right, fun);
+  } else {
+    auto new_left_index = (stop_index_left + start_index_left) / 2;
+    calculate_full_slice_rec(start_index_left, new_left_index, start_index_right, stop_index_right, distances, cluster_left, cluster_right, fun);
+    calculate_full_slice_rec(new_left_index, stop_index_left, start_index_right, stop_index_right, distances, cluster_left, cluster_right, fun);
+  }
+}
+
+template <typename VC>
 void calculate_full_slice(size_t start_index, size_t stop_index, matrix_t &distances,
                      container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
                      const std::function<double(vlmc_c &, vlmc_c &)> &fun) {
-  for (size_t i = start_index; i < stop_index; i++) {
-    for (size_t j = 0; j < cluster_right.size(); j++) {
-      distances(i, j) = fun(cluster_left.get(i), cluster_right.get(j));
-    }
-  }
+  calculate_full_slice_rec(start_index, stop_index, 0, cluster_right.size(), distances, cluster_left, cluster_right, fun); 
 }
 
 // Inter-directory distances
