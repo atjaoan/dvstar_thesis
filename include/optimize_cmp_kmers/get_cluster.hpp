@@ -7,6 +7,10 @@
 #include <iostream>
 #include <thread>
 #include <vector>
+#include <functional>
+#include <limits.h>
+#include <exception>
+#include <algorithm>
 
 #include "cluster_container.hpp"
 #include "vlmc_container.hpp"
@@ -45,6 +49,26 @@ container::Cluster_Container<VC> old_get_cluster(const std::filesystem::path &di
   container::Cluster_Container<VC> cluster{};
   for (const auto& dir_entry : recursive_directory_iterator(directory)) {
     cluster.push(VC{dir_entry.path()});
+  }
+  return cluster; 
+}
+
+container::Kmer_Cluster get_kmer_cluster(const std::filesystem::path &directory){
+  container::Kmer_Cluster cluster{};
+  size_t id = 0; 
+  for (const auto& dir_entry : recursive_directory_iterator(directory)) {
+    std::ifstream ifs(dir_entry.path(), std::ios::binary);
+    cereal::BinaryInputArchive archive(ifs);
+    Kmer input_kmer{};
+    
+    while (ifs.peek() != EOF){
+      archive(input_kmer);
+      container::RI_Kmer ri_kmer{input_kmer};
+      container::Kmer_Pair kmer_pair{ri_kmer, id};
+      cluster.push(kmer_pair);
+    }
+    ifs.close();
+    id++; 
   }
   return cluster; 
 }

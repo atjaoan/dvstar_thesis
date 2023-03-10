@@ -55,14 +55,14 @@ struct Kmer_Pair {
   ~Kmer_Pair() = default; 
 };
 
-class Kmer_Container {
+class Kmer_Cluster {
 
   private: 
     std::unordered_map<int, Kmer_Pair> container{};
 
   public: 
-    Kmer_Container() = default;
-    ~Kmer_Container() = default; 
+    Kmer_Cluster() = default;
+    ~Kmer_Cluster() = default; 
 
     void push(const Kmer_Pair kmer_pair) { container[kmer_pair.kmer.integer_rep] = kmer_pair; }
 
