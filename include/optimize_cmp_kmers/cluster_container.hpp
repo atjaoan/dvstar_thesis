@@ -2,7 +2,9 @@
 
 #include <functional>
 #include <filesystem>
-
+#include <map>
+#include <unordered_map>
+ 
 #include "vlmc_from_kmers/kmer.hpp"
 #include "vlmc_container.hpp"
 
@@ -58,13 +60,17 @@ struct Kmer_Pair {
 class Kmer_Cluster {
 
   private: 
-    std::unordered_map<int, Kmer_Pair> container{};
+
+    // std::map<int, std::vector<Kmer_Pair>> container{};
+    
+    std::unordered_multimap<int, Kmer_Pair> container{};
+    // std::unordered_map<int, Kmer_Pair> container{};
 
   public: 
     Kmer_Cluster() = default;
     ~Kmer_Cluster() = default; 
 
-    void push(const Kmer_Pair kmer_pair) { container[kmer_pair.kmer.integer_rep] = kmer_pair; }
+    void push(const Kmer_Pair kmer_pair) { container.insert({kmer_pair.kmer.integer_rep, kmer_pair}); }
 
     std::vector<Kmer_Pair> get(int bucket_num){
       std::vector<Kmer_Pair> returning_vector;
@@ -76,6 +82,18 @@ class Kmer_Cluster {
 
     int get_bucket(const Kmer_Pair& kmer_pair){
       return container.bucket(kmer_pair.id);
+    }
+
+    void prettyPrint(){
+      for (int bucket_num = 0; bucket_num < container.bucket_count(); bucket_num++){
+        if (container.bucket_size(bucket_num) == 0){
+          continue; 
+        }
+        for (auto it = container.begin(bucket_num); it != container.end(bucket_num); ++it){
+          std::cout << "(" << it->first << ", {" << it->second.id << ", " << it->second.kmer.integer_rep << "}) ";  
+        }
+        std::cout << std::endl;
+      }
     }
 };
 }

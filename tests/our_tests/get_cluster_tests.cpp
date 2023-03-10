@@ -33,3 +33,9 @@ TEST_F(GetClusterTest, ClusterGetWithVlmcMultiVector) {
   EXPECT_GT(container.size(), 0);
   EXPECT_EQ(container.get(0).get(1).integer_rep, 1);
 }
+
+TEST_F(GetClusterTest, ClusterPrettyPrint) {
+  container::Kmer_Cluster cluster = cluster::get_kmer_cluster(path_to_bintrees);
+
+  cluster.prettyPrint(); 
+}
