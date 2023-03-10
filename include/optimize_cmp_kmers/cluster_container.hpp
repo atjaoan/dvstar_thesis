@@ -66,12 +66,16 @@ class Kmer_Cluster {
 
     void push(const Kmer_Pair kmer_pair) { container[kmer_pair.kmer.integer_rep] = kmer_pair; }
 
-    std::vector<Kmer_Pair> &get(int bucket_num){
+    std::vector<Kmer_Pair> get(int bucket_num){
       std::vector<Kmer_Pair> returning_vector;
       for( auto it = container.begin(bucket_num); it!= container.end(bucket_num); ++it){
         returning_vector.push_back(it->second);
       }
       return returning_vector;
+    }
+
+    int get_bucket(const Kmer_Pair& kmer_pair){
+      return container.bucket(kmer_pair.id);
     }
 };
 }
