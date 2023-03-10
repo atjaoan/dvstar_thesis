@@ -82,4 +82,9 @@ matrix_t calculate_distances(
       // parallel::sequential(cluster_left.size(), cluster_right.size(), fun, requested_cores);
       return distances; 
 }
+
+matrix_t calculate_distance_major(){
+  return matrix_t{0,0}; 
+}
+
 }

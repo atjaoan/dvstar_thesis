@@ -32,6 +32,11 @@ matrix_t apply_container(parser::cli_arguments arguments, parser::VLMC_Rep vlmc_
   }
 }
 
+matrix_t calculate_kmer_major(parser::cli_arguments arguments, const size_t nr_cores){
+  auto distance_function = parser::parse_distance_function(arguments);
+  return matrix_t{0,0};
+}
+
 int main(int argc, char *argv[]){
   CLI::App app{"Distance comparison of either one directory or between two different directories."};
 
