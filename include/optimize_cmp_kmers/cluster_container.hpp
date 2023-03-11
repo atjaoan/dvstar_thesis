@@ -70,6 +70,8 @@ class Kmer_Cluster {
     Kmer_Cluster() = default;
     ~Kmer_Cluster() = default; 
 
+    int size(){ return container.bucket_count(); }
+
     void push(const Kmer_Pair kmer_pair) { container.insert({kmer_pair.kmer.integer_rep, kmer_pair}); }
 
     std::vector<Kmer_Pair> get(int bucket_num){

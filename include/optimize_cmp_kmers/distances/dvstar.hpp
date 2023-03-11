@@ -1,6 +1,8 @@
 #pragma once 
 
 #include <math.h>
+#include <map>
+#include <unordered_map>
 
 #include "vlmc_container.hpp"
 #include "read_in_kmer.hpp"
@@ -11,6 +13,7 @@ namespace distance {
 
 using vlmc_c = container::VLMC_Container;  
 using Kmer = container::RI_Kmer;
+using kmer_c = container::Kmer_Cluster;
 
 std::array<std::array<double, 4>, 2>
 get_components(const Kmer &left, const Kmer &left_background,
@@ -104,6 +107,33 @@ double normalise_dvstar(double dot_product, double left_norm,
 }
 
 double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
+
+  double dot_product = 0.0;
+
+  double left_norm = 0.0;
+  double right_norm = 0.0;
+
+  auto dvstar_fun = [&](auto &left_v, auto &right_v) {
+    dot_product += (left_v.next_char_prob * right_v.next_char_prob).sum();
+    left_norm += left_v.next_char_prob.square().sum();
+    right_norm += right_v.next_char_prob.square().sum();
+    //for (int i = 0; i < 4; i++) { 
+    //  dot_product += left_v.next_char_prob[i] * right_v.next_char_prob[i];
+    //  left_norm += std::pow(left_v.next_char_prob[i], 2.0);
+    //  right_norm += std::pow(right_v.next_char_prob[i], 2.0);
+    //}
+    };
+
+  if (left.size() < right.size()){
+    left.iterate_kmers(left, right, dvstar_fun);
+  } else {
+    right.iterate_kmers(right, left, dvstar_fun);
+  }
+      
+  return normalise_dvstar(dot_product, left_norm, right_norm);
+}
+
+double dvstar(bucket_t &left, bucket_t &right, size_t background_order){
 
   double dot_product = 0.0;
 

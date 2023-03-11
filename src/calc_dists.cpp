@@ -34,6 +34,14 @@ matrix_t apply_container(parser::cli_arguments arguments, parser::VLMC_Rep vlmc_
 
 matrix_t calculate_kmer_major(parser::cli_arguments arguments, const size_t nr_cores){
   auto distance_function = parser::parse_distance_function(arguments);
+  //TODO use cores
+  auto cluster = cluster::get_kmer_cluster(arguments.first_VLMC_path);
+  if (arguments.second_VLMC_path.empty()){
+    return calculate::calculate_distance_major(cluster, distance_function, nr_cores);
+  } else {
+    auto cluster_to = cluster::get_kmer_cluster(arguments.second_VLMC_path);
+    return calculate::calculate_distance_major(cluster, cluster_to, distance_function, nr_cores);
+  }
   return matrix_t{0,0};
 }
 

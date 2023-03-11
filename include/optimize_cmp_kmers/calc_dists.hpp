@@ -9,6 +9,7 @@ namespace calculate {
 
 using matrix_t  = Eigen::MatrixXd;
 using vlmc_c    = container::VLMC_Container;  
+using kmer_pair = container::Kmer_Pair;
 
 template <typename VC>
 void calculate_reduced_slice(size_t start_index, size_t stop_index, matrix_t &distances,
@@ -83,8 +84,37 @@ matrix_t calculate_distances(
       return distances; 
 }
 
-matrix_t calculate_distance_major(){
+void calculate_kmer_buckets(size_t start_bucket, size_t stop_bucket, matrix_t &distances,
+                     container::Kmer_Cluster &cluster,
+                     const std::function<double(kmer_pair &, kmer_pair &)> &fun) {
+  for (size_t i = start_bucket; i < stop_bucket; i++) {
+    //distances(i, j) = fun(cluster_left.get(i), cluster_right.get(j));
+  }
+}
+
+matrix_t calculate_distance_major(
+    container::Kmer_Cluster &cluster_left, container::Kmer_Cluster &cluster_right,
+    std::function<double(kmer_pair &, kmer_pair &)> &distance_function,
+    size_t requested_cores){
+
   return matrix_t{0,0}; 
+}
+matrix_t calculate_distance_major(
+    container::Kmer_Cluster &cluster,
+    std::function<double(kmer_pair &, kmer_pair &)> &distance_function,
+    size_t requested_cores){
+
+  matrix_t distances{cluster.size(), cluster.size()};
+  matrix_t dot_prod{cluster.size(), cluster.size()};
+  matrix_t left_norm{cluster.size(), cluster.size()};
+  matrix_t right_norm{cluster.size(), cluster.size()};
+
+  auto fun = [&](size_t start_bucket, size_t stop_bucket) {
+    calculate_kmer_buckets(start_bucket, stop_bucket, distances,
+                           cluster, distance_function);
+  };
+  parallel::sequential(cluster.size(), fun);
+  return distances;
 }
 
 }

@@ -74,6 +74,20 @@ parse_distance_function(cli_arguments arguments) {
   throw std::invalid_argument("Invalid distance function name.");
 }
 
+std::function<double(container::Kmer_Cluster &, container::Kmer_Cluster &)>
+parse_distance_function(cli_arguments arguments) {
+  if (arguments.dist_fn == parser::Distance_function::dvstar) {
+    auto fun = [&](auto &left, auto &right) {
+      return distance::dvstar(left, right, arguments.background_order);
+    };
+    return fun; 
+  } 
+  else if (arguments.dist_fn ==  parser::Distance_function::kl) {
+    return distance::kl; 
+  }  
+  throw std::invalid_argument("Invalid distance function name.");
+}
+
 size_t parse_dop(size_t requested_cores){
   if(requested_cores < 1){
     throw std::invalid_argument("Too low degree of parallelism, must be >= 1");
