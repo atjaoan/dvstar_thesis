@@ -5,6 +5,7 @@
 #include "vlmc_container.hpp"
 #include "parallel.hpp"
 #include "distances/dvstar.hpp"
+#include "utils.hpp"
 
 namespace calculate {
 
@@ -26,29 +27,15 @@ void calculate_reduced_slice(size_t start_index, size_t stop_index, matrix_t &di
 }
 
 template <typename VC>
-void calculate_full_slice_rec(size_t start_index_left, size_t stop_index_left, size_t start_index_right, size_t stop_index_right, matrix_t &distances,
-                     container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
-                     const std::function<double(vlmc_c &, vlmc_c &)> &fun) {
-  auto diff_left = stop_index_left - start_index_left;
-  auto diff_right = stop_index_right - start_index_right;
-  if (diff_left == 1 && diff_right == 1){
-    distances(start_index_left, start_index_right) = fun(cluster_left.get(start_index_left), cluster_right.get(start_index_right));
-  } else if (diff_right > diff_left){
-    auto new_right_index = (stop_index_right + start_index_right) / 2;
-    calculate_full_slice_rec(start_index_left, stop_index_left, start_index_right, new_right_index, distances, cluster_left, cluster_right, fun);
-    calculate_full_slice_rec(start_index_left, stop_index_left, new_right_index, stop_index_right, distances, cluster_left, cluster_right, fun);
-  } else {
-    auto new_left_index = (stop_index_left + start_index_left) / 2;
-    calculate_full_slice_rec(start_index_left, new_left_index, start_index_right, stop_index_right, distances, cluster_left, cluster_right, fun);
-    calculate_full_slice_rec(new_left_index, stop_index_left, start_index_right, stop_index_right, distances, cluster_left, cluster_right, fun);
-  }
-}
-
-template <typename VC>
 void calculate_full_slice(size_t start_index, size_t stop_index, matrix_t &distances,
                      container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
                      const std::function<double(vlmc_c &, vlmc_c &)> &fun) {
-  calculate_full_slice_rec(start_index, stop_index, 0, cluster_right.size(), distances, cluster_left, cluster_right, fun); 
+
+  auto rec_fun = [&](size_t left, size_t right) {
+    distances(left, right) = fun(cluster_left.get(left), cluster_right.get(right)); 
+  };
+
+  utils::matrix_recursion(start_index, stop_index, 0, cluster_right.size(), rec_fun); 
 }
 
 // Inter-directory distances
@@ -98,24 +85,6 @@ void calculate_kmer_buckets(size_t start_bucket, size_t stop_bucket,
   } 
 }
 
-void normalize_rec(size_t start_index_left, size_t stop_index_left, size_t start_index_right, size_t stop_index_right, 
-  matrix_t &distances, matrix_t &dot_prod, matrix_t &left_norm, matrix_t &right_norm){
-  auto diff_left = stop_index_left - start_index_left;
-  auto diff_right = stop_index_right - start_index_right;
-  if (diff_left == 1 && diff_right == 1){
-    distances(start_index_left, start_index_right) = distance::normalise_dvstar(dot_prod(start_index_left, start_index_right), 
-                              left_norm(start_index_left, start_index_right), right_norm(start_index_left, start_index_right));
-  } else if (diff_right > diff_left){
-    auto new_right_index = (stop_index_right + start_index_right) / 2;
-    normalize_rec(start_index_left, stop_index_left, start_index_right, new_right_index, distances, dot_prod, left_norm, right_norm);
-    normalize_rec(start_index_left, stop_index_left, new_right_index, stop_index_right, distances, dot_prod, left_norm, right_norm);
-  } else {
-    auto new_left_index = (stop_index_left + start_index_left) / 2;
-    normalize_rec(start_index_left, new_left_index, start_index_right, stop_index_right, distances, dot_prod, left_norm, right_norm);
-    normalize_rec(new_left_index, stop_index_left, start_index_right, stop_index_right, distances, dot_prod, left_norm, right_norm);
-  }
-}
-
 matrix_t calculate_distance_major(
     container::Kmer_Cluster &cluster_left, container::Kmer_Cluster &cluster_right,
     size_t requested_cores){
@@ -130,9 +99,12 @@ matrix_t calculate_distance_major(
   };
   parallel::parallelize(cluster_left.bucket_count(), fun, requested_cores);
 
+  auto rec_fun = [&](size_t left, size_t right) {
+    distances(left, right) = distance::normalise_dvstar(dot_prod(left, right), left_norm(left, right), right_norm(left, right));
+  }; 
 
   auto norm_fun = [&](size_t start_vlmc, size_t stop_vlmc) {
-    normalize_rec(start_vlmc, stop_vlmc, 0, cluster_right.size(), distances, dot_prod, left_norm, right_norm);
+    utils::matrix_recursion(start_vlmc, stop_vlmc, 0, cluster_right.size(), rec_fun); 
   };
 
   parallel::parallelize(cluster_left.size(), norm_fun, requested_cores); 
@@ -154,9 +126,12 @@ matrix_t calculate_distance_major(
   };
   parallel::parallelize(cluster.bucket_count(), fun, requested_cores);
 
+  auto rec_fun = [&](size_t left, size_t right) {
+    distances(left, right) = distance::normalise_dvstar(dot_prod(left, right), left_norm(left, right), right_norm(left, right));
+  }; 
 
   auto norm_fun = [&](size_t start_vlmc, size_t stop_vlmc) {
-    normalize_rec(start_vlmc, stop_vlmc, 0, cluster.size(), distances, dot_prod, left_norm, right_norm);
+    utils::matrix_recursion(start_vlmc, stop_vlmc, 0, cluster.size(), rec_fun);
   };
 
   parallel::parallelize(cluster.size(), norm_fun, requested_cores); 
