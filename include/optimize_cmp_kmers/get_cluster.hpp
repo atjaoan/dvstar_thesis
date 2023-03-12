@@ -17,6 +17,7 @@
 #include "parallel.hpp"
 
 using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
+using RI_Kmer = container::RI_Kmer;
 
 namespace cluster{
   
@@ -53,26 +54,47 @@ container::Cluster_Container<VC> old_get_cluster(const std::filesystem::path &di
   return cluster; 
 }
 
-container::Kmer_Cluster get_kmer_cluster(const std::filesystem::path &directory){
+container::Kmer_Cluster get_kmer_cluster(const std::filesystem::path &directory, const size_t background_order = 0){
   container::Kmer_Cluster cluster{};
   size_t id = 0; 
   for (const auto& dir_entry : recursive_directory_iterator(directory)) {
     std::ifstream ifs(dir_entry.path(), std::ios::binary);
     cereal::BinaryInputArchive archive(ifs);
     Kmer input_kmer{};
-    
+    std::vector<container::RI_Kmer> input_vector{}; 
+
+    Eigen::ArrayX4d cached_context((int)std::pow(4, background_order), 4); 
+
+    auto offset_to_remove = 0;
+    for (int i = 0; i < background_order; i++){
+      offset_to_remove += std::pow(4, i); 
+    }
+
     while (ifs.peek() != EOF){
       archive(input_kmer);
-      container::RI_Kmer ri_kmer{input_kmer};
-      container::Kmer_Pair kmer_pair{ri_kmer, id};
-      cluster.push(kmer_pair);
+      RI_Kmer ri_kmer{input_kmer};
+      if(ri_kmer.length <= background_order){
+        if (ri_kmer.length + 1 > background_order){
+          int offset = ri_kmer.integer_rep - offset_to_remove; 
+          cached_context.row(offset) = ri_kmer.next_char_prob;
+        }
+      } else {
+        input_vector.push_back(ri_kmer); 
+      }
     }
     ifs.close();
+
+    for (RI_Kmer kmer : input_vector){
+      int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
+      int offset = background_idx - offset_to_remove;
+      kmer.next_char_prob *= cached_context.row(offset).rsqrt();
+      cluster.push(container::Kmer_Pair{kmer, id}); 
+    }
     id++; 
   }
+
+  cluster.set_size(id); 
+
   return cluster; 
 }
-
-
-
 }

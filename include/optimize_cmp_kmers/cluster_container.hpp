@@ -60,41 +60,54 @@ struct Kmer_Pair {
 class Kmer_Cluster {
 
   private: 
-
-    // std::map<int, std::vector<Kmer_Pair>> container{};
-    
+    // std::map<int, std::vector<Kmer_Pair>> container{}; 
     std::unordered_multimap<int, Kmer_Pair> container{};
-    // std::unordered_map<int, Kmer_Pair> container{};
+    size_t vlmc_count = 0; 
 
   public: 
     Kmer_Cluster() = default;
     ~Kmer_Cluster() = default; 
 
-    int size(){ return container.bucket_count(); }
+    int size(){ return vlmc_count; }
 
-    void push(const Kmer_Pair kmer_pair) { container.insert({kmer_pair.kmer.integer_rep, kmer_pair}); }
+    void set_size(size_t count){ this->vlmc_count = count; }
+
+    void push(const Kmer_Pair kmer_pair) { 
+      container.insert({kmer_pair.kmer.integer_rep, kmer_pair}); 
+    }
 
     std::vector<Kmer_Pair> get(int bucket_num){
-      std::vector<Kmer_Pair> returning_vector;
+      std::vector<Kmer_Pair> returning_vector{};
       for( auto it = container.begin(bucket_num); it!= container.end(bucket_num); ++it){
         returning_vector.push_back(it->second);
-      }
+      } 
       return returning_vector;
     }
+
+    int bucket_count() { return container.bucket_count(); }
 
     int get_bucket(const Kmer_Pair& kmer_pair){
       return container.bucket(kmer_pair.id);
     }
 
+    bool is_bucket_empty(int bucket_num){
+      return container.bucket_size(bucket_num) == 0; 
+    }
+
     void prettyPrint(){
+      size_t print_size = 0; 
       for (int bucket_num = 0; bucket_num < container.bucket_count(); bucket_num++){
-        if (container.bucket_size(bucket_num) == 0){
+        if (print_size > 10){
+          break; 
+        }
+        if (container.bucket_size(bucket_num) < 2){
           continue; 
         }
         for (auto it = container.begin(bucket_num); it != container.end(bucket_num); ++it){
-          std::cout << "(" << it->first << ", {" << it->second.id << ", " << it->second.kmer.integer_rep << "}) ";  
+          std::cout << "(" << it->first << ", {" << it->second.id << ", " << it->second.kmer.next_char_prob[0] << "}) ";  
         }
         std::cout << std::endl;
+        print_size++; 
       }
     }
 };

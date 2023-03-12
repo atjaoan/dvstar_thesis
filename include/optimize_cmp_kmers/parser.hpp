@@ -18,7 +18,8 @@ namespace parser {
 using vlmc_c = container::VLMC_Container;
 
 enum Mode {
-  compare
+  compare,
+  kmer_major
 };
 
 enum Distance_function {
@@ -74,20 +75,6 @@ parse_distance_function(cli_arguments arguments) {
   throw std::invalid_argument("Invalid distance function name.");
 }
 
-std::function<double(container::Kmer_Cluster &, container::Kmer_Cluster &)>
-parse_distance_function(cli_arguments arguments) {
-  if (arguments.dist_fn == parser::Distance_function::dvstar) {
-    auto fun = [&](auto &left, auto &right) {
-      return distance::dvstar(left, right, arguments.background_order);
-    };
-    return fun; 
-  } 
-  else if (arguments.dist_fn ==  parser::Distance_function::kl) {
-    return distance::kl; 
-  }  
-  throw std::invalid_argument("Invalid distance function name.");
-}
-
 size_t parse_dop(size_t requested_cores){
   if(requested_cores < 1){
     throw std::invalid_argument("Too low degree of parallelism, must be >= 1");
@@ -98,7 +85,9 @@ size_t parse_dop(size_t requested_cores){
 
 void add_options(CLI::App &app, cli_arguments &arguments) {
   std::map<std::string, Mode> mode_map{
-      {"compare", Mode::compare}};
+      {"compare", Mode::compare},
+      {"kmer-major", Mode::kmer_major},
+  };
 
   std::map<std::string, Distance_function> function_map{
       {"kl", Distance_function::kl},
@@ -120,7 +109,7 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
 
   app.add_option(
          "-m,--mode", arguments.mode,
-         "Program mode, 'compare'." "Place holder descriptiopn")
+         "Program mode, 'compare', 'kmer-major'." "Place holder descriptiopn")
       ->transform(CLI::CheckedTransformer(mode_map, CLI::ignore_case));
 
   app.add_option("--function", arguments.dist_fn,
