@@ -363,7 +363,7 @@ void calculate_kmer_buckets(size_t start_bucket, size_t stop_bucket,
 
 void benchmark_calculate_distance_major(){
   std::filesystem::path path{"../data/test_VLMCs"};
-  int requested_cores = 1;
+  int requested_cores = 4;
   auto cluster_left = cluster::get_kmer_cluster(path, 0);
   auto cluster_right = cluster::get_kmer_cluster(path, 0);
 
@@ -381,7 +381,7 @@ void benchmark_calculate_distance_major(){
   };
   
   auto start_dist = std::chrono::steady_clock::now();
-  parallel::parallelize(cluster_left.bucket_count(), fun, requested_cores);
+  parallel::parallelize_exp_halving(cluster_left.bucket_count(), fun, requested_cores);
   auto end_dist = std::chrono::steady_clock::now();
 
   auto rec_fun = [&](size_t left, size_t right) {
