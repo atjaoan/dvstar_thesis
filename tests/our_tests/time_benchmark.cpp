@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <Eigen/Core>
 
 #include "vlmc_from_kmers/kmer.hpp"
 #include "vlmc_container.hpp"
@@ -12,8 +13,11 @@
 #include "../read_helper.hpp"
 #include "read_in_kmer.hpp"
 #include "distances/dvstar.hpp"
+#include "calc_dists.hpp"
+#include "get_cluster.hpp"
 
 using RI_Kmer = container::RI_Kmer; 
+using matrix_t = Eigen::MatrixXd;
 
 void prettyPrint(size_t insert_time_fst, size_t insert_time_snd, size_t find_time_fst, size_t find_time_snd, 
       size_t iterate_time, size_t dvstar_time, int items_fst, int items_snd, std::string container){
@@ -297,17 +301,130 @@ void benchmark_kmer_comparison(){
   std::cout << "Total time for our : " << our_kmer_comp_time << " [nano sec], Avg : " << our_kmer_comp_time / nr_kmers << " [nano sec]" << std::endl;  
 }
 
+void benchmark_kmer_major_load_calc(){
+  std::filesystem::path path{"../data/VLMCs"};
+  int nr_cores = 4;
+  auto start_loading = std::chrono::steady_clock::now();
+  auto cluster = cluster::get_kmer_cluster(path, 0);
+  auto end_loading = std::chrono::steady_clock::now();
+
+  matrix_t distance_matrix = calculate::calculate_distance_major(cluster, cluster, nr_cores);
+  auto end_calc = std::chrono::steady_clock::now();
+
+  auto time_loading = std::chrono::duration_cast<std::chrono::microseconds>(end_loading - start_loading).count();
+  auto time_calc = std::chrono::duration_cast<std::chrono::microseconds>(end_calc - end_loading).count();
+  auto time_total = std::chrono::duration_cast<std::chrono::microseconds>(end_calc - start_loading).count();
+  
+  std::cout << std::endl;
+  std::string descriptive_string = "Time calc kmer-major: ";
+  int string_length = descriptive_string.length() + 24; 
+  std::cout << std::string(string_length, '-') << std::endl;
+  std::cout << "|           " << descriptive_string << "           |" << std::endl; 
+  std::cout << std::string(string_length, '-') << std::endl; 
+  std::cout << "Time loading : " << time_loading << " [micro sec]" << " , fraction: " << (time_loading / (double)time_total) << std::endl;  
+  std::cout << "Time calc : " << time_calc << " [micro sec]"  << " , fraction: " << (time_calc / (double)time_total) << std::endl; 
+  std::cout << "Total time : " << time_total << " [micro sec]" << std::endl; 
+}
+/*
+void calculate_kmer_buckets(size_t start_bucket, size_t stop_bucket, 
+    matrix_t &distances, matrix_t &dot_prod, matrix_t &left_norm, matrix_t &right_norm,
+    container::Kmer_Cluster &cluster_left, container::Kmer_Cluster &cluster_right) {
+  int get = 0;
+  int dvstar = 0;
+  int total = 0;
+  for (size_t i = start_bucket; i < stop_bucket; i++) {
+    if (cluster_left.is_bucket_empty(i) || cluster_right.is_bucket_empty(i)){
+      continue; 
+    }
+    auto start_get = std::chrono::steady_clock::now();
+    auto vec_left = cluster_left.get(i);
+    auto vec_right = cluster_right.get(i);
+    auto end_get = std::chrono::steady_clock::now();
+
+    distance::dvstar_kmer_major(vec_left, vec_right, dot_prod, left_norm, right_norm);
+    auto end_dist = std::chrono::steady_clock::now();
+
+    auto time_get = std::chrono::duration_cast<std::chrono::microseconds>(end_get - start_get).count();
+    auto time_dvstar = std::chrono::duration_cast<std::chrono::microseconds>(end_dist - end_get).count();
+    auto time_both = std::chrono::duration_cast<std::chrono::microseconds>(end_dist - start_get).count();
+
+    get += time_get;
+    dvstar += time_dvstar;
+    total += time_both;
+  }
+  std::cout << "Time get : " << get << " [micro sec]" << " , fraction: " << (get / (double)total) << std::endl;  
+  std::cout << "Time dvstar : " << dvstar << " [micro sec]"  << " , fraction: " << (dvstar / (double)total) << std::endl; 
+  std::cout << "Total time in buckets : " << total << " [micro sec]" << std::endl; 
+  std::cout << "I work on buckets : " << start_bucket << " to " << stop_bucket << std::endl;
+}
+*/
+/*
+void benchmark_calculate_distance_major(){
+  std::filesystem::path path{"../data/small_test"};
+  int requested_cores = 4;
+  auto cluster_left = cluster::get_kmer_cluster(path, 0);
+  auto cluster_right = cluster::get_kmer_cluster(path, 0);
+
+
+  //calculate::calculate_distance_major(cluster, cluster_to, nr_cores); 
+  auto start_create_matricies = std::chrono::steady_clock::now();
+  matrix_t distances = matrix_t::Zero(cluster_left.size(), cluster_right.size());
+  matrix_t dot_prod = matrix_t::Zero(cluster_left.size(), cluster_right.size());
+  matrix_t left_norm = matrix_t::Zero(cluster_left.size(), cluster_right.size());
+  matrix_t right_norm = matrix_t::Zero(cluster_left.size(), cluster_right.size());
+  auto end_create_matricies = std::chrono::steady_clock::now();
+
+  auto fun = [&](size_t start_bucket, size_t stop_bucket) {
+    calculate_kmer_buckets(start_bucket, stop_bucket, distances, dot_prod, left_norm, right_norm, cluster_left, cluster_right);
+  };
+  
+  auto start_dist = std::chrono::steady_clock::now();
+  parallel::parallelize(cluster_left.bucket_count(), fun, requested_cores);
+  auto end_dist = std::chrono::steady_clock::now();
+
+  auto rec_fun = [&](size_t left, size_t right) {
+    distances(left, right) = distance::normalise_dvstar(dot_prod(left, right), left_norm(left, right), right_norm(left, right));
+  }; 
+
+  auto norm_fun = [&](size_t start_vlmc, size_t stop_vlmc) {
+    utils::matrix_recursion(start_vlmc, stop_vlmc, 0, cluster_right.size(), rec_fun); 
+  };
+
+  auto start_norm = std::chrono::steady_clock::now();
+  parallel::parallelize(cluster_left.size(), norm_fun, requested_cores);
+  auto end_norm = std::chrono::steady_clock::now();
+
+  auto time_create = std::chrono::duration_cast<std::chrono::microseconds>(end_create_matricies - start_create_matricies).count();
+  auto time_dist = std::chrono::duration_cast<std::chrono::microseconds>(end_dist - start_dist).count();
+  auto time_norm = std::chrono::duration_cast<std::chrono::microseconds>(end_norm - start_norm).count();
+  auto time_tot = std::chrono::duration_cast<std::chrono::microseconds>(end_norm - start_create_matricies).count();
+  
+  std::cout << std::endl;
+  std::string descriptive_string = "Time calculate_distance_major: ";
+  int string_length = descriptive_string.length() + 24; 
+  std::cout << std::string(string_length, '-') << std::endl;
+  std::cout << "|           " << descriptive_string << "           |" << std::endl; 
+  std::cout << std::string(string_length, '-') << std::endl; 
+  std::cout << "Time create matricies : " << time_create << " [micro sec]" << " , fraction: " << (time_create / (double)time_tot) << std::endl;  
+  std::cout << "Time calculate dist : " << time_dist << " [micro sec]"  << " , fraction: " << (time_dist / (double)time_tot) << std::endl; 
+  std::cout << "Time normalize dist : " << time_norm << " [micro sec]"  << " , fraction: " << (time_norm / (double)time_tot) << std::endl; 
+  std::cout << "Total time : " << time_tot << " [micro sec]" << std::endl; 
+}
+*/
+
+
 int main(int argc, char *argv[]){
   // int num_items = 1500;
 
   // run_timer<container::VLMC_vector>("Vector");
-  run_timer<container::VLMC_Indexing>("Indexing");
-  run_timer<container::VLMC_sorted_vector>("Sorted Vector");
-  run_timer<container::VLMC_B_tree>("B-tree");
-  run_timer<container::VLMC_hashmap>("Hashmap");
-  run_timer<container::VLMC_Combo>("Combo");
+  //run_timer<container::VLMC_Indexing>("Indexing");
+  //run_timer<container::VLMC_sorted_vector>("Sorted Vector");
+  //run_timer<container::VLMC_B_tree>("B-tree");
+  //run_timer<container::VLMC_hashmap>("Hashmap");
+  //run_timer<container::VLMC_Combo>("Combo");
   // run_timer(num_items, container::VLMC_Veb{}, "Veb-tree");
-  benchmark_read_in_kmer();
-  benchmark_kmer_comparison();
-  benchmark_container_inv_sqrt();
+  //benchmark_read_in_kmer();
+  //benchmark_kmer_comparison();
+  //benchmark_container_inv_sqrt();
+  //benchmark_calculate_distance_major();
 }

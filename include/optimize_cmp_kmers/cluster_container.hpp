@@ -61,7 +61,7 @@ class Kmer_Cluster {
 
   private: 
     // std::map<int, std::vector<Kmer_Pair>> container{}; 
-    std::unordered_multimap<int, Kmer_Pair> container{};
+    std::multimap<int, Kmer_Pair> container{};
     size_t vlmc_count = 0; 
 
   public: 
@@ -82,6 +82,14 @@ class Kmer_Cluster {
         returning_vector.push_back(it->second);
       } 
       return returning_vector;
+    }
+
+    std::multimap<int, container::Kmer_Pair>::const_iterator get_bucket_begin(int bucket_num){
+      return container.begin(bucket_num);
+    }
+
+    std::multimap<int, container::Kmer_Pair>::const_iterator get_bucket_end(int bucket_num){
+      return container.end(bucket_num);
     }
 
     int bucket_count() { return container.bucket_count(); }

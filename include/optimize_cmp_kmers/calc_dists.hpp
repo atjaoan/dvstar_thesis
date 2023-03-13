@@ -79,10 +79,12 @@ void calculate_kmer_buckets(size_t start_bucket, size_t stop_bucket,
     if (cluster_left.is_bucket_empty(i) || cluster_right.is_bucket_empty(i)){
       continue; 
     }
-    auto vec_left = cluster_left.get(i);
-    auto vec_right = cluster_right.get(i);
-    distance::dvstar_kmer_major(vec_left, vec_right, dot_prod, left_norm, right_norm);
-  } 
+    auto vec_left_begin = cluster_left.get_bucket_begin(i);
+    auto vec_left_end = cluster_left.get_bucket_end(i);
+    auto vec_right_begin = cluster_right.get_bucket_begin(i);
+    auto vec_right_end = cluster_right.get_bucket_end(i);
+    distance::dvstar_kmer_major(vec_left_begin, vec_left_end, vec_right_begin, vec_right_end, dot_prod, left_norm, right_norm);
+  }
 }
 
 matrix_t calculate_distance_major(

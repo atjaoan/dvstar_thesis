@@ -15,7 +15,7 @@ namespace distance {
 
 using vlmc_c = container::VLMC_Container;  
 using Kmer = container::RI_Kmer;
-using bucket_t = std::vector<container::Kmer_Pair>; 
+using bucket_t = std::multimap<int, container::Kmer_Pair>::const_iterator;
 using matrix_t = Eigen::MatrixXd;
 
 std::array<std::array<double, 4>, 2>
@@ -108,17 +108,41 @@ double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
   return normalise_dvstar(dot_product, left_norm, right_norm);
 }
 
-void dvstar_kmer_major(bucket_t &left_vector, bucket_t &right_vector, matrix_t &dot_prod, matrix_t &left_norm, matrix_t &right_norm){
+void dvstar_kmer_major(bucket_t &left_begin, bucket_t &left_end, bucket_t &right_begin, bucket_t &right_end, 
+                      matrix_t &dot_prod, matrix_t &left_norm, matrix_t &right_norm){
+  std::cout << "pre std::distance" << std::endl;
+  auto size_left = std::distance(left_begin, left_end);
+  auto size_right = std::distance(right_begin, right_end);
+  std::cout << "left size : " << size_left << std::endl;
+  std::cout << "right size : " << size_right << std::endl; 
   auto rec_fun = [&](size_t &left, size_t &right) {
-    if (left_vector[left].kmer.integer_rep == right_vector[right].kmer.integer_rep){
-      auto left_id = left_vector[left].id;
-      auto right_id = right_vector[right].id; 
-      dot_prod(left_id, right_id) += (left_vector[left].kmer.next_char_prob * right_vector[right].kmer.next_char_prob).sum();
-      left_norm(left_id, right_id) += left_vector[left].kmer.next_char_prob.square().sum();
-      right_norm(left_id, right_id) += right_vector[right].kmer.next_char_prob.square().sum();
+    bucket_t left_test;
+    bucket_t right_test;
+    left_test = left_begin;
+    right_test = right_begin;
+    std::cout << "pre advanced" << std::endl;
+    std::cout << "left : " << left << std::endl;
+    std::cout << "right : " << right << std::endl; 
+    std::advance(left_test, left);
+    std::advance(right_test, right);
+    std::cout << "advanced" << std::endl;
+    if (left_begin->second.kmer.integer_rep == right_begin->second.kmer.integer_rep){
+      auto left_id = left_begin->second.id;
+      auto right_id = right_begin->second.id; 
+      dot_prod(left_id, right_id) += (left_begin->second.kmer.next_char_prob * right_begin->second.kmer.next_char_prob).sum();
+      left_norm(left_id, right_id) += left_begin->second.kmer.next_char_prob.square().sum();
+      right_norm(left_id, right_id) += right_begin->second.kmer.next_char_prob.square().sum();
     }
+    //std::cout << "left before : " << left << std::endl;
+    //std::cout << "right before : " << right << std::endl;
+    //int left_reverse = left;
+    //int right_reverse = right;
+    //std::cout << "left after : " << -left_reverse << std::endl;
+    //std::cout << "right after : " << -right_reverse << std::endl;
+    //std::advance(left_begin, -left_reverse);
+    //std::advance(right_begin, -right_reverse);
   };
 
-  utils::matrix_recursion(0, left_vector.size(), 0, right_vector.size(), rec_fun);
+  utils::matrix_recursion(0, size_left, 0, size_right, rec_fun);
 }
 }
