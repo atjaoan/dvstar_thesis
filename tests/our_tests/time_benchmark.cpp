@@ -301,9 +301,9 @@ void benchmark_kmer_comparison(){
   std::cout << "Total time for our : " << our_kmer_comp_time << " [nano sec], Avg : " << our_kmer_comp_time / nr_kmers << " [nano sec]" << std::endl;  
 }
 
-void benchmark_kmer_major_load_calc(){
-  std::filesystem::path path{"../data/VLMCs"};
-  int nr_cores = 4;
+void benchmark_kmer_major_load_calc(int nr_cores){
+  std::cout << "Running test with " << nr_cores << " cores" << std::endl; 
+  std::filesystem::path path{"../data/medium_test"};
   auto start_loading = std::chrono::steady_clock::now();
   auto cluster = cluster::get_kmer_cluster(path, 0);
   auto end_loading = std::chrono::steady_clock::now();
@@ -326,6 +326,7 @@ void benchmark_kmer_major_load_calc(){
   std::cout << "Total time : " << time_total << " [micro sec]" << std::endl; 
 }
 
+/*
 void calculate_kmer_buckets(size_t start_bucket, size_t stop_bucket, 
     matrix_t &distances, matrix_t &dot_prod, matrix_t &left_norm, matrix_t &right_norm,
     container::Kmer_Cluster &cluster_left, container::Kmer_Cluster &cluster_right) {
@@ -359,8 +360,9 @@ void calculate_kmer_buckets(size_t start_bucket, size_t stop_bucket,
   std::cout << "Total time in buckets : " << total << " [micro sec]" << std::endl; 
   std::cout << "I work on buckets : " << start_bucket << " to " << stop_bucket << std::endl;
 }
+*/
 
-
+/*
 void benchmark_calculate_distance_major(){
   std::filesystem::path path{"../data/test_VLMCs"};
   int requested_cores = 4;
@@ -412,6 +414,7 @@ void benchmark_calculate_distance_major(){
   std::cout << "Time normalize dist : " << time_norm << " [micro sec]"  << " , fraction: " << (time_norm / (double)time_tot) << std::endl; 
   std::cout << "Total time : " << time_tot << " [micro sec]" << std::endl; 
 }
+*/
 
 
 int main(int argc, char *argv[]){
@@ -427,5 +430,6 @@ int main(int argc, char *argv[]){
   //benchmark_read_in_kmer();
   //benchmark_kmer_comparison();
   //benchmark_container_inv_sqrt();
-  benchmark_calculate_distance_major();
+  benchmark_kmer_major_load_calc(8);
+  // benchmark_calculate_distance_major();
 }
