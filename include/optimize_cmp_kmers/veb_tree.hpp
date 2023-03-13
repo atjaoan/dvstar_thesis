@@ -19,8 +19,8 @@ struct Veb_tree{
   container::RI_Kmer min;
   container::RI_Kmer max;
   container::RI_Kmer null_kmer = container::RI_Kmer(-1);
-  size_t size = 0;
-  size_t nr_subtrees = 0;
+  size_t size;
+  size_t nr_subtrees;
   bool is_empty = true;
   std::shared_ptr<Veb_tree> summary = nullptr;
   std::vector<std::shared_ptr<Veb_tree>> trees{0, nullptr};
@@ -44,10 +44,10 @@ struct Veb_tree{
   ~Veb_tree() = default;
 
   size_t tree_group(size_t in){
-    if(nr_subtrees < 2) return in;
+    if (nr_subtrees == 0) return in / 2;
     return (in / nr_subtrees); }
   size_t tree_group_index(size_t in){
-    if(nr_subtrees < 2) return in % 2;
+    if (nr_subtrees == 0) return in % 2;
    return in % nr_subtrees; 
   }
 };
@@ -64,16 +64,16 @@ void insert(Veb_tree &t, container::RI_Kmer in) {
     t.min = in;
     in = temp;
   }
-  if(in >= t.max){
+  if(in > t.max){
     t.max = in;
   }
-  if(t.nr_subtrees == 0) { return;}
+  //if(t.nr_subtrees == 0) { return; }
 
   size_t c = t.tree_group(in.integer_rep);
   size_t i = t.tree_group_index(in.integer_rep);
   
   if(t.trees[c] == nullptr){
-    //std::cout << "New tree at index  " << c << " with i " << i << std::endl;
+    //std::cout << "New tree at c : " << c << " with size : " << t.nr_subtrees << std::endl;
     t.trees[c] = std::make_shared<Veb_tree>(t.nr_subtrees);
   }
 
@@ -81,7 +81,7 @@ void insert(Veb_tree &t, container::RI_Kmer in) {
     in.integer_rep = c;
     insert(*t.summary, in);
   }
-
+  //std::cout << "i =  " << i << " c = " << c << std::endl;
   in.integer_rep = i;
   insert(*t.trees[c], in);
   return;
@@ -110,7 +110,7 @@ container::RI_Kmer find(Veb_tree &t, int in) {
   if(t.min.integer_rep == in) return t.min;
   if(t.max.integer_rep == in) return t.max;
 
-  if(t.size < 1) return t.null_kmer;
+  if(t.size == 0) return t.null_kmer;
 
   size_t c = t.tree_group(in);
   size_t i = t.tree_group_index(in);
@@ -125,25 +125,17 @@ container::RI_Kmer find(Veb_tree &t, int in) {
 }
 
 container::RI_Kmer succ(Veb_tree&t, int in){
-  if(in >= t.max.integer_rep) {
-    return t.null_kmer;
-  }
-  if(t.is_empty) {
-    return t.null_kmer;
-  }
   if(in < t.min.integer_rep) {
     return t.min;
   }
-  if(t.size < 2){
-    return t.max;
+  if(in >= t.max.integer_rep || t.is_empty) {
+    return t.null_kmer;
   }
 
   size_t c = t.tree_group(in);
   size_t i = t.tree_group_index(in);
-  if(t.trees[c] == nullptr){
-    return t.max;
-  }
-  if(i < t.trees[c]->max.integer_rep){
+
+  if(t.trees[c] != nullptr && i < t.trees[c]->max.integer_rep){
     in = i;
     auto ret_kmer = succ(*t.trees[c], in);
     ret_kmer.integer_rep += c*t.nr_subtrees;
@@ -151,7 +143,7 @@ container::RI_Kmer succ(Veb_tree&t, int in){
   } else{
     in = c;
     auto c_prim = succ(*t.summary, in);
-    if(c_prim.is_null) {
+    if(c_prim.integer_rep == -1) {
       return t.max;
     } else {
       auto ret_kmer = t.trees[c_prim.integer_rep]->min;
@@ -162,37 +154,25 @@ container::RI_Kmer succ(Veb_tree&t, int in){
 }
 
 container::RI_Kmer succ(Veb_tree&t, container::RI_Kmer in){
-  //std::cout << "succ with in = " << in.integer_rep << std::endl; 
-  if(in >= t.max) {
-    return t.null_kmer;
-  }
-  if(t.is_empty) {
-    return t.null_kmer;
-  }
   if(in < t.min) {
     return t.min;
   }
-  if(t.size < 2){
-    return t.max;
+  if(in >= t.max || t.is_empty) {
+    return t.null_kmer;
   }
 
   size_t c = t.tree_group(in.integer_rep);
   size_t i = t.tree_group_index(in.integer_rep);
-  if(t.trees[c] == nullptr){
-    //std::cout << "tmax at c : " << c << " with nr_subtrees : " << t.nr_subtrees << std::endl;
-    //std::cout << "trees[1] null? " <<  (t.trees[1] == nullptr) << std::endl;
-    return t.max;
-  }
+
   if(t.trees[c] != nullptr && i < t.trees[c]->max.integer_rep){
     in.integer_rep = i;
-    //std::cout << "checking in subtree " << c  << " with i : " << i << std::endl; 
     auto ret_kmer = succ(*t.trees[c], in);
     ret_kmer.integer_rep += c*t.nr_subtrees;
     return ret_kmer; 
   } else{
     in.integer_rep = c;
     auto c_prim = succ(*t.summary, in);
-    if(c_prim.is_null) {
+    if(c_prim.integer_rep == -1) {
       return t.max;
     } else {
       auto ret_kmer = t.trees[c_prim.integer_rep]->min;

@@ -1,5 +1,5 @@
-#include <Eigen/Dense>
 #include <chrono> 
+#include <Eigen/Core>
 
 #include "cluster_container.hpp"
 #include "vlmc_container.hpp"
