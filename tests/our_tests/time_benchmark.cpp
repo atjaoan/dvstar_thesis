@@ -306,7 +306,7 @@ int main(int argc, char *argv[]){
   run_timer<container::VLMC_B_tree>("B-tree");
   run_timer<container::VLMC_hashmap>("Hashmap");
   run_timer<container::VLMC_Combo>("Combo");
-  // run_timer(num_items, container::VLMC_Veb{}, "Veb-tree");
+  run_timer<container::VLMC_Veb>("Veb-tree");
   benchmark_read_in_kmer();
   benchmark_kmer_comparison();
   benchmark_container_inv_sqrt();
