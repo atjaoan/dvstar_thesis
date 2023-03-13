@@ -325,7 +325,7 @@ void benchmark_kmer_major_load_calc(){
   std::cout << "Time calc : " << time_calc << " [micro sec]"  << " , fraction: " << (time_calc / (double)time_total) << std::endl; 
   std::cout << "Total time : " << time_total << " [micro sec]" << std::endl; 
 }
-/*
+
 void calculate_kmer_buckets(size_t start_bucket, size_t stop_bucket, 
     matrix_t &distances, matrix_t &dot_prod, matrix_t &left_norm, matrix_t &right_norm,
     container::Kmer_Cluster &cluster_left, container::Kmer_Cluster &cluster_right) {
@@ -337,11 +337,13 @@ void calculate_kmer_buckets(size_t start_bucket, size_t stop_bucket,
       continue; 
     }
     auto start_get = std::chrono::steady_clock::now();
-    auto vec_left = cluster_left.get(i);
-    auto vec_right = cluster_right.get(i);
+    auto vec_left_begin = cluster_left.get_bucket_begin(i);
+    auto vec_left_end = cluster_left.get_bucket_end(i);
+    auto vec_right_begin = cluster_right.get_bucket_begin(i);
+    auto vec_right_end = cluster_right.get_bucket_end(i);
     auto end_get = std::chrono::steady_clock::now();
 
-    distance::dvstar_kmer_major(vec_left, vec_right, dot_prod, left_norm, right_norm);
+    distance::dvstar_kmer_major(vec_left_begin, vec_left_end, vec_right_begin, vec_right_end, dot_prod, left_norm, right_norm);
     auto end_dist = std::chrono::steady_clock::now();
 
     auto time_get = std::chrono::duration_cast<std::chrono::microseconds>(end_get - start_get).count();
@@ -357,11 +359,11 @@ void calculate_kmer_buckets(size_t start_bucket, size_t stop_bucket,
   std::cout << "Total time in buckets : " << total << " [micro sec]" << std::endl; 
   std::cout << "I work on buckets : " << start_bucket << " to " << stop_bucket << std::endl;
 }
-*/
-/*
+
+
 void benchmark_calculate_distance_major(){
-  std::filesystem::path path{"../data/small_test"};
-  int requested_cores = 4;
+  std::filesystem::path path{"../data/test_VLMCs"};
+  int requested_cores = 1;
   auto cluster_left = cluster::get_kmer_cluster(path, 0);
   auto cluster_right = cluster::get_kmer_cluster(path, 0);
 
@@ -410,7 +412,6 @@ void benchmark_calculate_distance_major(){
   std::cout << "Time normalize dist : " << time_norm << " [micro sec]"  << " , fraction: " << (time_norm / (double)time_tot) << std::endl; 
   std::cout << "Total time : " << time_tot << " [micro sec]" << std::endl; 
 }
-*/
 
 
 int main(int argc, char *argv[]){
@@ -426,5 +427,5 @@ int main(int argc, char *argv[]){
   //benchmark_read_in_kmer();
   //benchmark_kmer_comparison();
   //benchmark_container_inv_sqrt();
-  //benchmark_calculate_distance_major();
+  benchmark_calculate_distance_major();
 }
