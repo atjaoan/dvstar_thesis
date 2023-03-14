@@ -2,6 +2,7 @@ import typer
 import subprocess
 from pathlib import Path
 import os 
+import numpy as np 
 
 app = typer.Typer()
 
@@ -10,10 +11,11 @@ cwd = Path(__file__).parent
 def get_bintree_name(genome_path: str, threshold: float, min_count: int, max_depth: int):
     return os.path.splitext(genome_path)[0] + f"_{threshold}_{min_count}_{max_depth}.bintree"
 
-############################################
-# Builds VLMCs from sequences.             #
-# Dvstars projects implementation is used. #
-############################################ 
+#####################################################
+# Builds VLMCs from sequences.                      #
+# Dvstars projects implementation is used.          #
+# threshold = 3.9075, min_count = 10, max_depth = 9 # 
+#####################################################
 def dvstar_build(genome_path: Path, out_path: Path, threshold: float, min_count: int, max_depth: int):
     for genome in os.listdir(genome_path):
         args = (
@@ -27,9 +29,39 @@ def dvstar_build(genome_path: Path, out_path: Path, threshold: float, min_count:
         )
         subprocess.run(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
+def build_parameter_test():
+    genome_path = cwd / "data/one_fasta"
+    out_path = cwd / "data/benchmarking/parameter_test"
+
+    for threshold in np.arange(0, 15, 0.5):
+        for min_count in range(0, 15, 1):
+            for max_depth in range(0, 15, 1):
+                dvstar_build(genome_path, out_path, threshold, min_count, max_depth)
+
+def build_human():
+    genome_path = cwd / "data/human_genome_split_files"
+    out_path = cwd / "data/benchmarking/human"
+    print("Building low threshold...")
+    dvstar_build(genome_path, out_path / "low", 1, 10, 9)
+    print("Building mid threshold...")
+    dvstar_build(genome_path, out_path / "mid", 3.9075, 10, 9)
+    print("Building high threshold...")
+    dvstar_build(genome_path, out_path / "high", 5, 10, 9)
+
+def build_ecoli():
+    genome_path = cwd / "data/sequences_split_files"
+    out_path = cwd / "data/benchmarking/ecoli"
+    dvstar_build(genome_path, out_path / "low", 3.9075, 10, 9)
+    dvstar_build(genome_path, out_path / "mid", 3.9075, 10, 9)
+    dvstar_build(genome_path, out_path / "high", 3.9075, 10, 9)
+
 @app.command()
 def build():
-    print("Building")
+    print("Building Human Sequences...")
+    build_parameter_test()
+    ## print("Building E-coli Sequences...")
+    ## build_ecoli()
+
 
 if __name__ == "__main__":
     app()
