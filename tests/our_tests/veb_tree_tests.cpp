@@ -213,7 +213,7 @@ TEST_F(VebTreeTest, Sized10) {
 }
 
 TEST_F(VebTreeTest, CheckMany) {
-  for (size_t j = 10; j < 16; j++)
+  for (size_t j = 10; j < 500; j++)
   {
   
   int items = j;

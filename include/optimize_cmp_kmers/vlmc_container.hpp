@@ -314,11 +314,14 @@ class VLMC_sorted_vector : public VLMC_Container {
       size_t right_i = 0;  
       size_t left_size = left_kmers.size();
       size_t right_size = right_kmers.size();
+      //int f_applied = 0;
       while(left_i < left_size && right_i < right_size) {
         const RI_Kmer &left_kmer = left_kmers.get(left_i);
         const RI_Kmer &right_kmer = right_kmers.get(right_i);
         if (right_kmer == left_kmer) {
           f(left_kmer, right_kmer);
+          //std::cout << left_kmer.next_char_prob[0] << "\n";
+          //f_applied++;
           left_i++;
           right_i++;
         } else if (left_kmer < right_kmer) {
@@ -327,6 +330,7 @@ class VLMC_sorted_vector : public VLMC_Container {
           right_i++;
         }
       }
+      //std::cout << "Applied f " << f_applied << " times with sorted" << std::endl;
     }
 };
 
@@ -611,24 +615,52 @@ class VLMC_Combo : public VLMC_Container {
 class VLMC_Veb : public VLMC_Container {
 
   private: 
-    veb::Veb_tree veb = veb::Veb_tree(7000);
+    veb::Veb_tree veb = veb::Veb_tree(500000);
+    int min_index = INT_MAX;
+    int max_index = -1;
 
   public: 
     VLMC_Veb() = default;
     ~VLMC_Veb() = default; 
 
     VLMC_Veb(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
+      
       std::ifstream ifs(path_to_bintree, std::ios::binary);
       cereal::BinaryInputArchive archive(ifs);
 
-      Kmer kmer{};
+      Kmer input_kmer{};
+
+      Eigen::ArrayX4d cached_context((int)std::pow(4, background_order), 4);
+      std::vector<RI_Kmer> tmp_container{};
+
+      auto offset_to_remove = 0;
+      for (int i = 0; i < background_order; i++){
+        offset_to_remove += std::pow(4, i); 
+      }
 
       while (ifs.peek() != EOF){
-        archive(kmer);
-        RI_Kmer ri_kmer{kmer};
-        push(ri_kmer);
+        archive(input_kmer);
+        RI_Kmer ri_kmer{input_kmer};
+
+        if(ri_kmer.length <= background_order){
+          if (ri_kmer.length + 1 > background_order){
+            int offset = ri_kmer.integer_rep - offset_to_remove; 
+            cached_context.row(offset) = ri_kmer.next_char_prob;
+          }
+        } else {
+          if(ri_kmer.integer_rep > max_index) max_index = ri_kmer.integer_rep;
+          if(ri_kmer.integer_rep < min_index) min_index = ri_kmer.integer_rep;
+          tmp_container.push_back(ri_kmer);
+        }
       }
+
       ifs.close();
+      for(auto kmer : tmp_container){
+        int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
+        int offset = background_idx - offset_to_remove;
+        kmer.next_char_prob *= cached_context.row(offset).rsqrt();
+        veb::insert(veb, kmer);
+      }
     } 
 
     size_t size() const override { return veb.size; }
@@ -644,20 +676,21 @@ class VLMC_Veb : public VLMC_Container {
 
     RI_Kmer &get(const int i) override { return null_kmer; }
 
-    int get_max_kmer_index() const override { return veb.size - 1; }
-    int get_min_kmer_index() const override { return 0; }
+    int get_max_kmer_index() const override { return max_index; }
+    int get_min_kmer_index() const override { return min_index; }
 
     RI_Kmer find(const int i_rep) override { return veb::find(veb, i_rep); }
 
     void iterate_kmers(VLMC_Container &left_kmers, VLMC_Container &right_kmers,
     const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f) override {
-      RI_Kmer left_kmer = left_kmers.find(0);
-      RI_Kmer right_kmer = right_kmers.find(0);
-      while(right_kmer.integer_rep != -1){
+      RI_Kmer left_kmer = left_kmers.find(this->min_index);
+      RI_Kmer right_kmer = right_kmers.find(this->min_index);
+      while(true){
         // Check if right_kmers has this succeeding left_kmer
         // if, apply f
-        if(left_kmer.integer_rep != -1)
+        if(left_kmer == right_kmer){
           f(left_kmer, right_kmer);
+        }
         // Iterating left
         left_kmer = veb::succ(veb, left_kmer);
         if(left_kmer.integer_rep == -1){
@@ -665,7 +698,6 @@ class VLMC_Veb : public VLMC_Container {
         }
         right_kmer = right_kmers.find(left_kmer.integer_rep);
       }
-      
     }
 };
 }

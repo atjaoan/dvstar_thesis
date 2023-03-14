@@ -67,13 +67,11 @@ void insert(Veb_tree &t, container::RI_Kmer in) {
   if(in > t.max){
     t.max = in;
   }
-  //if(t.nr_subtrees == 0) { return; }
 
   size_t c = t.tree_group(in.integer_rep);
   size_t i = t.tree_group_index(in.integer_rep);
   
   if(t.trees[c] == nullptr){
-    //std::cout << "New tree at c : " << c << " with size : " << t.nr_subtrees << std::endl;
     t.trees[c] = std::make_shared<Veb_tree>(t.nr_subtrees);
   }
 
@@ -81,7 +79,6 @@ void insert(Veb_tree &t, container::RI_Kmer in) {
     in.integer_rep = c;
     insert(*t.summary, in);
   }
-  //std::cout << "i =  " << i << " c = " << c << std::endl;
   in.integer_rep = i;
   insert(*t.trees[c], in);
   return;

@@ -91,8 +91,8 @@ std::tuple<std::vector<RI_Kmer>, int> get_kmer_vector(std::filesystem::path path
 
 template <typename VC> 
 void run_timer(std::string container){
-  std::filesystem::path path_fst{"../data/one_human_VLMCs/human_genome_1.bintree"};
-  std::filesystem::path path_snd{"../data/one_human_VLMCs/human_genome_2.bintree"};
+  std::filesystem::path path_fst{"../data/one_human_VLMCs/sequences_1.bintree"};
+  std::filesystem::path path_snd{"../data/one_human_VLMCs/sequences_2.bintree"};
 
   auto fst = get_kmer_vector(path_fst);
   auto snd = get_kmer_vector(path_snd);

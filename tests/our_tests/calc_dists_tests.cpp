@@ -118,12 +118,11 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
 
 
   // Veb Implementation - Currently too slow
-  //cluster_c left_cluster_veb{};
-  //cluster_c right_cluster_veb{};
-  //cluster::get_cluster<container::VLMC_Veb>(path_to_bintrees, left_cluster_veb);
-  //cluster::get_cluster<container::VLMC_Veb>(path_to_bintrees, right_cluster_veb);
-  //matrix_t distances_veb = calculate::calculate_distances(left_cluster_veb, right_cluster_veb, dist_func, 1);
-  
+  auto left_cluster_veb = cluster::get_cluster<container::VLMC_Veb>(path_to_bintrees, 1, background_order);
+  auto right_cluster_veb = cluster::get_cluster<container::VLMC_Veb>(path_to_bintrees, 1, background_order);
+  matrix_t distances_veb = calculate::calculate_distances<container::VLMC_Veb>(left_cluster_veb, right_cluster_veb, dist_func, 1);
+
+
   // Dvstar Original implementation 
   matrix_t distances_org_dvstar{distances_vector.cols(), distances_vector.rows()};
   int x = 0;
@@ -147,6 +146,7 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
         EXPECT_NEAR(distances_vector(x,y), distances_b_tree(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_hashmap(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_combo(x,y), error_tolerance);
+        EXPECT_NEAR(distances_vector(x,y), distances_veb(x,y), error_tolerance);
         // EXPECT_NEAR(distances_vector(x,y), distances_veb(x,y), error_tolerance);
       }
     }
