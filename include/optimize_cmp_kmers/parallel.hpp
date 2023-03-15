@@ -7,6 +7,8 @@
 #include <thread>
 #include <vector>
 
+#include "BS_thread_pool.hpp"
+
 namespace parallel {
 
 std::vector<std::tuple<size_t, size_t>> get_x_bounds(size_t size, const size_t requested_cores) {
