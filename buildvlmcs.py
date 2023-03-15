@@ -29,38 +29,50 @@ def dvstar_build(genome_path: Path, out_path: Path, threshold: float, min_count:
         )
         subprocess.run(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
+#####################################
+# Build data set for comparing file #
+# size to input parameters.         #
+#####################################
 def build_parameter_test():
-    genome_path = cwd / "data/one_fasta"
+    genome_path = cwd / "data/test"
     out_path = cwd / "data/benchmarking/parameter_test"
-
-    for threshold in np.arange(0, 15, 0.5):
+    for threshold in np.arange(0, 4, 0.25):
         for min_count in range(0, 15, 1):
-            for max_depth in range(0, 15, 1):
-                dvstar_build(genome_path, out_path, threshold, min_count, max_depth)
+            for max_depth in np.arange(0, 15, 1):
+                dvstar_build(genome_path, out_path, threshold, min_count, max_depth) 
 
+#########################
+# Build human data set. #
+#########################
 def build_human():
     genome_path = cwd / "data/human_genome_split_files"
     out_path = cwd / "data/benchmarking/human"
-    print("Building low threshold...")
-    dvstar_build(genome_path, out_path / "low", 1, 10, 9)
-    print("Building mid threshold...")
-    dvstar_build(genome_path, out_path / "mid", 3.9075, 10, 9)
-    print("Building high threshold...")
-    dvstar_build(genome_path, out_path / "high", 5, 10, 9)
+    print("Building small vlmcs...")
+    dvstar_build(genome_path, out_path / "small", 3.9075, 6, 6)
+    print("Building medium vlmcs...")
+    dvstar_build(genome_path, out_path / "medium", 2.5, 4, 8)
+    print("Building large vlmcs...")
+    dvstar_build(genome_path, out_path / "large", 1.5, 2, 12)
 
+##########################
+# Build E-coli data set. #
+##########################
 def build_ecoli():
     genome_path = cwd / "data/sequences_split_files"
     out_path = cwd / "data/benchmarking/ecoli"
-    dvstar_build(genome_path, out_path / "low", 3.9075, 10, 9)
-    dvstar_build(genome_path, out_path / "mid", 3.9075, 10, 9)
-    dvstar_build(genome_path, out_path / "high", 3.9075, 10, 9)
+    print("Building small vlmcs...")
+    dvstar_build(genome_path, out_path / "small", 3.9075, 6, 6)
+    print("Building medium vlmcs...")
+    dvstar_build(genome_path, out_path / "medium", 2.5, 4, 8)
+    print("Building large vlmcs...")
+    dvstar_build(genome_path, out_path / "large", 1.5, 2, 12)
 
 @app.command()
 def build():
-    print("Building Human Sequences...")
-    build_parameter_test()
-    ## print("Building E-coli Sequences...")
-    ## build_ecoli()
+    ## print("Building Human Sequences...")
+    ## build_human()
+    print("Building E-coli Sequences...")
+    build_ecoli()
 
 
 if __name__ == "__main__":
