@@ -12,7 +12,9 @@ namespace parallel {
 std::vector<std::tuple<size_t, size_t>> get_x_bounds(size_t size, const size_t requested_cores) {
   const size_t processor_count = std::thread::hardware_concurrency();
   size_t used_cores {1};
-  if(requested_cores <= processor_count){
+  if (requested_cores > size){
+    used_cores = size; 
+  } else if(requested_cores <= processor_count){
       used_cores = requested_cores;
   } else {
     used_cores = processor_count;
