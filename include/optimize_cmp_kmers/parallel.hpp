@@ -6,13 +6,16 @@
 #include <iostream>
 #include <thread>
 #include <vector>
+#include "BS_thread_pool.hpp"
 
 namespace parallel {
 
 std::vector<std::tuple<size_t, size_t>> get_x_bounds(size_t size, const size_t requested_cores) {
   const size_t processor_count = std::thread::hardware_concurrency();
   size_t used_cores = 1;
-  if(requested_cores <= processor_count){
+  if(requested_cores > size){
+    used_cores = size;
+  } else if(requested_cores <= processor_count){
       used_cores = requested_cores;
   } else {
     used_cores = processor_count;
@@ -119,6 +122,25 @@ void sequential(size_t size, const std::function<void(size_t, size_t)> &fun, con
 void sequential(size_t size_left, size_t size_right, const std::function<void(size_t, size_t)> &fun, const size_t requested_cores) {
   std::thread t {fun, 0, size_left};
   t.join();
+}
+
+void pool_parallelize(size_t size, const std::function<void(size_t, size_t)> &fun, const size_t requested_cores) {
+  const size_t processor_count = std::thread::hardware_concurrency();
+  size_t used_cores = 1;
+  if(requested_cores > size){
+    used_cores = size;
+  } else if(requested_cores <= processor_count){
+      used_cores = requested_cores;
+  } else {
+    used_cores = processor_count;
+  }
+  BS::thread_pool pool(used_cores);
+
+  auto bounds = get_x_bounds(size, requested_cores);
+  for (auto &[start_index, stop_index] : bounds) {
+    std::future<void> fut = pool.submit(fun, start_index, stop_index);
+  }
+  pool.wait_for_tasks();
 }
 
 }

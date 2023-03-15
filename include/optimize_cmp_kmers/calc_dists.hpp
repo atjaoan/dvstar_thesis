@@ -1,5 +1,7 @@
 #include <Eigen/Dense>
 #include <chrono> 
+#include <mutex>
+#include <deque>
 
 #include "cluster_container.hpp"
 #include "vlmc_container.hpp"
@@ -87,6 +89,21 @@ void calculate_kmer_buckets(size_t start_bucket, size_t stop_bucket,
   }
 }
 
+void calculate_kmer_buckets_new(size_t start_bucket, size_t stop_bucket, 
+    std::deque<distance::Intermediate_matrix_val> &out_q,
+    container::Kmer_Cluster &cluster_left, container::Kmer_Cluster &cluster_right) {
+  auto left_it = cluster_left.get_begin();
+  std::advance(left_it, start_bucket);
+  for (size_t i = start_bucket; i < stop_bucket; i++) {
+    auto idx = left_it->first;
+    auto right_it = cluster_right.find(idx);
+    if (right_it != cluster_right.get_end()){
+      distance::dvstar_kmer_major_new(left_it->second, right_it->second, out_q);
+    }
+    left_it++;
+  }
+}
+
 void calculate_kmer_buckets_single(size_t start_bucket, size_t stop_bucket, 
     matrix_t &dot_prod, matrix_t &left_norm, matrix_t &right_norm,
     container::Kmer_Cluster &cluster) {
@@ -102,13 +119,21 @@ matrix_t calculate_distance_major(
     container::Kmer_Cluster &cluster_left, container::Kmer_Cluster &cluster_right,
     size_t requested_cores){
 
+  std::mutex matricies_mutex;
   matrix_t distances = matrix_t::Zero(cluster_left.size(), cluster_right.size());
   matrix_t dot_prod = matrix_t::Zero(cluster_left.size(), cluster_right.size());
   matrix_t left_norm = matrix_t::Zero(cluster_left.size(), cluster_right.size());
   matrix_t right_norm = matrix_t::Zero(cluster_left.size(), cluster_right.size());
 
   auto fun = [&](size_t start_bucket, size_t stop_bucket) {
-    calculate_kmer_buckets(start_bucket, stop_bucket, dot_prod, left_norm, right_norm, cluster_left, cluster_right);
+    std::deque<distance::Intermediate_matrix_val> results{};
+    calculate_kmer_buckets_new(start_bucket, stop_bucket, results, cluster_left, cluster_right);
+    std::lock_guard<std::mutex> guard(matricies_mutex);
+    for(auto r : results){
+      dot_prod(r.left_id, r.right_id) += r.dot_prod;
+      left_norm(r.left_id, r.right_id) += r.left_norm;
+      right_norm(r.left_id, r.right_id) += r.right_norm;
+    }
   };
   
   parallel::parallelize(cluster_left.experimental_bucket_count(), fun, requested_cores);
