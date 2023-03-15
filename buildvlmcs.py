@@ -48,11 +48,11 @@ def build_human():
     genome_path = cwd / "data/human_genome_split_files"
     out_path = cwd / "data/benchmarking/human"
     print("Building small vlmcs...")
-    dvstar_build(genome_path, out_path / "small", 3.9075, 6, 6)
+    dvstar_build(genome_path, out_path / "small", 3.9075, 9, 6)
     print("Building medium vlmcs...")
-    dvstar_build(genome_path, out_path / "medium", 2.5, 4, 8)
+    dvstar_build(genome_path, out_path / "medium", 3, 6, 8)
     print("Building large vlmcs...")
-    dvstar_build(genome_path, out_path / "large", 1.5, 2, 12)
+    dvstar_build(genome_path, out_path / "large", 2, 3, 10)
 
 ##########################
 # Build E-coli data set. #
@@ -69,10 +69,10 @@ def build_ecoli():
 
 @app.command()
 def build():
-    ## print("Building Human Sequences...")
-    ## build_human()
-    print("Building E-coli Sequences...")
-    build_ecoli()
+    print("Building Human Sequences...")
+    build_human()
+    ## print("Building E-coli Sequences...")
+    ## build_ecoli()
 
 
 if __name__ == "__main__":

@@ -85,8 +85,8 @@ def calculate_distance(set_size: int, genome_path: str, vlmc_container: str, nr_
         "-s", cwd / genome_path,
         "-v", vlmc_container,
         "-n", str(nr_cores),
-        "-b", str(background_order)
-        # OBS! Implement set size in our implementation. 
+        "-b", str(background_order),
+        "-a", str(set_size)
     )
     return subprocess.run(args, capture_output=True, text=True)
 
@@ -111,14 +111,14 @@ def PstClassifierSeqan(set_size: int, genome_path: str, background_order: int) -
 # Save output from perf to csv file. #
 ######################################
 def save_to_csv(res: subprocess.CompletedProcess, csv_path: Path, vlmc_size: str, 
-                set_size: int, threshold: float, min_count: int, max_depth: int, implementation: str):
+                set_size: int, threshold: float, min_count: int, max_depth: int, implementation: str, nr_cores_used: int):
     new_line_separated_attr = res.stderr.split('\n')[3:-8]
 
     print("For implementation -> " + implementation + "\n")
     print(res.stderr)
 
-    data = [get_git_commit_version(), implementation, vlmc_size, set_size, threshold, min_count, max_depth]
-    columns = ["repo_version", "implementation", "vlmc_size", "set_size", "threshold", "min_count", "max_depth"]
+    data = [get_git_commit_version(), implementation, vlmc_size, set_size, threshold, min_count, max_depth, nr_cores_used]
+    columns = ["repo_version", "implementation", "vlmc_size", "set_size", "threshold", "min_count", "max_depth", "nr_cores_used"]
     
     for line in new_line_separated_attr:
         split_line = line.split('#')
@@ -175,20 +175,36 @@ def human_benchmarking():
     th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(dir_path / "large")[0])
 
     while(nb_files > 2):
+        print("Benchmarking with " + str(nb_files) + " VLMCs...")
+        print("Benchmarking small PstClassifierSeqan.")
         res_small  = PstClassifierSeqan(nb_files, dir_path / "small", 0)
+        print("Benchmarking medium PstClassifierSeqan.")
         res_medium = PstClassifierSeqan(nb_files, dir_path / "medium", 0)
+        print("Benchmarking large PstClassifierSeqan.")
         res_large  = PstClassifierSeqan(nb_files, dir_path / "large", 0)
 
-        save_to_csv(res_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, "PstClassifierSeqan")
-        save_to_csv(res_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, "PstClassifierSeqan")
-        save_to_csv(res_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, "PstClassifierSeqan")
+        save_to_csv(res_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, "PstClassifierSeqan", 8)
+        save_to_csv(res_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, "PstClassifierSeqan", 8)
+        save_to_csv(res_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, "PstClassifierSeqan", 8)
 
-        nb_files = nb_files / 2
+        for imp in ['sorted-vector']:
+            print("Benchmarking small " + imp + ".")
+            res_our_small  = calculate_distance(nb_files, dir_path / "small", imp, 8, 0)
+            print("Benchmarking medium " + imp + ".")
+            res_our_medium = calculate_distance(nb_files, dir_path / "medium", imp, 8, 0)
+            print("Benchmarking large " + imp + ".")
+            res_our_large  = calculate_distance(nb_files, dir_path / "large", imp, 8, 0)
+
+            save_to_csv(res_our_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, imp, 8)
+            save_to_csv(res_our_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, imp, 8)
+            save_to_csv(res_our_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, imp, 8)
+
+        nb_files = int(nb_files / 2)
 
 
 @app.command()
 def benchmark():
-    get_csv_name()
+    human_benchmarking()
 
 if __name__ == "__main__":
     app()
