@@ -69,7 +69,7 @@ double normalise_dvstar(double dot_product, double left_norm,
                         double right_norm) {
   left_norm = std::sqrt(left_norm);
   right_norm = std::sqrt(right_norm);
-
+  if(dot_product == 0) return 0;
   if (left_norm == 0 || right_norm == 0) {
     return 1.0;
   } else {
@@ -112,6 +112,7 @@ void dvstar_kmer_major(bucket_t &left_vector, bucket_t &right_vector,
                       matrix_t &dot_prod, matrix_t &left_norm, matrix_t &right_norm){
                         
   auto rec_fun = [&](size_t &left, size_t &right) { 
+    if(left_vector[left].id > right_vector[right].id) return;
     if (left_vector[left].kmer.integer_rep == right_vector[right].kmer.integer_rep){
       auto left_id = left_vector[left].id;
       auto right_id = right_vector[right].id; 

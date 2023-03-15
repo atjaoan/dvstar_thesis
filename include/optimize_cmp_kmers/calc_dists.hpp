@@ -127,7 +127,7 @@ matrix_t calculate_distance_major(
   auto fun = [&](size_t start_bucket, size_t stop_bucket) {
     calculate_kmer_buckets(start_bucket, stop_bucket, distances, dot_prod, left_norm, right_norm, cluster, cluster);
   };
-  parallel::parallelize(cluster.bucket_count(), fun, requested_cores);
+  parallel::parallelize(cluster.experimental_bucket_count(), fun, requested_cores);
 
   auto rec_fun = [&](size_t left, size_t right) {
     distances(left, right) = distance::normalise_dvstar(dot_prod(left, right), left_norm(left, right), right_norm(left, right));
