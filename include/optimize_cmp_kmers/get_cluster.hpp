@@ -17,14 +17,20 @@ using recursive_directory_iterator = std::filesystem::recursive_directory_iterat
 namespace cluster{
   
 template <typename VC>  
-container::Cluster_Container<VC> get_cluster(const std::filesystem::path &directory, const size_t nr_cores_to_use, const size_t background_order){
+container::Cluster_Container<VC> get_cluster(const std::filesystem::path &directory, const size_t nr_cores_to_use, 
+      const size_t background_order, const int set_size = -1){
   std::vector<std::filesystem::path> paths{};
 
   for (const auto& dir_entry : recursive_directory_iterator(directory)) {
     paths.push_back(dir_entry.path());
   }
 
-  container::Cluster_Container<VC> cluster{paths.size()};
+  size_t paths_size = paths.size();
+  if ((set_size != -1) && (set_size < paths_size)){
+    paths_size = set_size; 
+  }
+
+  container::Cluster_Container<VC> cluster{paths_size};
 
   auto fun = [&](size_t start_index, size_t stop_index) {
     for (int index = start_index; index < stop_index; index++){
@@ -32,7 +38,7 @@ container::Cluster_Container<VC> get_cluster(const std::filesystem::path &direct
     }
   };
 
-  parallel::parallelize(paths.size(), fun, nr_cores_to_use);
+  parallel::parallelize(paths_size, fun, nr_cores_to_use);
 
   return cluster; 
 }

@@ -56,6 +56,7 @@ struct cli_arguments {
   std::filesystem::path second_VLMC_path{};
   std::filesystem::path out_path{};
   size_t dop {1};
+  int set_size {-1};
   Cluster_Rep cluster{Cluster_Rep::cluster_vector};
   VLMC_Rep vlmc{VLMC_Rep::vlmc_vector}; 
   size_t background_order {0}; 
@@ -139,6 +140,9 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
 
   app.add_option("-b,--background-order", arguments.background_order,
                  "Background order.");
+
+  app.add_option("-a, --set-size", arguments.set_size,
+                    "Number of VLMCs to compute distance function on.");
 }
 
 }
