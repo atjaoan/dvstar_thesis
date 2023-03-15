@@ -136,7 +136,7 @@ matrix_t calculate_distance_major(
     }
   };
   
-  parallel::parallelize(cluster_left.experimental_bucket_count(), fun, requested_cores);
+  parallel::pool_parallelize(cluster_left.experimental_bucket_count(), fun, requested_cores);
 
   auto rec_fun = [&](size_t left, size_t right) {
     distances(left, right) = distance::normalise_dvstar(dot_prod(left, right), left_norm(left, right), right_norm(left, right));
