@@ -1,4 +1,5 @@
 build/
+csv_results/
 images/
 .vscode/
 build-debug/
