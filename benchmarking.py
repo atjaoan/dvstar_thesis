@@ -231,8 +231,8 @@ def parallelization_benchmark(dataset: str):
 
 @app.command()
 def benchmark():
-    parallelization_benchmark("data/benchmarking/human")
-    ## normal_benchmaking("data/benchmarking/human")
+    normal_benchmaking("data/benchmarking/ecoli")
+    parallelization_benchmark("data/benchmarking/ecoli")
 
 if __name__ == "__main__":
     app()
