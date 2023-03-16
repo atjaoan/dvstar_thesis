@@ -25,3 +25,6 @@
 [submodule "submodules/unordered_dense"]
 	path = submodules/unordered_dense
 	url = https://github.com/martinus/unordered_dense.git
+[submodule "submodules/thread-ppol"]
+	path = submodules/thread-pool
+	url = https://github.com/bshoshany/thread-pool.git
