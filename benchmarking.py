@@ -166,11 +166,13 @@ def save_to_csv(res: subprocess.CompletedProcess, csv_path: Path, vlmc_size: str
 # Function for benchmarking time and # 
 # cache-misses on dataset.           #
 ######################################
-def normal_benchmaking(dataset: str):
+def normal_benchmaking(dataset: str, implementation: str):
     dir_path = cwd / dataset
     csv_filename = get_csv_name(dataset)
     print(csv_filename)
     nb_files = count_nb_files(dir_path / "small")
+
+    nb_files = int(nb_files / 2)
 
     th_small, min_small, max_small = get_parameter_from_bintree(os.listdir(dir_path / "small")[0])
     th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(dir_path / "medium")[0])
@@ -178,6 +180,32 @@ def normal_benchmaking(dataset: str):
 
     while(nb_files > 2):
         print("Benchmarking with " + str(nb_files) + " VLMCs...")
+        print("Benchmarking small " + implementation + ".")
+        res_our_small  = calculate_distance(nb_files, dir_path / "small", implementation, 8, 0)
+        print("Benchmarking medium " + implementation + ".")
+        res_our_medium = calculate_distance(nb_files, dir_path / "medium", implementation, 8, 0)
+        print("Benchmarking large " + implementation + ".")
+        res_our_large  = calculate_distance(nb_files, dir_path / "large", implementation, 8, 0)
+
+        save_to_csv(res_our_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, implementation, 8)
+        save_to_csv(res_our_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, implementation, 8)
+        save_to_csv(res_our_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, implementation, 8)
+
+        nb_files = int(nb_files / 2)
+
+def Pst_normal_benchmaking(dataset: str):
+    dir_path = cwd / dataset
+    csv_filename = get_csv_name(dataset)
+    print(csv_filename)
+    nb_files = count_nb_files(dir_path / "small")
+
+    nb_files = int(nb_files / 2)
+
+    th_small, min_small, max_small = get_parameter_from_bintree(os.listdir(dir_path / "small")[0])
+    th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(dir_path / "medium")[0])
+    th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(dir_path / "large")[0])
+
+    while(nb_files > 2):
         print("Benchmarking small PstClassifierSeqan.")
         res_small  = PstClassifierSeqan(nb_files, dir_path / "small", 0)
         print("Benchmarking medium PstClassifierSeqan.")
@@ -188,19 +216,6 @@ def normal_benchmaking(dataset: str):
         save_to_csv(res_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, "PstClassifierSeqan", 8)
         save_to_csv(res_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, "PstClassifierSeqan", 8)
         save_to_csv(res_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, "PstClassifierSeqan", 8)
-
-        for imp in ['sorted-vector']:
-            print("Benchmarking small " + imp + ".")
-            res_our_small  = calculate_distance(nb_files, dir_path / "small", imp, 8, 0)
-            print("Benchmarking medium " + imp + ".")
-            res_our_medium = calculate_distance(nb_files, dir_path / "medium", imp, 8, 0)
-            print("Benchmarking large " + imp + ".")
-            res_our_large  = calculate_distance(nb_files, dir_path / "large", imp, 8, 0)
-
-            save_to_csv(res_our_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, imp, 8)
-            save_to_csv(res_our_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, imp, 8)
-            save_to_csv(res_our_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, imp, 8)
-
         nb_files = int(nb_files / 2)
 
 #####################################
@@ -213,16 +228,18 @@ def parallelization_benchmark(dataset: str):
     print(csv_filename)
     nb_files = count_nb_files(dir_path / "small")
 
+    nb_files = int(nb_files / 2)
+
     th_small, min_small, max_small = get_parameter_from_bintree(os.listdir(dir_path / "small")[0])
     th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(dir_path / "medium")[0])
     th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(dir_path / "large")[0])
     for nr_cores in range(1, 9, 1):
         print("Benchmarking small with " + str(nr_cores) + " cores.")
-        res_our_small  = calculate_distance(-1, dir_path / "small", 'sorted-vector', nr_cores, 0)
+        res_our_small  = calculate_distance(nb_files, dir_path / "small", 'sorted-vector', nr_cores, 0)
         print("Benchmarking medium with " + str(nr_cores) + " cores.")
-        res_our_medium = calculate_distance(-1, dir_path / "medium", 'sorted-vector', nr_cores, 0)
+        res_our_medium = calculate_distance(nb_files, dir_path / "medium", 'sorted-vector', nr_cores, 0)
         print("Benchmarking large with " + str(nr_cores) + " cores.")
-        res_our_large  = calculate_distance(-1, dir_path / "large", 'sorted-vector', nr_cores, 0)
+        res_our_large  = calculate_distance(nb_files, dir_path / "large", 'sorted-vector', nr_cores, 0)
 
         save_to_csv(res_our_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, 'sorted-vector', nr_cores)
         save_to_csv(res_our_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, 'sorted-vector', nr_cores)
@@ -231,7 +248,7 @@ def parallelization_benchmark(dataset: str):
 
 @app.command()
 def benchmark():
-    normal_benchmaking("data/benchmarking/ecoli")
+    Pst_normal_benchmaking("data/benchmarking/ecoli")
     parallelization_benchmark("data/benchmarking/ecoli")
 
 if __name__ == "__main__":
