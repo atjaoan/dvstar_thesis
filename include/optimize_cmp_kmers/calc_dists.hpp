@@ -90,7 +90,7 @@ void calculate_kmer_buckets(size_t start_bucket, size_t stop_bucket,
 }
 
 void calculate_kmer_buckets_new(size_t start_bucket, size_t stop_bucket, 
-    std::deque<distance::Intermediate_matrix_val> &out_q,
+    matrix_t& dot, matrix_t& lnorm, matrix_t& rnorm,
     container::Kmer_Cluster &cluster_left, container::Kmer_Cluster &cluster_right) {
   auto left_it = cluster_left.get_begin();
   std::advance(left_it, start_bucket);
@@ -98,7 +98,7 @@ void calculate_kmer_buckets_new(size_t start_bucket, size_t stop_bucket,
     auto idx = left_it->first;
     auto right_it = cluster_right.find(idx);
     if (right_it != cluster_right.get_end()){
-      distance::dvstar_kmer_major_new(left_it->second, right_it->second, out_q);
+      distance::dvstar_kmer_major_new(left_it->second, right_it->second, dot, lnorm, rnorm);
     }
     left_it++;
   }
@@ -119,24 +119,40 @@ matrix_t calculate_distance_major(
     container::Kmer_Cluster &cluster_left, container::Kmer_Cluster &cluster_right,
     size_t requested_cores){
 
-  std::mutex matricies_mutex;
+  //std::mutex matricies_mutex;
   matrix_t distances = matrix_t::Zero(cluster_left.size(), cluster_right.size());
   matrix_t dot_prod = matrix_t::Zero(cluster_left.size(), cluster_right.size());
   matrix_t left_norm = matrix_t::Zero(cluster_left.size(), cluster_right.size());
   matrix_t right_norm = matrix_t::Zero(cluster_left.size(), cluster_right.size());
 
+  std::vector<matrix_t> dot_prods{};
+  std::vector<matrix_t> lnorms{};
+  std::vector<matrix_t> rnorms{};
+
   auto fun = [&](size_t start_bucket, size_t stop_bucket) {
-    std::deque<distance::Intermediate_matrix_val> results{};
-    calculate_kmer_buckets_new(start_bucket, stop_bucket, results, cluster_left, cluster_right);
-    std::lock_guard<std::mutex> guard(matricies_mutex);
-    for(auto r : results){
-      dot_prod(r.left_id, r.right_id) += r.dot_prod;
-      left_norm(r.left_id, r.right_id) += r.left_norm;
-      right_norm(r.left_id, r.right_id) += r.right_norm;
-    }
+    matrix_t dot_local = matrix_t::Zero(cluster_left.size(), cluster_right.size());
+    matrix_t lnorm_local = matrix_t::Zero(cluster_left.size(), cluster_right.size());
+    matrix_t rnorm_local = matrix_t::Zero(cluster_left.size(), cluster_right.size());
+    //std::deque<distance::Intermediate_matrix_val> results{};
+    calculate_kmer_buckets_new(start_bucket, stop_bucket, dot_local, lnorm_local, rnorm_local, cluster_left, cluster_right);
+    //std::lock_guard<std::mutex> guard(matricies_mutex);
+    //for(auto r : results){
+    //  dot_prod(r.left_id, r.right_id) += r.dot_prod;
+    //  left_norm(r.left_id, r.right_id) += r.left_norm;
+    //  right_norm(r.left_id, r.right_id) += r.right_norm;
+    dot_prods.push_back(dot_local);
+    lnorms.push_back(lnorm_local);
+    rnorms.push_back(rnorm_local);
+    //}
   };
   
   parallel::pool_parallelize(cluster_left.experimental_bucket_count(), fun, requested_cores);
+
+  for(int i = 0; i < dot_prods.size(); i++){
+    dot_prod += dot_prods[i];
+    left_norm += lnorms[i];
+    right_norm += rnorms[i];
+  }
 
   auto rec_fun = [&](size_t left, size_t right) {
     distances(left, right) = distance::normalise_dvstar(dot_prod(left, right), left_norm(left, right), right_norm(left, right));
@@ -146,7 +162,7 @@ matrix_t calculate_distance_major(
     utils::matrix_recursion(start_vlmc, stop_vlmc, 0, cluster_right.size(), rec_fun); 
   };
 
-  parallel::parallelize(cluster_left.size(), norm_fun, requested_cores); 
+  parallel::parallelize(cluster_left.size(), norm_fun, 1); 
 
   return distances; 
 }

@@ -134,16 +134,16 @@ void dvstar_kmer_major(bucket_t &left_vector, bucket_t &right_vector,
 }
 
 void dvstar_kmer_major_new(bucket_t &left_vector, bucket_t &right_vector, 
-                          std::deque<Intermediate_matrix_val>& out_vec){
+                          matrix_t& dot, matrix_t& lnorm, matrix_t& rnorm){
   auto rec_fun = [&](size_t &left, size_t &right) { 
     if (left_vector[left].kmer.integer_rep == right_vector[right].kmer.integer_rep){
       auto left_id = left_vector[left].id;
       auto right_id = right_vector[right].id; 
-      auto dot_prod = (left_vector[left].kmer.next_char_prob * right_vector[right].kmer.next_char_prob).sum();
-      auto left_norm = left_vector[left].kmer.next_char_prob.square().sum();
-      auto right_norm = right_vector[right].kmer.next_char_prob.square().sum();
-      auto val =  Intermediate_matrix_val{left_id, right_id, dot_prod, left_norm, right_norm};
-      out_vec.push_front(val);
+      dot(left_id, right_id) += (left_vector[left].kmer.next_char_prob * right_vector[right].kmer.next_char_prob).sum();
+      lnorm(left_id, right_id) += left_vector[left].kmer.next_char_prob.square().sum();
+      rnorm(left_id, right_id) += right_vector[right].kmer.next_char_prob.square().sum();
+      //auto val =  Intermediate_matrix_val{left_id, right_id, dot_prod, left_norm, right_norm};
+      //out_vec.push_front(val);
     }
   };
 
@@ -154,7 +154,7 @@ void dvstar_kmer_major_single(bucket_t &left_vector, bucket_t &right_vector,
                       matrix_t &dot_prod, matrix_t &left_norm, matrix_t &right_norm){
                         
   auto rec_fun = [&](size_t &left, size_t &right) { 
-    if(left_vector[left].id > right_vector[right].id) return;
+    if(left_vector[left].id >= right_vector[right].id) return;
     if (left_vector[left].kmer.integer_rep == right_vector[right].kmer.integer_rep){
       auto left_id = left_vector[left].id;
       auto right_id = right_vector[right].id; 
