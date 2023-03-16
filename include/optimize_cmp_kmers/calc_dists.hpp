@@ -119,6 +119,17 @@ matrix_t calculate_distance_major(
     container::Kmer_Cluster &cluster_left, container::Kmer_Cluster &cluster_right,
     size_t requested_cores){
 
+  const size_t processor_count = std::thread::hardware_concurrency();
+  size_t used_cores = 1;
+  if(requested_cores > cluster_left.experimental_bucket_count()){
+    used_cores = cluster_left.experimental_bucket_count();
+  } else if(requested_cores <= processor_count){
+      used_cores = requested_cores;
+  } else {
+    used_cores = processor_count;
+  }
+  BS::thread_pool pool(used_cores);
+
   //std::mutex matricies_mutex;
   matrix_t distances = matrix_t::Zero(cluster_left.size(), cluster_right.size());
   matrix_t dot_prod = matrix_t::Zero(cluster_left.size(), cluster_right.size());
@@ -146,9 +157,9 @@ matrix_t calculate_distance_major(
     //}
   };
   
-  parallel::pool_parallelize(cluster_left.experimental_bucket_count(), fun, requested_cores);
-
-  for(int i = 0; i < dot_prods.size(); i++){
+  parallel::pool_parallelize(cluster_left.experimental_bucket_count(), fun, requested_cores, pool);
+  
+  for(int i = 0; i < dot_prods.size(); ++i){
     dot_prod += dot_prods[i];
     left_norm += lnorms[i];
     right_norm += rnorms[i];
@@ -182,8 +193,7 @@ matrix_t calculate_distance_major(
   parallel::parallelize(cluster.experimental_bucket_count(), fun, requested_cores);
 
   auto rec_fun = [&](size_t left, size_t right) {
-    if(left > right) {
-      distances(left, right) = 0.0;
+    if(left >= right) {
       return;
     }
     distances(left, right) = distance::normalise_dvstar(dot_prod(left, right), left_norm(left, right), right_norm(left, right));
