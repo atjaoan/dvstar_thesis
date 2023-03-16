@@ -130,7 +130,6 @@ matrix_t calculate_distance_major(
   }
   BS::thread_pool pool(used_cores);
 
-  //std::mutex matricies_mutex;
   matrix_t distances = matrix_t::Zero(cluster_left.size(), cluster_right.size());
   matrix_t dot_prod = matrix_t::Zero(cluster_left.size(), cluster_right.size());
   matrix_t left_norm = matrix_t::Zero(cluster_left.size(), cluster_right.size());
@@ -144,17 +143,10 @@ matrix_t calculate_distance_major(
     matrix_t dot_local = matrix_t::Zero(cluster_left.size(), cluster_right.size());
     matrix_t lnorm_local = matrix_t::Zero(cluster_left.size(), cluster_right.size());
     matrix_t rnorm_local = matrix_t::Zero(cluster_left.size(), cluster_right.size());
-    //std::deque<distance::Intermediate_matrix_val> results{};
     calculate_kmer_buckets_new(start_bucket, stop_bucket, dot_local, lnorm_local, rnorm_local, cluster_left, cluster_right);
-    //std::lock_guard<std::mutex> guard(matricies_mutex);
-    //for(auto r : results){
-    //  dot_prod(r.left_id, r.right_id) += r.dot_prod;
-    //  left_norm(r.left_id, r.right_id) += r.left_norm;
-    //  right_norm(r.left_id, r.right_id) += r.right_norm;
     dot_prods.push_back(dot_local);
     lnorms.push_back(lnorm_local);
     rnorms.push_back(rnorm_local);
-    //}
   };
   
   parallel::pool_parallelize(cluster_left.experimental_bucket_count(), fun, requested_cores, pool);
