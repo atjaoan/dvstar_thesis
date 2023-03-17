@@ -34,6 +34,28 @@ matrix_t apply_container(parser::cli_arguments arguments, parser::VLMC_Rep vlmc_
   }
 }
 
+matrix_t calculate_kmer_major(parser::cli_arguments arguments, const size_t nr_cores){
+  //TODO use cores
+  auto cluster = cluster::get_kmer_cluster(arguments.first_VLMC_path, arguments.background_order);
+  if (arguments.second_VLMC_path.empty()){
+    return calculate::calculate_distance_major(cluster, nr_cores);
+  } else {
+    auto cluster_to = cluster::get_kmer_cluster(arguments.second_VLMC_path);
+    return calculate::calculate_distance_major(cluster, cluster_to, nr_cores);
+  }
+}
+
+void print_matrix(matrix_t distance_matrix){
+  for (size_t i = 0; i < distance_matrix.rows(); i++)
+  {
+    for (size_t j = 0; j < distance_matrix.cols(); j++)
+    {
+      std::cout << distance_matrix(i,j) << " ";
+    }
+    std::cout << std::endl;
+  }
+}
+
 int main(int argc, char *argv[]){
   CLI::App app{"Distance comparison of either one directory or between two different directories."};
 
@@ -45,9 +67,6 @@ int main(int argc, char *argv[]){
   } catch (const CLI::ParseError &e) {
     return app.exit(e);
   }
-  if(arguments.mode != parser::Mode::compare){
-    return EXIT_SUCCESS;
-  }
   if(arguments.first_VLMC_path.empty()){
     std::cerr
         << "Error: A input path to .bintree files has to be given for comparison operation."
@@ -57,15 +76,14 @@ int main(int argc, char *argv[]){
 
   size_t nr_cores = parser::parse_dop(arguments.dop);
 
-  matrix_t distance_matrix = apply_container(arguments, arguments.vlmc, nr_cores);
-      
-  for (size_t i = 0; i < distance_matrix.rows(); i++)
-  {
-    for (size_t j = 0; j < distance_matrix.cols(); j++)
-    {
-      std::cout << distance_matrix(i,j) << " ";
-    }
-    std::cout << std::endl;
+  if(arguments.mode==parser::Mode::compare){
+    std::cout << "Running Normal implementation" << std::endl; 
+    matrix_t distance_matrix = apply_container(arguments, arguments.vlmc, nr_cores);
+    print_matrix(distance_matrix); 
+  } else {
+    std::cout << "Running Kmer-Major implemenation" << std::endl; 
+    matrix_t distance_matrix = calculate_kmer_major(arguments, nr_cores);
+    print_matrix(distance_matrix); 
   }
 
   return EXIT_SUCCESS;

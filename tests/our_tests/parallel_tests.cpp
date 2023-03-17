@@ -27,6 +27,8 @@ protected:
   std::function<double(vlmc_t &, vlmc_t &)> distance_function = [&](auto &left, auto &right) {
       return distance::dvstar(left, right, background_order);
   };
+
+  double error_tolerance = 1E-7;
 };
 
 TEST_F(ParallelTest, SequentialEqParallel) {
@@ -81,5 +83,44 @@ TEST_F(ParallelTest, ReducedEqFullSlice) {
       EXPECT_DOUBLE_EQ(distances_parallel(i,j), distances_sequantial(i,j));
     }
     y_bound++;
+  }
+}
+
+TEST_F(ParallelTest, FullComparisonCheck) {
+  auto nr_cores = 1; 
+  while(nr_cores <= 8){
+    // Sorted Vector Implementation
+    auto left_cluster_s = cluster::get_cluster<container::VLMC_sorted_vector>(first_directory, 1, background_order);
+    auto right_cluster_s = cluster::get_cluster<container::VLMC_sorted_vector>(first_directory, 1, background_order);
+    matrix_t distances_sorted_vector = calculate::calculate_distances<container::VLMC_sorted_vector>(left_cluster_s, right_cluster_s, distance_function, nr_cores);
+
+    // Kmer major implementation
+    auto left_cluster_k = cluster::get_kmer_cluster(first_directory, background_order);
+    auto right_cluster_k = cluster::get_kmer_cluster(first_directory, background_order);
+    matrix_t distances_k_major = calculate::calculate_distance_major(left_cluster_k, right_cluster_k, nr_cores); 
+
+    // Dvstar Original implementation 
+    matrix_t distances_org_dvstar{distances_sorted_vector.cols(), distances_sorted_vector.rows()};
+    int x = 0;
+    for (const auto& dir_entry_x : recursive_directory_iterator(first_directory)) {
+      int y = 0; 
+      for (const auto& dir_entry_y : recursive_directory_iterator(first_directory)) {
+        distances_org_dvstar(x,y) = vlmc::dvstar(dir_entry_x, dir_entry_y, background_order);
+        y++;
+      }
+      x++;
+    }
+    for (int x = 0; x < distances_sorted_vector.cols(); x++){
+      for (int y = 0; y < distances_sorted_vector.rows(); y++){
+        if (x==y){
+          EXPECT_NEAR(0.0, distances_sorted_vector(x,y), error_tolerance);
+          EXPECT_NEAR(0.0, distances_k_major(x,y), error_tolerance);
+        } else { 
+          EXPECT_NEAR(distances_org_dvstar(x,y), distances_sorted_vector(x,y), error_tolerance);
+          EXPECT_NEAR(distances_sorted_vector(x,y), distances_k_major(x,y), error_tolerance); 
+        }
+      }
+    }
+    nr_cores = nr_cores * 2; 
   }
 }
