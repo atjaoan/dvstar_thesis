@@ -89,21 +89,6 @@ void calculate_kmer_buckets(size_t start_bucket, size_t stop_bucket,
   }
 }
 
-void calculate_kmer_buckets_new(size_t start_bucket, size_t stop_bucket, 
-    matrix_t& dot, matrix_t& lnorm, matrix_t& rnorm,
-    container::Kmer_Cluster &cluster_left, container::Kmer_Cluster &cluster_right) {
-  auto left_it = cluster_left.get_begin();
-  std::advance(left_it, start_bucket);
-  for (size_t i = start_bucket; i < stop_bucket; i++) {
-    auto idx = left_it->first;
-    auto right_it = cluster_right.find(idx);
-    if (right_it != cluster_right.get_end()){
-      distance::dvstar_kmer_major(left_it->second, right_it->second, dot, lnorm, rnorm);
-    }
-    left_it++;
-  }
-}
-
 void calculate_kmer_buckets_single(size_t start_bucket, size_t stop_bucket, 
     matrix_t &dot_prod, matrix_t &left_norm, matrix_t &right_norm,
     container::Kmer_Cluster &cluster) {
@@ -143,7 +128,7 @@ matrix_t calculate_distance_major(
     matrix_t dot_local = matrix_t::Zero(cluster_left.size(), cluster_right.size());
     matrix_t lnorm_local = matrix_t::Zero(cluster_left.size(), cluster_right.size());
     matrix_t rnorm_local = matrix_t::Zero(cluster_left.size(), cluster_right.size());
-    calculate_kmer_buckets_new(start_bucket, stop_bucket, dot_local, lnorm_local, rnorm_local, cluster_left, cluster_right);
+    calculate_kmer_buckets(start_bucket, stop_bucket, dot_local, lnorm_local, rnorm_local, cluster_left, cluster_right);
     dot_prods.push_back(dot_local);
     lnorms.push_back(lnorm_local);
     rnorms.push_back(rnorm_local);

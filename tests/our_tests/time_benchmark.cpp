@@ -397,7 +397,7 @@ void benchmark_calculate_distance_major(){
     matrix_t dot_local = matrix_t::Zero(cluster_left.size(), cluster_right.size());
     matrix_t lnorm_local = matrix_t::Zero(cluster_left.size(), cluster_right.size());
     matrix_t rnorm_local = matrix_t::Zero(cluster_left.size(), cluster_right.size());
-    calculate::calculate_kmer_buckets_new(start_bucket, stop_bucket, dot_local, lnorm_local, rnorm_local, cluster_left, cluster_right);
+    calculate::calculate_kmer_buckets(start_bucket, stop_bucket, dot_local, lnorm_local, rnorm_local, cluster_left, cluster_right);
     dot_prods.push_back(dot_local);
     lnorms.push_back(lnorm_local);
     rnorms.push_back(rnorm_local);
