@@ -1,6 +1,7 @@
 #include "parser.hpp"
 #include "get_cluster.hpp"
 #include "calc_dists.hpp"
+#include "utils.hpp"
 
 using matrix_t = Eigen::MatrixXd;
 
@@ -45,14 +46,33 @@ matrix_t calculate_kmer_major(parser::cli_arguments arguments, const size_t nr_c
   }
 }
 
-void print_matrix(matrix_t distance_matrix){
-  for (size_t i = 0; i < distance_matrix.rows(); i++)
-  {
-    for (size_t j = 0; j < distance_matrix.cols(); j++)
-    {
-      std::cout << distance_matrix(i,j) << " ";
+std::map<parser::VLMC_Rep, std::string> VLMC_Rep_map{
+      {parser::VLMC_Rep::vlmc_vector, "vector"},
+      {parser::VLMC_Rep::vlmc_indexing, "indexing"},
+      {parser::VLMC_Rep::vlmc_sorted_vector, "sorted-vector"},
+      {parser::VLMC_Rep::vlmc_b_tree, "b-tree"},
+      {parser::VLMC_Rep::vlmc_hashmap, "hashmap"},
+      {parser::VLMC_Rep::vlmc_combo, "combo"},
+      {parser::VLMC_Rep::vlmc_veb, "veb"}
+  };
+
+std::string get_group_name(parser::cli_arguments arguments){
+  if (arguments.mode == parser::Mode::compare) {
+    auto in_data = utils::get_filename(arguments.first_VLMC_path);
+    if (arguments.second_VLMC_path.empty()){
+      return VLMC_Rep_map[arguments.vlmc] + "-" + in_data; 
+    } else {
+      in_data = in_data + "-" + utils::get_filename(arguments.second_VLMC_path);
+      return VLMC_Rep_map[arguments.vlmc] + "-" + in_data;
+    } 
+  } else {
+    auto in_data = utils::get_filename(arguments.first_VLMC_path);
+    if (arguments.second_VLMC_path.empty()){
+      return "kmer-major-" + in_data; 
+    } else {
+      in_data = in_data + "-" + utils::get_filename(arguments.second_VLMC_path);
+      return "kmer-major-" + in_data;
     }
-    std::cout << std::endl;
   }
 }
 
@@ -76,15 +96,19 @@ int main(int argc, char *argv[]){
 
   size_t nr_cores = parser::parse_dop(arguments.dop);
 
+  matrix_t distance_matrix;
+
   if(arguments.mode==parser::Mode::compare){
     std::cout << "Running Normal implementation" << std::endl; 
-    matrix_t distance_matrix = apply_container(arguments, arguments.vlmc, nr_cores);
-    print_matrix(distance_matrix); 
+    distance_matrix = apply_container(arguments, arguments.vlmc, nr_cores);
   } else {
     std::cout << "Running Kmer-Major implemenation" << std::endl; 
-    matrix_t distance_matrix = calculate_kmer_major(arguments, nr_cores);
-    print_matrix(distance_matrix); 
+    distance_matrix = calculate_kmer_major(arguments, nr_cores);
   }
+
+  if (arguments.out_path.empty()) {
+    utils::print_matrix(distance_matrix);
+  } 
 
   return EXIT_SUCCESS;
 }
