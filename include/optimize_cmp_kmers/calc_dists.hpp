@@ -98,7 +98,7 @@ void calculate_kmer_buckets_new(size_t start_bucket, size_t stop_bucket,
     auto idx = left_it->first;
     auto right_it = cluster_right.find(idx);
     if (right_it != cluster_right.get_end()){
-      distance::dvstar_kmer_major_new(left_it->second, right_it->second, dot, lnorm, rnorm);
+      distance::dvstar_kmer_major(left_it->second, right_it->second, dot, lnorm, rnorm);
     }
     left_it++;
   }
