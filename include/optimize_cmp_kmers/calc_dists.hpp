@@ -109,7 +109,6 @@ matrix_t calculate_distance_major(
   matrix_t dot_prod = matrix_t::Zero(cluster_left.size(), cluster_right.size());
   matrix_t left_norm = matrix_t::Zero(cluster_left.size(), cluster_right.size());
   matrix_t right_norm = matrix_t::Zero(cluster_left.size(), cluster_right.size());
-
   std::vector<matrix_t> dot_prods{};
   std::vector<matrix_t> lnorms{};
   std::vector<matrix_t> rnorms{};
@@ -145,19 +144,34 @@ matrix_t calculate_distance_major(
   return distances; 
 }
 
-matrix_t calculate_distance_major(
-    container::Kmer_Cluster &cluster,
-    size_t requested_cores){
+matrix_t calculate_distance_major(container::Kmer_Cluster &cluster, size_t requested_cores){
+  int used_cores = utils::get_used_cores(requested_cores, cluster.experimental_bucket_count());
+  BS::thread_pool pool(used_cores);
 
   matrix_t distances = matrix_t::Zero(cluster.size(), cluster.size());
   matrix_t dot_prod = matrix_t::Zero(cluster.size(), cluster.size());
   matrix_t left_norm = matrix_t::Zero(cluster.size(), cluster.size());
   matrix_t right_norm = matrix_t::Zero(cluster.size(), cluster.size());
+  std::vector<matrix_t> dot_prods{};
+  std::vector<matrix_t> lnorms{};
+  std::vector<matrix_t> rnorms{};
 
   auto fun = [&](size_t start_bucket, size_t stop_bucket) {
+    matrix_t dot_local = matrix_t::Zero(cluster.size(), cluster.size());
+    matrix_t lnorm_local = matrix_t::Zero(cluster.size(), cluster.size());
+    matrix_t rnorm_local = matrix_t::Zero(cluster.size(), cluster.size());
     calculate_kmer_buckets_single(start_bucket, stop_bucket, dot_prod, left_norm, right_norm, cluster);
+    dot_prods.push_back(dot_local);
+    lnorms.push_back(lnorm_local);
+    rnorms.push_back(rnorm_local);
   };
-  parallel::parallelize(cluster.experimental_bucket_count(), fun, requested_cores);
+  parallel::pool_parallelize(cluster.experimental_bucket_count(), fun, requested_cores, pool);
+
+  for(int i = 0; i < dot_prods.size(); ++i){
+    dot_prod += dot_prods[i];
+    left_norm += lnorms[i];
+    right_norm += rnorms[i];
+  }
 
   auto rec_fun = [&](size_t left, size_t right) {
     if(left >= right) {
