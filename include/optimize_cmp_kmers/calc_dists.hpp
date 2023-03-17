@@ -1,7 +1,6 @@
 #include <Eigen/Dense>
 #include <chrono> 
 #include <mutex>
-#include <deque>
 
 #include "cluster_container.hpp"
 #include "vlmc_container.hpp"
@@ -103,16 +102,7 @@ void calculate_kmer_buckets_single(size_t start_bucket, size_t stop_bucket,
 matrix_t calculate_distance_major(
     container::Kmer_Cluster &cluster_left, container::Kmer_Cluster &cluster_right,
     size_t requested_cores){
-
-  const size_t processor_count = std::thread::hardware_concurrency();
-  size_t used_cores = 1;
-  if(requested_cores > cluster_left.experimental_bucket_count()){
-    used_cores = cluster_left.experimental_bucket_count();
-  } else if(requested_cores <= processor_count){
-      used_cores = requested_cores;
-  } else {
-    used_cores = processor_count;
-  }
+  int used_cores = utils::get_used_cores(requested_cores, cluster_left.experimental_bucket_count());
   BS::thread_pool pool(used_cores);
 
   matrix_t distances = matrix_t::Zero(cluster_left.size(), cluster_right.size());

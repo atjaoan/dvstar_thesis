@@ -1,5 +1,7 @@
 #pragma once
 
+#include <thread>
+
 namespace utils {
   
 void matrix_recursion(size_t start_index_left, size_t stop_index_left, size_t start_index_right, size_t stop_index_right, 
@@ -18,4 +20,18 @@ void matrix_recursion(size_t start_index_left, size_t stop_index_left, size_t st
     matrix_recursion(new_left_index, stop_index_left, start_index_right, stop_index_right, fun);
   }
 }
+
+int get_used_cores(size_t requested_cores, size_t size){
+  const size_t processor_count = std::thread::hardware_concurrency();
+  size_t used_cores = 1;
+  if(requested_cores > size){
+    used_cores = size;
+  } else if(requested_cores <= processor_count){
+      used_cores = requested_cores;
+  } else {
+    used_cores = processor_count;
+  }
+  return used_cores;
+}
+
 }
