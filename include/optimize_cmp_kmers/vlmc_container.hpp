@@ -16,6 +16,7 @@
 /*
   Stores VLMC (multiple k-mers) in a container. 
 */
+constexpr int misses_before_skip = 6;
 
 using Kmer = vlmc::VLMCKmer; 
 
@@ -308,29 +309,79 @@ class VLMC_sorted_vector : public VLMC_Container {
       return null_kmer;
     }
 
+    int find_in_range(const int low_irep, const int high_irep, const int searched_irep) {
+      int L = low_irep;
+      int R = high_irep;
+      int m = low_irep;
+      while (L <= R) {
+          int m = (L + R) / 2;
+          if (container[m].integer_rep < searched_irep) {
+            L = m + 1;
+          } else if (container[m].integer_rep > searched_irep) {
+            R = m - 1;
+          } else {
+            return m;
+          }
+      }
+      return -1;
+    }
+
     void iterate_kmers(VLMC_Container &left_kmers, VLMC_Container &right_kmers,
     const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f) override {
       size_t left_i = 0;
       size_t right_i = 0;  
       size_t left_size = left_kmers.size();
       size_t right_size = right_kmers.size();
-      //int f_applied = 0;
+      size_t nr_missed_kmers_left = 0;
+      size_t nr_missed_kmers_right = 0;
+
       while(left_i < left_size && right_i < right_size) {
         const RI_Kmer &left_kmer = left_kmers.get(left_i);
         const RI_Kmer &right_kmer = right_kmers.get(right_i);
         if (right_kmer == left_kmer) {
           f(left_kmer, right_kmer);
-          //std::cout << left_kmer.next_char_prob[0] << "\n";
-          //f_applied++;
           left_i++;
           right_i++;
+          nr_missed_kmers_left = 0;
+          nr_missed_kmers_right = 0;
         } else if (left_kmer < right_kmer) {
-          left_i++;
+          if(nr_missed_kmers_left > misses_before_skip){
+            left_i = exp_skipping(right_kmer.integer_rep, left_i, left_kmers);
+            nr_missed_kmers_left = 0;
+            nr_missed_kmers_right = 0;
+          } else {
+            left_i++;
+            nr_missed_kmers_left++;
+            nr_missed_kmers_right = 0;
+          }
         } else {
-          right_i++;
+          if(nr_missed_kmers_right > misses_before_skip){
+            right_i = exp_skipping(left_kmer.integer_rep, right_i, right_kmers);
+            nr_missed_kmers_right = 0;
+            nr_missed_kmers_left = 0;
+          } else {
+            right_i++;
+            nr_missed_kmers_right++;
+            nr_missed_kmers_left = 0;
+          }
         }
       }
-      //std::cout << "Applied f " << f_applied << " times with sorted" << std::endl;
+    }
+
+    int exp_skipping(const int fixed_kmer_rep, int lag_index, VLMC_Container &lag_container){
+      int skipper = 2;
+      int prev_lag_index = lag_index;
+      while(lag_container.get(lag_index) < fixed_kmer_rep){
+        prev_lag_index = lag_index;
+        lag_index += skipper;
+        if(lag_index >= lag_container.size()) {
+          return prev_lag_index;
+        }
+        skipper *= 2;
+      }
+      int found_index = find_in_range(prev_lag_index, lag_index + 1, fixed_kmer_rep);
+      if(found_index == -1) return prev_lag_index;
+      return found_index;
     }
 };
 

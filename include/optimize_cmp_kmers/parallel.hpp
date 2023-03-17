@@ -127,8 +127,6 @@ void sequential(size_t size_left, size_t size_right, const std::function<void(si
 }
 
 void pool_parallelize(size_t size, const std::function<void(size_t, size_t)> &fun, const size_t requested_cores, BS::thread_pool& pool) {
-  
-
   auto bounds = get_x_bounds(size, requested_cores);
   for (auto &[start_index, stop_index] : bounds) {
     std::future<void> fut = pool.submit(fun, start_index, stop_index);
