@@ -147,5 +147,4 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
   app.add_option("-a, --set-size", arguments.set_size,
                     "Number of VLMCs to compute distance function on.");
 }
-
 }

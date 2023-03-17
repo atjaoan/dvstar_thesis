@@ -83,3 +83,4 @@ wcwidth==0.2.6
 webcolors==1.12
 webencodings==0.5.1
 websocket-client==1.5.0
+h5py==3.8.0

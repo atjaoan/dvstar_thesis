@@ -96,7 +96,7 @@ def calculate_distance(set_size: int, genome_path: str, vlmc_container: str, nr_
 # distance calculation between VLMCs #
 # from PstClassifierSeqan submodule. #
 ######################################
-def PstClassifierSeqan(set_size: int, genome_path: str, background_order: int) -> subprocess.CompletedProcess:
+def PstClassifierSeqan(set_size: int, genome_path: str, out_path: str, background_order: int) -> subprocess.CompletedProcess:
     args = (
         "perf", "stat",
         "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
@@ -104,7 +104,8 @@ def PstClassifierSeqan(set_size: int, genome_path: str, background_order: int) -
         "-p", cwd / genome_path,
         "-n", "dvstar",
         "-a", str(set_size),
-        "-b", str(background_order)
+        "-b", str(background_order),
+        "-s", cwd / out_path
     )
     return subprocess.run(args, capture_output=True, text=True)
 
@@ -246,10 +247,31 @@ def parallelization_benchmark(dataset: str):
         save_to_csv(res_our_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, 'sorted-vector', nr_cores)
 
 
+import h5py
+
+def compare_hdf5_files(vlmc_size: str, PstGroup: str, VLMCGroup: str):
+    vlmc_file = h5py.File(cwd / ("hdf5_results/distances" + vlmc_size + ".hdf5"), 'r')
+    pst_file  = h5py.File(cwd / ("hdf5_results/pst_distances" + vlmc_size + ".hdf5"), 'r')
+
+    vlmc_group = vlmc_file.get('distances').get(VLMCGroup)
+    pst_group  = pst_file.get('distances').get(PstGroup)
+
+    print(list(pst_file.get('distances').keys()))
+
+    error_tolerance = 1e-8
+
+    for x in range(0, vlmc_group[0].size):
+        for y in range(0, vlmc_group[0].size):
+            if abs(vlmc_group[x][y] - pst_group[x][y]) > error_tolerance:
+                print("Our = " + str(vlmc_group[x][y]) + " pst = " + str(pst_group[x][y]))
+                print("Difference = " + str(vlmc_group[x][y] - pst_group[x][y]))
+
 @app.command()
 def benchmark():
-    Pst_normal_benchmaking("data/benchmarking/ecoli")
-    parallelization_benchmark("data/benchmarking/ecoli")
+    PstClassifierSeqan(-1, "data/test_VLMCs", "hdf5_results/pst_distances.hdf5", 0)
+    compare_hdf5_files("", "dvstar-0", "sorted-vector-test_VLMCs-test_VLMCs")
+    ## Pst_normal_benchmaking("data/benchmarking/ecoli")
+    ## parallelization_benchmark("data/benchmarking/ecoli")
 
 if __name__ == "__main__":
     app()

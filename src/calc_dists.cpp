@@ -2,6 +2,7 @@
 #include "get_cluster.hpp"
 #include "calc_dists.hpp"
 #include "utils.hpp"
+#include <highfive/H5File.hpp>
 
 using matrix_t = Eigen::MatrixXd;
 
@@ -60,18 +61,18 @@ std::string get_group_name(parser::cli_arguments arguments){
   if (arguments.mode == parser::Mode::compare) {
     auto in_data = utils::get_filename(arguments.first_VLMC_path);
     if (arguments.second_VLMC_path.empty()){
-      return VLMC_Rep_map[arguments.vlmc] + "-" + in_data; 
+      return VLMC_Rep_map[arguments.vlmc] + "-" + in_data + "-" + std::to_string(arguments.set_size); 
     } else {
       in_data = in_data + "-" + utils::get_filename(arguments.second_VLMC_path);
-      return VLMC_Rep_map[arguments.vlmc] + "-" + in_data;
+      return VLMC_Rep_map[arguments.vlmc] + "-" + in_data + "-" + std::to_string(arguments.set_size);
     } 
   } else {
     auto in_data = utils::get_filename(arguments.first_VLMC_path);
     if (arguments.second_VLMC_path.empty()){
-      return "kmer-major-" + in_data; 
+      return "kmer-major-" + in_data + "-" + std::to_string(arguments.set_size); 
     } else {
       in_data = in_data + "-" + utils::get_filename(arguments.second_VLMC_path);
-      return "kmer-major-" + in_data;
+      return "kmer-major-" + in_data + "-" + std::to_string(arguments.set_size);
     }
   }
 }
@@ -109,6 +110,27 @@ int main(int argc, char *argv[]){
   if (arguments.out_path.empty()) {
     utils::print_matrix(distance_matrix);
   } 
+  else if (arguments.out_path.extension() == ".h5" ||
+             arguments.out_path.extension() == ".hdf5") {
+    std::cout << "Writing to file..." << std::endl;
+    HighFive::File file{arguments.out_path, HighFive::File::OpenOrCreate};
+
+    auto group_name = get_group_name(arguments); 
+
+    if (!file.exist("distances")) {
+      file.createGroup("distances");
+    }
+    auto distance_group = file.getGroup("distances");
+
+    if (!distance_group.exist(group_name)) {
+      std::vector<size_t> dims{distance_matrix.rows(), distance_matrix.cols()};
+      distance_group.createDataSet<double>(group_name,
+                                           HighFive::DataSpace(dims));
+    }
+
+    auto distance_data_set = distance_group.getDataSet(group_name);
+    distance_data_set.write(distance_matrix);
+  }
 
   return EXIT_SUCCESS;
 }

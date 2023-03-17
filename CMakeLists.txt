@@ -39,6 +39,13 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ltbb -fopenmp -fpermissive")
 # CLI11 for command line interface
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/submodules/CLI11)
 
+set(HIGHFIVE_USE_BOOST OFF)
+set(HIGHFIVE_USE_EIGEN ON)
+set(HIGHFIVE_EXAMPLES FALSE)
+
+# HighFive
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/submodules/HighFive)
+
 set(SKIP_PERFORMANCE_COMPARISON ON)
 
 # Add include paths
@@ -52,7 +59,7 @@ if(NOT MAIN_PROJECT)
     set(CountVLMC_INCLUDE_DIRS ${INCLUDE_DIRS} PARENT_SCOPE)
 endif()
 
-set(CountVLMC_LIBRARIES ${STXXL_LIBRARIES} tbb kmc_file kmer_api mmer CLI11::CLI11 unordered_dense::unordered_dense)
+set(CountVLMC_LIBRARIES ${STXXL_LIBRARIES} tbb kmc_file kmer_api mmer CLI11::CLI11 unordered_dense::unordered_dense HighFive)
 
 add_library(CountVLMC INTERFACE)
 add_library(CountVLMC::CountVLMC ALIAS CountVLMC)
