@@ -18,7 +18,8 @@ namespace parser {
 using vlmc_c = container::VLMC_Container;
 
 enum Mode {
-  compare
+  compare,
+  kmer_major
 };
 
 enum Distance_function {
@@ -86,7 +87,9 @@ size_t parse_dop(size_t requested_cores){
 
 void add_options(CLI::App &app, cli_arguments &arguments) {
   std::map<std::string, Mode> mode_map{
-      {"compare", Mode::compare}};
+      {"compare", Mode::compare},
+      {"kmer-major", Mode::kmer_major},
+  };
 
   std::map<std::string, Distance_function> function_map{
       {"kl", Distance_function::kl},
@@ -109,7 +112,7 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
 
   app.add_option(
          "-m,--mode", arguments.mode,
-         "Program mode, 'compare'." "Place holder descriptiopn")
+         "Program mode, 'compare', 'kmer-major'." "Place holder descriptiopn")
       ->transform(CLI::CheckedTransformer(mode_map, CLI::ignore_case));
 
   app.add_option("--function", arguments.dist_fn,

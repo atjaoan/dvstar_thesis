@@ -1,16 +1,31 @@
 #pragma once 
 
 #include <math.h>
+#include <map>
+#include <unordered_map>
+#include <stack>
 
 #include "vlmc_container.hpp"
+#include "cluster_container.hpp"
 #include "read_in_kmer.hpp"
 #include "vlmc_from_kmers/kmer.hpp"
 #include "vlmc_from_kmers/estimators.hpp"
+#include "utils.hpp"
 
 namespace distance {
 
 using vlmc_c = container::VLMC_Container;  
 using Kmer = container::RI_Kmer;
+using bucket_t = std::vector<container::Kmer_Pair>;
+using matrix_t = Eigen::MatrixXd;
+
+struct Intermediate_matrix_val{
+  int left_id;
+  int right_id;
+  double dot_prod;
+  double left_norm;
+  double right_norm;
+};
 
 std::array<std::array<double, 4>, 2>
 get_components(const Kmer &left, const Kmer &left_background,
@@ -59,34 +74,11 @@ std::string get_background_context(const std::string &state,
   }
 }
 
-/*
-// Perhaps remove this since it is now placed in the vlmc_container.hpp script
-
-void iterate_kmers(
-    vlmc_c &left_kmers, vlmc_c &right_kmers,
-    const std::function<void(const Kmer &left, const Kmer &right)> &f,
-    const std::function<void(const Kmer &left, const Kmer &right)>
-        &f_not_shared) {
-  for (size_t i = left_kmers.get_min_kmer_index() ; i <= left_kmers.get_max_kmer_index(); i++) {
-    const Kmer &left_kmer = left_kmers.get(i);
-    if (left_kmer.is_null){
-      continue; 
-    }
-    auto right_kmer = right_kmers.find(left_kmer.integer_rep);
-    if (right_kmer.is_null){
-      f_not_shared(left_kmer, right_kmer);
-    } else {
-      f(left_kmer, right_kmer);
-    }
-  }
-}
-*/
-
 double normalise_dvstar(double dot_product, double left_norm,
                         double right_norm) {
+
   left_norm = std::sqrt(left_norm);
   right_norm = std::sqrt(right_norm);
-
   if (left_norm == 0 || right_norm == 0) {
     return 1.0;
   } else {
@@ -114,11 +106,6 @@ double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
     dot_product += (left_v.next_char_prob * right_v.next_char_prob).sum();
     left_norm += left_v.next_char_prob.square().sum();
     right_norm += right_v.next_char_prob.square().sum();
-    //for (int i = 0; i < 4; i++) { 
-    //  dot_product += left_v.next_char_prob[i] * right_v.next_char_prob[i];
-    //  left_norm += std::pow(left_v.next_char_prob[i], 2.0);
-    //  right_norm += std::pow(right_v.next_char_prob[i], 2.0);
-    //}
     };
 
   if (left.size() < right.size()){
@@ -128,5 +115,38 @@ double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
   }
       
   return normalise_dvstar(dot_product, left_norm, right_norm);
+}
+
+void dvstar_kmer_major(bucket_t &left_vector, bucket_t &right_vector, 
+                      matrix_t &dot_prod, matrix_t &left_norm, matrix_t &right_norm){
+                        
+  auto rec_fun = [&](size_t &left, size_t &right) { 
+    if (left_vector[left].kmer.integer_rep == right_vector[right].kmer.integer_rep){
+      auto left_id = left_vector[left].id;
+      auto right_id = right_vector[right].id; 
+      dot_prod(left_id, right_id) += (left_vector[left].kmer.next_char_prob * right_vector[right].kmer.next_char_prob).sum();
+      left_norm(left_id, right_id) += left_vector[left].kmer.next_char_prob.square().sum();
+      right_norm(left_id, right_id) += right_vector[right].kmer.next_char_prob.square().sum();
+    }
+  };
+
+  utils::matrix_recursion(0, left_vector.size(), 0, right_vector.size(), rec_fun);
+}
+
+void dvstar_kmer_major_single(bucket_t &left_vector, bucket_t &right_vector, 
+                      matrix_t &dot_prod, matrix_t &left_norm, matrix_t &right_norm){
+                        
+  auto rec_fun = [&](size_t &left, size_t &right) { 
+    if(left_vector[left].id >= right_vector[right].id) return;
+    if (left_vector[left].kmer.integer_rep == right_vector[right].kmer.integer_rep){
+      auto left_id = left_vector[left].id;
+      auto right_id = right_vector[right].id; 
+      dot_prod(left_id, right_id) += (left_vector[left].kmer.next_char_prob * right_vector[right].kmer.next_char_prob).sum();
+      left_norm(left_id, right_id) += left_vector[left].kmer.next_char_prob.square().sum();
+      right_norm(left_id, right_id) += right_vector[right].kmer.next_char_prob.square().sum();
+    }
+  };
+
+  utils::matrix_recursion(0, left_vector.size(), 0, right_vector.size(), rec_fun);
 }
 }

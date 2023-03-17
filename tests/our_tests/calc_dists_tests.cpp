@@ -116,6 +116,11 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
   auto right_cluster_c = cluster::get_cluster<container::VLMC_Combo>(path_to_bintrees, 1, background_order);
   matrix_t distances_combo = calculate::calculate_distances<container::VLMC_Combo>(left_cluster_c, right_cluster_c, dist_func, 1);
 
+  // Kmer major implementation
+  auto left_cluster_k = cluster::get_kmer_cluster(path_to_bintrees, background_order);
+  auto right_cluster_k = cluster::get_kmer_cluster(path_to_bintrees, background_order);
+  matrix_t distances_k_major = calculate::calculate_distance_major(left_cluster_k, right_cluster_k, 1); 
+
 
   // Veb Implementation - Currently too slow
   auto left_cluster_veb = cluster::get_cluster<container::VLMC_Veb>(path_to_bintrees, 1, background_order);
@@ -147,6 +152,7 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
         EXPECT_NEAR(distances_vector(x,y), distances_hashmap(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_combo(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_veb(x,y), error_tolerance);
+        EXPECT_NEAR(distances_vector(x,y), distances_k_major(x,y), error_tolerance); 
         // EXPECT_NEAR(distances_vector(x,y), distances_veb(x,y), error_tolerance);
       }
     }
