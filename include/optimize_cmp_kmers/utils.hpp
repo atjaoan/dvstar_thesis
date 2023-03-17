@@ -7,6 +7,7 @@
 
 using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
 using RI_Kmer = container::RI_Kmer;
+using matrix_t = Eigen::MatrixXd;
 
 namespace utils {
   
@@ -68,4 +69,22 @@ int get_used_cores(size_t requested_cores, size_t size){
   return used_cores;
 }
 
+void print_matrix(matrix_t distance_matrix){
+  for (size_t i = 0; i < distance_matrix.rows(); i++)
+  {
+    for (size_t j = 0; j < distance_matrix.cols(); j++)
+    {
+      std::cout << distance_matrix(i,j) << " ";
+    }
+    std::cout << std::endl;
+  }
+}
+
+std::string get_filename(std::filesystem::path path){
+  if (path.has_filename()){
+    return path.filename().u8string();
+  } else {
+    return path.parent_path().filename().u8string();
+  }
+}
 }

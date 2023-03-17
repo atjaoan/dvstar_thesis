@@ -128,7 +128,7 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
       "Optional path to saved bintree directory. Calculates distance between the trees in VLMC-path and snd-VLMC-path.");
 
   app.add_option("-o,--matrix-path", arguments.out_path,
-                 "Path to matrix of distances.");
+                 "Path to hdf5 file where scores will be stored.");
   
   app.add_option("-n,--max-dop", arguments.dop,
                  "Degree of parallelism. Default 1 (sequential).");
