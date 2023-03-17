@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <thread>
 
 #include "cluster_container.hpp"
 
@@ -53,4 +54,18 @@ int load_VLMCs_from_file(const std::filesystem::path &path_to_bintree, Eigen::Ar
 
   return offset_to_remove; 
 }
+
+int get_used_cores(size_t requested_cores, size_t size){
+  const size_t processor_count = std::thread::hardware_concurrency();
+  size_t used_cores = 1;
+  if(requested_cores > size){
+    used_cores = size;
+  } else if(requested_cores <= processor_count){
+      used_cores = requested_cores;
+  } else {
+    used_cores = processor_count;
+  }
+  return used_cores;
+}
+
 }
