@@ -15,6 +15,7 @@
 #include "cluster_container.hpp"
 #include "vlmc_container.hpp"
 #include "parallel.hpp"
+#include "utils.hpp"
 
 using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
 using RI_Kmer = container::RI_Kmer;
@@ -59,31 +60,12 @@ container::Kmer_Cluster get_kmer_cluster(const std::filesystem::path &directory,
   container::Kmer_Cluster cluster{};
   size_t id = 0; 
   for (const auto& dir_entry : recursive_directory_iterator(directory)) {
-    std::ifstream ifs(dir_entry.path(), std::ios::binary);
-    cereal::BinaryInputArchive archive(ifs);
-    Kmer input_kmer{};
-    std::vector<container::RI_Kmer> input_vector{}; 
+    std::vector<container::RI_Kmer> input_vector{};  
+    Eigen::ArrayX4d cached_context((int)std::pow(4, background_order), 4);
 
-    Eigen::ArrayX4d cached_context((int)std::pow(4, background_order), 4); 
+    auto fun = [&](const RI_Kmer &kmer) { input_vector.push_back(kmer); }; 
 
-    auto offset_to_remove = 0;
-    for (int i = 0; i < background_order; i++){
-      offset_to_remove += std::pow(4, i); 
-    }
-
-    while (ifs.peek() != EOF){
-      archive(input_kmer);
-      RI_Kmer ri_kmer{input_kmer};
-      if(ri_kmer.length <= background_order){
-        if (ri_kmer.length + 1 > background_order){
-          int offset = ri_kmer.integer_rep - offset_to_remove; 
-          cached_context.row(offset) = ri_kmer.next_char_prob;
-        }
-      } else {
-        input_vector.push_back(ri_kmer); 
-      }
-    }
-    ifs.close();
+    int offset_to_remove = utils::load_VLMCs_from_file(dir_entry.path(), cached_context, fun, background_order); 
 
     for (RI_Kmer kmer : input_vector){
       int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
