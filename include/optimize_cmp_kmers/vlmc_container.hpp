@@ -332,8 +332,8 @@ class VLMC_sorted_vector : public VLMC_Container {
       size_t right_i = 0;  
       size_t left_size = left_kmers.size();
       size_t right_size = right_kmers.size();
-      size_t nr_missed_kmers_left = 0;
-      size_t nr_missed_kmers_right = 0;
+      // size_t nr_missed_kmers_left = 0;
+      // size_t nr_missed_kmers_right = 0;
 
       while(left_i < left_size && right_i < right_size) {
         const RI_Kmer &left_kmer = left_kmers.get(left_i);
@@ -342,28 +342,30 @@ class VLMC_sorted_vector : public VLMC_Container {
           f(left_kmer, right_kmer);
           left_i++;
           right_i++;
-          nr_missed_kmers_left = 0;
-          nr_missed_kmers_right = 0;
+          // nr_missed_kmers_left = 0;
+          // nr_missed_kmers_right = 0;
         } else if (left_kmer < right_kmer) {
-          if(nr_missed_kmers_left > misses_before_skip){
-            left_i = exp_skipping(right_kmer.integer_rep, left_i, left_kmers);
-            nr_missed_kmers_left = 0;
-            nr_missed_kmers_right = 0;
-          } else {
-            left_i++;
-            nr_missed_kmers_left++;
-            nr_missed_kmers_right = 0;
-          }
+          left_i++;
+          // if(nr_missed_kmers_left > misses_before_skip){
+          //   left_i = exp_skipping(right_kmer.integer_rep, left_i, left_kmers);
+          //   nr_missed_kmers_left = 0;
+          //   nr_missed_kmers_right = 0;
+          // } else {
+          //   left_i++;
+          //   nr_missed_kmers_left++;
+          //   nr_missed_kmers_right = 0;
+          // }
         } else {
-          if(nr_missed_kmers_right > misses_before_skip){
-            right_i = exp_skipping(left_kmer.integer_rep, right_i, right_kmers);
-            nr_missed_kmers_right = 0;
-            nr_missed_kmers_left = 0;
-          } else {
-            right_i++;
-            nr_missed_kmers_right++;
-            nr_missed_kmers_left = 0;
-          }
+          right_i++;
+          // if(nr_missed_kmers_right > misses_before_skip){
+          //   right_i = exp_skipping(left_kmer.integer_rep, right_i, right_kmers);
+          //   nr_missed_kmers_right = 0;
+          //   nr_missed_kmers_left = 0;
+          // } else {
+          //   right_i++;
+          //   nr_missed_kmers_right++;
+          //   nr_missed_kmers_left = 0;
+          // }
         }
       }
     }

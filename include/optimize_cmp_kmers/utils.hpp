@@ -82,9 +82,9 @@ void print_matrix(matrix_t distance_matrix){
 
 std::string get_filename(std::filesystem::path path){
   if (path.has_filename()){
-    return path.filename().u8string();
+    return path.parent_path().filename().u8string() + "_" + path.filename().u8string();
   } else {
-    return path.parent_path().filename().u8string();
+    return path.parent_path().parent_path().filename().u8string() + "_" + path.parent_path().filename().u8string();
   }
 }
 }

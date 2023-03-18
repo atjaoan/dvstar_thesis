@@ -8,6 +8,7 @@ import os
 from enum import Enum
 import numpy as np
 from datetime import datetime
+import h5py
 
 app = typer.Typer()
 
@@ -77,7 +78,7 @@ def get_parameter_from_bintree(bintree: str) -> tuple[float, int, int]:
 # distance calculation between     #
 # one or two directories of VLMCs. #
 ####################################     
-def calculate_distance(set_size: int, genome_path: str, vlmc_container: str, nr_cores: int, background_order: int) -> subprocess.CompletedProcess:
+def calculate_distance(set_size: int, genome_path: str, out_path: str, vlmc_container: str, nr_cores: int, background_order: int) -> subprocess.CompletedProcess:
     args = (
         "perf", "stat",
         "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
@@ -87,7 +88,8 @@ def calculate_distance(set_size: int, genome_path: str, vlmc_container: str, nr_
         "-v", vlmc_container,
         "-n", str(nr_cores),
         "-b", str(background_order),
-        "-a", str(set_size)
+        "-a", str(set_size),
+        "-o", str(out_path)
     )
     return subprocess.run(args, capture_output=True, text=True)
 
@@ -102,6 +104,7 @@ def PstClassifierSeqan(set_size: int, genome_path: str, out_path: str, backgroun
         "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
         cwd / "submodules/PstClassifierSeqan/build/src/calculate-distances", 
         "-p", cwd / genome_path,
+        "-y", cwd / genome_path,
         "-n", "dvstar",
         "-a", str(set_size),
         "-b", str(background_order),
@@ -165,28 +168,64 @@ def save_to_csv(res: subprocess.CompletedProcess, csv_path: Path, vlmc_size: str
 
 ######################################
 # Function for benchmarking time and # 
-# cache-misses on dataset.           #
+# cache-misses on dataset with       #
+# Pst... implementation.             #
 ######################################
-def normal_benchmaking(dataset: str, implementation: str):
-    dir_path = cwd / dataset
+def Pst_normal_benchmaking(dataset: str):
     csv_filename = get_csv_name(dataset)
     print(csv_filename)
-    nb_files = count_nb_files(dir_path / "small")
+    nb_files = count_nb_files(cwd / dataset / "small")
 
-    nb_files = int(nb_files / 2)
+    if (nb_files > 10000):
+        nb_files = int(nb_files / 2)       
 
-    th_small, min_small, max_small = get_parameter_from_bintree(os.listdir(dir_path / "small")[0])
-    th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(dir_path / "medium")[0])
-    th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(dir_path / "large")[0])
+    th_small, min_small, max_small = get_parameter_from_bintree(os.listdir(cwd / dataset / "small")[0])
+    th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(cwd / dataset / "medium")[0])
+    th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(cwd / dataset / "large")[0])
 
     while(nb_files > 2):
         print("Benchmarking with " + str(nb_files) + " VLMCs...")
-        print("Benchmarking small " + implementation + ".")
-        res_our_small  = calculate_distance(nb_files, dir_path / "small", implementation, 8, 0)
-        print("Benchmarking medium " + implementation + ".")
-        res_our_medium = calculate_distance(nb_files, dir_path / "medium", implementation, 8, 0)
-        print("Benchmarking large " + implementation + ".")
-        res_our_large  = calculate_distance(nb_files, dir_path / "large", implementation, 8, 0)
+        print("Small PstClassifierSeqan.")
+        res_small  = PstClassifierSeqan(nb_files, dataset + "/small", "hdf5_results/pst_distances_small.hdf5", 0)
+        print("Medium PstClassifierSeqan.")
+        res_medium = PstClassifierSeqan(nb_files, dataset + "/medium", "hdf5_results/pst_distances_medium.hdf5", 0)
+        print("Large PstClassifierSeqan.")
+        res_large  = PstClassifierSeqan(nb_files, dataset + "/large", "hdf5_results/pst_distances_large.hdf5", 0)
+
+        save_to_csv(res_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, "PstClassifierSeqan", 8)
+        save_to_csv(res_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, "PstClassifierSeqan", 8)
+        save_to_csv(res_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, "PstClassifierSeqan", 8)
+        nb_files = int(nb_files / 2)
+
+######################################
+# Function for benchmarking time and # 
+# cache-misses on dataset with new   #
+# implementation.                    #
+######################################
+def normal_benchmaking(dataset: str, implementation: str, dataset_outer_dir: str):
+    csv_filename = get_csv_name(dataset)
+    print(csv_filename)
+    nb_files = count_nb_files(cwd / dataset / "small")
+
+    if (nb_files > 10000):
+        nb_files = int(nb_files / 2) 
+
+    th_small, min_small, max_small = get_parameter_from_bintree(os.listdir(cwd / dataset / "small")[0])
+    th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(cwd / dataset / "medium")[0])
+    th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(cwd / dataset / "large")[0])
+
+    while(nb_files > 2):
+        print("Benchmarking with " + str(nb_files) + " VLMCs...")
+        print("Small " + implementation + ".")
+        res_our_small  = calculate_distance(nb_files, dataset + "/small", "hdf5_results/distances_small.hdf5", implementation, 8, 0)
+        print("Medium " + implementation + ".")
+        res_our_medium = calculate_distance(nb_files, dataset + "/medium", "hdf5_results/distances_medium.hdf5", implementation, 8, 0)
+        print("Large " + implementation + ".")
+        res_our_large  = calculate_distance(nb_files, dataset + "/large", "hdf5_results/distances_large.hdf5", implementation, 8, 0)
+
+        compare_hdf5_files("", "_small", implementation, dataset_outer_dir + "_small", 8, nb_files, 0)
+        compare_hdf5_files("", "_medium", implementation, dataset_outer_dir + "_medium", 8, nb_files, 0)
+        compare_hdf5_files("", "_large", implementation, dataset_outer_dir + "_large", 8, nb_files, 0)
 
         save_to_csv(res_our_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, implementation, 8)
         save_to_csv(res_our_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, implementation, 8)
@@ -194,84 +233,68 @@ def normal_benchmaking(dataset: str, implementation: str):
 
         nb_files = int(nb_files / 2)
 
-def Pst_normal_benchmaking(dataset: str):
-    dir_path = cwd / dataset
-    csv_filename = get_csv_name(dataset)
-    print(csv_filename)
-    nb_files = count_nb_files(dir_path / "small")
-
-    nb_files = int(nb_files / 2)
-
-    th_small, min_small, max_small = get_parameter_from_bintree(os.listdir(dir_path / "small")[0])
-    th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(dir_path / "medium")[0])
-    th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(dir_path / "large")[0])
-
-    while(nb_files > 2):
-        print("Benchmarking small PstClassifierSeqan.")
-        res_small  = PstClassifierSeqan(nb_files, dir_path / "small", 0)
-        print("Benchmarking medium PstClassifierSeqan.")
-        res_medium = PstClassifierSeqan(nb_files, dir_path / "medium", 0)
-        print("Benchmarking large PstClassifierSeqan.")
-        res_large  = PstClassifierSeqan(nb_files, dir_path / "large", 0)
-
-        save_to_csv(res_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, "PstClassifierSeqan", 8)
-        save_to_csv(res_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, "PstClassifierSeqan", 8)
-        save_to_csv(res_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, "PstClassifierSeqan", 8)
-        nb_files = int(nb_files / 2)
-
 #####################################
 # Function for benchmarking degree  #
 # of parallelization on dataset.    #  
 #####################################
-def parallelization_benchmark(dataset: str):
-    dir_path = cwd / dataset
+def parallelization_benchmark(dataset: str, implementation: str, dataset_outer_dir: str):
     csv_filename = get_csv_name(dataset, "parallelization_")
     print(csv_filename)
-    nb_files = count_nb_files(dir_path / "small")
+    nb_files = count_nb_files(cwd / dataset / "small")
 
     nb_files = int(nb_files / 2)
+    nr_cores = 1
 
-    th_small, min_small, max_small = get_parameter_from_bintree(os.listdir(dir_path / "small")[0])
-    th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(dir_path / "medium")[0])
-    th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(dir_path / "large")[0])
-    for nr_cores in range(1, 9, 1):
+    th_small, min_small, max_small = get_parameter_from_bintree(os.listdir(cwd / dataset / "small")[0])
+    th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(cwd / dataset / "medium")[0])
+    th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(cwd / dataset / "large")[0])
+    while (nr_cores <= 8):
         print("Benchmarking small with " + str(nr_cores) + " cores.")
-        res_our_small  = calculate_distance(nb_files, dir_path / "small", 'sorted-vector', nr_cores, 0)
+        res_our_small  = calculate_distance(nb_files, dataset + "/small", "hdf5_results/distances_parallel_small.hdf5", implementation, nr_cores, 0)
         print("Benchmarking medium with " + str(nr_cores) + " cores.")
-        res_our_medium = calculate_distance(nb_files, dir_path / "medium", 'sorted-vector', nr_cores, 0)
+        res_our_medium = calculate_distance(nb_files, dataset + "/medium", "hdf5_results/distances_parallel_medium.hdf5", implementation, nr_cores, 0)
         print("Benchmarking large with " + str(nr_cores) + " cores.")
-        res_our_large  = calculate_distance(nb_files, dir_path / "large", 'sorted-vector', nr_cores, 0)
+        res_our_large  = calculate_distance(nb_files, dataset + "/large", "hdf5_results/distances_parallel_large.hdf5", implementation, nr_cores, 0)
 
-        save_to_csv(res_our_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, 'sorted-vector', nr_cores)
-        save_to_csv(res_our_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, 'sorted-vector', nr_cores)
-        save_to_csv(res_our_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, 'sorted-vector', nr_cores)
+        compare_hdf5_files("_parallel", "_small", implementation, dataset_outer_dir + "_small", nr_cores, nb_files, 0)
+        compare_hdf5_files("_parallel", "_medium", implementation, dataset_outer_dir + "_medium", nr_cores, nb_files, 0)
+        compare_hdf5_files("_parallel", "_large", implementation, dataset_outer_dir + "_large", nr_cores, nb_files, 0)
 
+        save_to_csv(res_our_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, implementation, nr_cores)
+        save_to_csv(res_our_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, implementation, nr_cores)
+        save_to_csv(res_our_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, implementation, nr_cores)
 
-import h5py
+        nr_cores = nr_cores * 2
 
-def compare_hdf5_files(vlmc_size: str, PstGroup: str, VLMCGroup: str):
-    vlmc_file = h5py.File(cwd / ("hdf5_results/distances" + vlmc_size + ".hdf5"), 'r')
-    pst_file  = h5py.File(cwd / ("hdf5_results/pst_distances" + vlmc_size + ".hdf5"), 'r')
+def compare_hdf5_files(bench: str, vlmc_size: str, vlmc: str, path: str, dop: int, set_size: int, background_order: int):
+    vlmc_file = h5py.File(cwd / ("hdf5_results/distances" + bench + vlmc_size + ".hdf5"), 'r')
+    vlmc_str  = vlmc +  "-" + path + "-dop-" + str(dop) + "-set-size-" + str(set_size) + "-bo-" + str(background_order)
+    vlmc_group = vlmc_file.get(vlmc_str)
+    vlmc_group = vlmc_group.get("distances")
 
-    vlmc_group = vlmc_file.get('distances').get(VLMCGroup)
-    pst_group  = pst_file.get('distances').get(PstGroup)
+    pst_file = h5py.File(cwd / ("hdf5_results/pst_distances" + vlmc_size + ".hdf5"), 'r')
+    pst_str = "dvstar-" + str(background_order) + "-" + path + "-set-size-" + str(set_size)
+    pst_group = pst_file.get(pst_str)
+    pst_group = pst_group.get("distances")
 
-    print(list(pst_file.get('distances').keys()))
-
-    error_tolerance = 1e-8
+    error_tolerance = 1e-7
+    misses = 0
 
     for x in range(0, vlmc_group[0].size):
         for y in range(0, vlmc_group[0].size):
             if abs(vlmc_group[x][y] - pst_group[x][y]) > error_tolerance:
+                misses = misses + 1
                 print("Our = " + str(vlmc_group[x][y]) + " pst = " + str(pst_group[x][y]))
                 print("Difference = " + str(vlmc_group[x][y] - pst_group[x][y]))
 
+    if misses == 0:
+        print("Correctness Check " + path + " : PASSED")
+
 @app.command()
 def benchmark():
-    PstClassifierSeqan(-1, "data/test_VLMCs", "hdf5_results/pst_distances.hdf5", 0)
-    compare_hdf5_files("", "dvstar-0", "sorted-vector-test_VLMCs-test_VLMCs")
-    ## Pst_normal_benchmaking("data/benchmarking/ecoli")
-    ## parallelization_benchmark("data/benchmarking/ecoli")
+    # Pst_normal_benchmaking("data/benchmarking/human")
+    # normal_benchmaking("data/benchmarking/human", "sorted-vector", "human")
+    parallelization_benchmark("data/benchmarking/human", "sorted-vector", "human")
 
 if __name__ == "__main__":
     app()
