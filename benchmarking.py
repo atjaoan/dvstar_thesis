@@ -115,15 +115,24 @@ def PstClassifierSeqan(set_size: int, genome_path: str, out_path: str, backgroun
 ######################################
 # Save output from perf to csv file. #
 ######################################
+def catch_and_save(res: subprocess.CompletedProcess, csv_path: Path, vlmc_size: str, 
+                set_size: int, threshold: float, min_count: int, max_depth: int, 
+                implementation: str, nr_cores_used: int):
+    try: 
+        save_to_csv(res, csv_path, vlmc_size, set_size, threshold, min_count, max_depth, implementation, nr_cores_used)
+    except:
+        print(res.stderr)
+        raise Exception("Failed to write to csv")
+
 def save_to_csv(res: subprocess.CompletedProcess, csv_path: Path, vlmc_size: str, 
-                set_size: int, threshold: float, min_count: int, max_depth: int, implementation: str, nr_cores_used: int):
+                set_size: int, threshold: float, min_count: int, max_depth: int, 
+                implementation: str, nr_cores_used: int, combo_init_size: int = 128):
     new_line_separated_attr = res.stderr.split('\n')[3:-8]
 
-    print("For implementation -> " + implementation + "\n")
-    print(res.stderr)
+    print("Save implementation -> " + implementation + " to csv...")
 
-    data = [get_git_commit_version(), implementation, vlmc_size, set_size, threshold, min_count, max_depth, nr_cores_used]
-    columns = ["repo_version", "implementation", "vlmc_size", "set_size", "threshold", "min_count", "max_depth", "nr_cores_used"]
+    data = [get_git_commit_version(), implementation, vlmc_size, set_size, threshold, min_count, max_depth, nr_cores_used, combo_init_size]
+    columns = ["repo_version", "implementation", "vlmc_size", "set_size", "threshold", "min_count", "max_depth", "nr_cores_used", "combo_init_size"]
     
     for line in new_line_separated_attr:
         split_line = line.split('#')
@@ -192,9 +201,9 @@ def Pst_normal_benchmaking(dataset: str):
         print("Large PstClassifierSeqan.")
         res_large  = PstClassifierSeqan(nb_files, dataset + "/large", "hdf5_results/pst_distances_large.hdf5", 0)
 
-        save_to_csv(res_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, "PstClassifierSeqan", 8)
-        save_to_csv(res_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, "PstClassifierSeqan", 8)
-        save_to_csv(res_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, "PstClassifierSeqan", 8)
+        catch_and_save(res_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, "PstClassifierSeqan", 8)
+        catch_and_save(res_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, "PstClassifierSeqan", 8)
+        catch_and_save(res_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, "PstClassifierSeqan", 8)
         nb_files = int(nb_files / 2)
 
 ######################################
@@ -203,7 +212,7 @@ def Pst_normal_benchmaking(dataset: str):
 # implementation.                    #
 ######################################
 def normal_benchmaking(dataset: str, implementation: str, dataset_outer_dir: str):
-    csv_filename = get_csv_name(dataset)
+    csv_filename = get_csv_name(dataset, implementation + "_")
     print(csv_filename)
     nb_files = count_nb_files(cwd / dataset / "small")
 
@@ -227,11 +236,15 @@ def normal_benchmaking(dataset: str, implementation: str, dataset_outer_dir: str
         compare_hdf5_files("", "_medium", implementation, dataset_outer_dir + "_medium", 8, nb_files, 0)
         compare_hdf5_files("", "_large", implementation, dataset_outer_dir + "_large", 8, nb_files, 0)
 
-        save_to_csv(res_our_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, implementation, 8)
-        save_to_csv(res_our_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, implementation, 8)
-        save_to_csv(res_our_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, implementation, 8)
+        catch_and_save(res_our_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, implementation, 8)
+        catch_and_save(res_our_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, implementation, 8)
+        catch_and_save(res_our_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, implementation, 8)
 
         nb_files = int(nb_files / 2)
+    
+    os.remove(cwd / "hdf5_results/distances_small.hdf5")
+    os.remove(cwd / "hdf5_results/distances_medium.hdf5")
+    os.remove(cwd / "hdf5_results/distances_large.hdf5")
 
 #####################################
 # Function for benchmarking degree  #
@@ -260,11 +273,14 @@ def parallelization_benchmark(dataset: str, implementation: str, dataset_outer_d
         compare_hdf5_files("_parallel", "_medium", implementation, dataset_outer_dir + "_medium", nr_cores, nb_files, 0)
         compare_hdf5_files("_parallel", "_large", implementation, dataset_outer_dir + "_large", nr_cores, nb_files, 0)
 
-        save_to_csv(res_our_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, implementation, nr_cores)
-        save_to_csv(res_our_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, implementation, nr_cores)
-        save_to_csv(res_our_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, implementation, nr_cores)
-
+        catch_and_save(res_our_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, implementation, nr_cores)
+        catch_and_save(res_our_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, implementation, nr_cores)
+        catch_and_save(res_our_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, implementation, nr_cores)
         nr_cores = nr_cores * 2
+    
+    os.remove(cwd / "hdf5_results/distances_small.hdf5")
+    os.remove(cwd / "hdf5_results/distances_medium.hdf5")
+    os.remove(cwd / "hdf5_results/distances_large.hdf5")
 
 def compare_hdf5_files(bench: str, vlmc_size: str, vlmc: str, path: str, dop: int, set_size: int, background_order: int):
     vlmc_file = h5py.File(cwd / ("hdf5_results/distances" + bench + vlmc_size + ".hdf5"), 'r')
@@ -292,9 +308,43 @@ def compare_hdf5_files(bench: str, vlmc_size: str, vlmc: str, path: str, dop: in
 
 @app.command()
 def benchmark():
-    # Pst_normal_benchmaking("data/benchmarking/human")
+    # normal_benchmaking("data/benchmarking/ecoli", "sorted-vector", "ecoli")
+    # normal_benchmaking("data/benchmarking/ecoli", "hashmap", "ecoli")
+    normal_benchmaking("data/benchmarking/ecoli", "combo", "ecoli")
+    # normal_benchmaking("data/benchmarking/human", "veb", "human")
+    # combo_parameter_sweep("data/benchmarking/ecoli", "combo", "ecoli")
     # normal_benchmaking("data/benchmarking/human", "sorted-vector", "human")
-    parallelization_benchmark("data/benchmarking/human", "sorted-vector", "human")
+    # parallelization_benchmark("data/benchmarking/human", "sorted-vector", "human")
 
 if __name__ == "__main__":
     app()
+
+# def combo_parameter_sweep(dataset: str, implementation: str, dataset_outer_dir: str):
+#     csv_filename = get_csv_name(dataset, "parameter_sweep_")
+#     print(csv_filename)
+#     nb_files = count_nb_files(cwd / dataset / "small")
+# 
+#     nb_files = int(nb_files / 2)
+#     combo_init_size = 2
+# 
+#     th_small, min_small, max_small = get_parameter_from_bintree(os.listdir(cwd / dataset / "small")[0])
+#     th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(cwd / dataset / "medium")[0])
+#     th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(cwd / dataset / "large")[0])
+#     while (combo_init_size <= 64):
+#         for i in range(0,5):
+#             print("Benchmarking small with " + str(combo_init_size) + " initial size.")
+#             res_our_small  = calculate_distance(nb_files, dataset + "/small", "hdf5_results/distances_combo_small.hdf5", implementation, 8, 0, combo_init_size)
+#             print("Benchmarking medium with " + str(combo_init_size) + " initial size.")
+#             res_our_medium = calculate_distance(nb_files, dataset + "/medium", "hdf5_results/distances_combo_medium.hdf5", implementation, 8, 0, combo_init_size)
+#             print("Benchmarking large with " + str(combo_init_size) + " initial size.")
+#             res_our_large  = calculate_distance(nb_files, dataset + "/large", "hdf5_results/distances_combo_large.hdf5", implementation, 8, 0, combo_init_size)
+# 
+#             ## compare_hdf5_files("_combo", "_small", implementation, dataset_outer_dir + "_small", 8, nb_files, 0)
+#             ## compare_hdf5_files("_combo", "_medium", implementation, dataset_outer_dir + "_medium", 8, nb_files, 0)
+#             ## compare_hdf5_files("_combo", "_large", implementation, dataset_outer_dir + "_large", 8, nb_files, 0)
+# 
+#             save_to_csv(res_our_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, implementation, 8, combo_init_size)
+#             save_to_csv(res_our_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, implementation, 8, combo_init_size)
+#             save_to_csv(res_our_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, implementation, 8, combo_init_size)
+# 
+#         combo_init_size = combo_init_size * 2

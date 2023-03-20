@@ -539,8 +539,8 @@ class VLMC_hashmap : public VLMC_Container {
 class VLMC_Combo : public VLMC_Container {
 
   private: 
-    int max_idx = 2048; 
-    std::array<RI_Kmer, 2048> container_ibv{};
+    int max_idx = 64; 
+    std::array<RI_Kmer, 64> container_ibv{};
     std::vector<RI_Kmer> container_sorted{};  
     int max_kmer_index = 0;
     int min_kmer_index = 0;
