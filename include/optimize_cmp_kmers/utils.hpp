@@ -98,17 +98,14 @@ void output_kmer_reps_to_file(const std::filesystem::path &path_to_dir, const st
   
   auto it = std::filesystem::directory_iterator{path_to_dir};
   for (auto const& dir_entry : it) {
-    std::cout << dir_entry << "\n";
     std::ifstream ifs(dir_entry.path(), std::ios::binary);
     cereal::BinaryInputArchive archive(ifs);
     Kmer input_kmer{};
-
     while (ifs.peek() != EOF){
       archive(input_kmer);
       RI_Kmer ri_kmer{input_kmer};
-      ofs << ri_kmer.integer_rep << ",";
+      ofs << ri_kmer.integer_rep << "\n";
     }
-    ofs << "\n";
     ifs.close();
   }
   
