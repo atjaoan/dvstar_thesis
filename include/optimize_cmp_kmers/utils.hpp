@@ -3,6 +3,11 @@
 #include <filesystem>
 #include <thread>
 
+#include <fstream>
+#include <iostream>
+#include <filesystem>
+#include <algorithm>
+
 #include "cluster_container.hpp"
 
 using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
@@ -86,5 +91,27 @@ std::string get_filename(std::filesystem::path path){
   } else {
     return path.parent_path().parent_path().filename().u8string() + "_" + path.parent_path().filename().u8string();
   }
+}
+
+void output_kmer_reps_to_file(const std::filesystem::path &path_to_dir, const std::filesystem::path &path_to_output) {
+  std::ofstream ofs(path_to_output.string());
+  
+  auto it = std::filesystem::directory_iterator{path_to_dir};
+  for (auto const& dir_entry : it) {
+    std::cout << dir_entry << "\n";
+    std::ifstream ifs(dir_entry.path(), std::ios::binary);
+    cereal::BinaryInputArchive archive(ifs);
+    Kmer input_kmer{};
+
+    while (ifs.peek() != EOF){
+      archive(input_kmer);
+      RI_Kmer ri_kmer{input_kmer};
+      ofs << ri_kmer.integer_rep << ",";
+    }
+    ofs << "\n";
+    ifs.close();
+  }
+  
+  ofs.close();
 }
 }
