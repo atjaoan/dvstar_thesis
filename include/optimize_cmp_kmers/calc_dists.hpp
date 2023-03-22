@@ -27,6 +27,32 @@ void calculate_reduced_slice(size_t start_index, size_t stop_index, matrix_t &di
 }
 
 template <typename VC>
+void calculate_triangle_slice(int x1, int y1, int x2, int y2, int x3, int y3, matrix_t &distances, 
+          container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
+                     const std::function<double(vlmc_c &, vlmc_c &)> &fun) {
+
+  auto rec_fun = [&](int left, int right) {
+    if (distances(left, right) == 0){
+      distances(left,right) = fun(cluster_left.get(left), cluster_right.get(right));
+    }  
+  };
+
+  if (x1 < x2) {
+    if (y2 > y3){
+      utils::triangle_recursion(x1, x3, y1, y2, x1, y1, x2, y2, x3, y3, rec_fun);
+    } else {
+      utils::triangle_recursion(x1, x3, y1, y3, x1, y1, x2, y2, x3, y3, rec_fun);
+    }
+  } else {
+    if (y2 > y3){
+      utils::triangle_recursion(x2, x3, y1, y2, x1, y1, x2, y2, x3, y3, rec_fun);
+    } else {
+      utils::triangle_recursion(x2, x3, y1, y3, x1, y1, x2, y2, x3, y3, rec_fun);
+    }
+  }
+}
+
+template <typename VC>
 void calculate_full_slice(size_t start_index, size_t stop_index, matrix_t &distances,
                      container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
                      const std::function<double(vlmc_c &, vlmc_c &)> &fun) {
@@ -46,11 +72,16 @@ matrix_t calculate_distances(
 
   matrix_t distances = Eigen::MatrixXd::Constant(cluster.size(), cluster.size(), 0);
 
-  auto fun = [&](size_t start_index, size_t stop_index) {
-    calculate_reduced_slice<VC>(start_index, stop_index, distances,
+  // auto fun = [&](size_t start_index, size_t stop_index) {
+  //   calculate_reduced_slice<VC>(start_index, stop_index, distances,
+  //                          cluster, cluster, distance_function);
+  // };
+
+  auto fun = [&](int x1, int y1, int x2, int y2, int x3, int y3) {  
+    calculate_triangle_slice<VC>(x1, y1, x2, y2, x3, y3, distances,
                            cluster, cluster, distance_function);
   };
-  parallel::parallelize(cluster.size(), fun, requested_cores);
+  parallel::parallelize_triangle(cluster.size(), fun, requested_cores);
   return distances; 
 }
 
