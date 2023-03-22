@@ -6,6 +6,7 @@
 #include <exception>
 #include <algorithm>
 #include <set>
+#include <execution>
 #include "vlmc_from_kmers/kmer.hpp"
 #include "optimize_cmp_kmers/read_in_kmer.hpp"
 #include "b_tree.hpp"
@@ -257,7 +258,7 @@ class VLMC_sorted_vector : public VLMC_Container {
       for (int i = 0; i < background_order; i++){
         offset_to_remove += std::pow(4, i); 
       }
-
+      
       while (ifs.peek() != EOF){
         archive(input_kmer);
         RI_Kmer ri_kmer{input_kmer};
@@ -272,8 +273,8 @@ class VLMC_sorted_vector : public VLMC_Container {
         }
       }
       ifs.close();
-
-      std::sort(container.begin(), container.end());
+      
+      std::sort(std::execution::seq, container.begin(), container.end());
       for (size_t i = 0; i < size(); i++){
         RI_Kmer kmer = get(i);
         int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
@@ -329,28 +330,27 @@ class VLMC_sorted_vector : public VLMC_Container {
 
     void iterate_kmers(VLMC_Container &left_kmers, VLMC_Container &right_kmers,
     const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f) override {
-      size_t left_i = 0;
-      size_t right_i = 0;  
-      size_t left_size = left_kmers.size();
-      size_t right_size = right_kmers.size();
-      int n = 0;
-      int n_shared = 0;
+      int left_i = 0;
+      int right_i = 0;  
+      const int left_size = left_kmers.size();
+      const int right_size = right_kmers.size();
+      const RI_Kmer &left_kmer = left_kmers.get(left_i);
+      const RI_Kmer &right_kmer = right_kmers.get(right_i);
       while(left_i < left_size && right_i < right_size) {
-        const RI_Kmer &left_kmer = left_kmers.get(left_i);
-        const RI_Kmer &right_kmer = right_kmers.get(right_i);
         if (right_kmer == left_kmer) {
           f(left_kmer, right_kmer);
           left_i++;
           right_i++;
-          //n_shared++;
+          const RI_Kmer &left_kmer = left_kmers.get(left_i);
+          const RI_Kmer &right_kmer = right_kmers.get(right_i);
         } else if (left_kmer < right_kmer) {
           left_i++;
+          const RI_Kmer &left_kmer = left_kmers.get(left_i);
         } else {
           right_i++;
+          const RI_Kmer &right_kmer = right_kmers.get(right_i);
         }
-        //n++;
       }
-      //std::cout << "n: " << n << " n_shared: " << n_shared << " fraction: " << n_shared / (float)n << "\n";
     }
 
     int exp_skipping(const int fixed_kmer_rep, int lag_index, VLMC_Container &lag_container){

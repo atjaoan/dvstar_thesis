@@ -23,10 +23,11 @@ using RI_Kmer = container::RI_Kmer;
 namespace cluster{
   
 template <typename VC>  
-container::Cluster_Container<VC> get_cluster(const std::filesystem::path &directory, const size_t nr_cores_to_use, 
+container::Cluster_Container<VC> get_cluster(const std::filesystem::path &directory, size_t nr_cores_to_use, 
       const size_t background_order, const int set_size = -1){
   std::vector<std::filesystem::path> paths{};
 
+  if(nr_cores_to_use > 4) nr_cores_to_use = 4;
   for (const auto& dir_entry : recursive_directory_iterator(directory)) {
     paths.push_back(dir_entry.path());
   }
