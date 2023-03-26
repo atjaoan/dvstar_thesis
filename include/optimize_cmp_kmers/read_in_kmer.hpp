@@ -16,20 +16,17 @@ constexpr double pseudo_count_amount = 1.0;
 namespace container{
  
 struct RI_Kmer{
+    Eigen::Array4d next_char_prob;
     //Could be 3 and infer the fourth probability,
     //Using 4 since it may be useful in SIMD instructions
-    size_t length = 0; 
+    // size_t length = 0; 
     int integer_rep;
-    // int background_rep; <- Should be implemented 
-    //std::array<double,4> next_char_prob{};
-    // To replace next_char_prob array with eigen array
-    Eigen::Array4d next_char_prob{0.0, 0.0, 0.0, 0.0};
     bool is_null = true;
 
     RI_Kmer() = default;
 
     RI_Kmer(const vlmc::VLMCKmer &old_kmer){
-        this->length = old_kmer.length;
+        // this->length = old_kmer.length;
         Eigen::Array4d tmp = {old_kmer.next_symbol_counts[0], 
                               old_kmer.next_symbol_counts[1],
                               old_kmer.next_symbol_counts[2],
@@ -38,25 +35,19 @@ struct RI_Kmer{
         this->next_char_prob = (tmp + pseudo_count_amount) / child_count;
         this->integer_rep = get_index_rep(old_kmer);
         this->is_null = false;
-        // this->background_rep = background_order_index(this->integer_rep, 0);  <- Should be implemented 
     }
+
     // Used in testing
-    
-    RI_Kmer(const std::array<double, 4>& next_counts, const int len){
-        this->length = len;
+    RI_Kmer(const std::array<double, 4>& next_counts){ // , const int len){
+        // this->length = len;
         int pseudo_count_amount = 1;
         double child_count = std::accumulate(next_counts.begin(), next_counts.end(), pseudo_count_amount * 4);
-        //this->next_char_prob = {(double(next_counts[0]) + pseudo_count_amount) / child_count,
-        //       (double(next_counts[1]) + pseudo_count_amount) / child_count,
-        //       (double(next_counts[2]) + pseudo_count_amount) / child_count,
-        //       (double(next_counts[3]) + pseudo_count_amount) / child_count};
         this->next_char_prob = {(double(next_counts[0]) + pseudo_count_amount) / child_count,
                (double(next_counts[1]) + pseudo_count_amount) / child_count,
                (double(next_counts[2]) + pseudo_count_amount) / child_count,
                (double(next_counts[3]) + pseudo_count_amount) / child_count};
         this->integer_rep = -1;
         this->is_null = false;
-        // this->background_rep = background_order_index(this->integer_rep, 0);  <- Should be implemented 
     }
     
     

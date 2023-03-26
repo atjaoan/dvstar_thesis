@@ -72,7 +72,7 @@ container::Kmer_Cluster get_kmer_cluster(const std::filesystem::path &directory,
 
     auto fun = [&](const RI_Kmer &kmer) { input_vector.push_back(kmer); }; 
 
-    int offset_to_remove = utils::load_VLMCs_from_file(dir_entry.path(), cached_context, fun, background_order); 
+    int offset_to_remove = container::load_VLMCs_from_file(dir_entry.path(), cached_context, fun, background_order); 
 
     for (RI_Kmer kmer : input_vector){
       int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);

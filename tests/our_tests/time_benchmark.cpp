@@ -16,6 +16,7 @@
 #include "calc_dists.hpp"
 #include "get_cluster.hpp"
 
+using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
 using RI_Kmer = container::RI_Kmer; 
 using matrix_t = Eigen::MatrixXd;
 
@@ -450,7 +451,7 @@ void benchmark_calculate_distance_major(){
 }
 
 void print_kmers_to_file(){
-  std::filesystem::path path_vlmcs{"../data/small_test"};
+  std::filesystem::path path_vlmcs{"../data/one_vlmcs"};
   std::filesystem::path output_path{"../tmp/" + path_vlmcs.filename().string() + "_kmer-distribution.txt"};
   utils::output_kmer_reps_to_file(path_vlmcs, output_path);
 }
@@ -537,6 +538,77 @@ std::array<double, reps> iterate_kmers_bench(){
   return dot_products;
 }
 
+// A function to implement bubble sort
+void bubbleSort(std::vector<RI_Kmer> &container) {
+  auto it_end = container.rend(); 
+  for (int i = 0; i < container.size(); i++){
+    for(auto it1 = container.rbegin(), it2 = ++container.rbegin(); it2 != it_end; it1++, it2++){
+      if (*it1 > *it2){
+        auto tmp = *it1;
+        *it1 = *it2;
+        *it2 = tmp;   
+        // std::iter_swap(it1, it2);
+      } 
+    }
+    it_end--; 
+  }
+}
+
+std::tuple<int, int> run_sorting_timer(std::vector<std::vector<RI_Kmer>> containers, std::function<void(std::vector<RI_Kmer> &container)> sort_fun){
+  int total_time = 0; 
+  int avg_kmer_time = 0; 
+  for (auto container : containers){
+    std::vector<RI_Kmer> new_container(container);
+    auto start_sort = std::chrono::steady_clock::now();
+    sort_fun(new_container);
+    auto end_sort = std::chrono::steady_clock::now();
+    total_time += std::chrono::duration_cast<std::chrono::nanoseconds>(end_sort - start_sort).count();
+    avg_kmer_time += std::chrono::duration_cast<std::chrono::nanoseconds>(end_sort - start_sort).count() / container.size();
+  }
+  return std::make_tuple(total_time / containers.size(), avg_kmer_time / containers.size()); 
+}
+
+void time_sorting_algorithms(std::filesystem::path directory){
+  std::vector<std::tuple<std::tuple<int,int>,std::string>> sort_timings{};
+  std::vector<std::vector<RI_Kmer>> containers{}; 
+
+  auto sort_fun_bubblesort = [](std::vector<RI_Kmer> &container) {
+    bubbleSort(container);
+  };
+
+  // auto sort_fun_timsort = [](std::vector<RI_Kmer> &container) {
+  //   gfx::timsort(container.rbegin(), container.rend());
+  // };
+
+  auto sort_fun_seq = [](std::vector<RI_Kmer> &container) {
+    std::sort(std::execution::seq, container.rbegin(), container.rend());
+  };
+
+  auto sort_fun_seq_not_rev = [](std::vector<RI_Kmer> &container) {
+    std::sort(std::execution::seq, container.begin(), container.end());
+  };
+
+  for (const auto& dir_entry : recursive_directory_iterator(directory)) {
+    std::vector<RI_Kmer> container{}; 
+    std::ifstream ifs(dir_entry.path(), std::ios::binary);
+    cereal::BinaryInputArchive archive(ifs);
+    Kmer input_kmer{};
+    while (ifs.peek() != EOF){
+      archive(input_kmer);
+      RI_Kmer ri_kmer{input_kmer};
+      container.push_back(ri_kmer);
+    }
+    ifs.close();
+    containers.push_back(container);  
+  }
+  sort_timings.push_back(std::make_tuple(run_sorting_timer(containers, sort_fun_seq), "sort_fun_seq"));
+  sort_timings.push_back(std::make_tuple(run_sorting_timer(containers, sort_fun_seq_not_rev), "sort_fun_seq_not_rev"));
+  sort_timings.push_back(std::make_tuple(run_sorting_timer(containers, sort_fun_bubblesort), "sort_fun_bubblesort"));
+
+  for (auto [time, sort_algorithm] : sort_timings){
+    std::cout << sort_algorithm << " took " << std::get<0>(time) / 1000 << " [microsec] on average, avg kmer -> " << std::get<1>(time) << " [nanosec]" << std::endl; 
+  }
+}
 
 int main(int argc, char *argv[]){
   // int num_items = 1500;
