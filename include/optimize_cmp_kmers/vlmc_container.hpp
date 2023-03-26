@@ -334,21 +334,17 @@ class VLMC_sorted_vector : public VLMC_Container {
       int right_i = 0;  
       const int left_size = left_kmers.size();
       const int right_size = right_kmers.size();
-      const RI_Kmer &left_kmer = left_kmers.get(left_i);
-      const RI_Kmer &right_kmer = right_kmers.get(right_i);
       while(left_i < left_size && right_i < right_size) {
+        const RI_Kmer &left_kmer = left_kmers.get(left_i);
+        const RI_Kmer &right_kmer = right_kmers.get(right_i);
         if (right_kmer == left_kmer) {
           f(left_kmer, right_kmer);
           left_i++;
           right_i++;
-          const RI_Kmer &left_kmer = left_kmers.get(left_i);
-          const RI_Kmer &right_kmer = right_kmers.get(right_i);
         } else if (left_kmer < right_kmer) {
           left_i++;
-          const RI_Kmer &left_kmer = left_kmers.get(left_i);
         } else {
           right_i++;
-          const RI_Kmer &right_kmer = right_kmers.get(right_i);
         }
       }
     }

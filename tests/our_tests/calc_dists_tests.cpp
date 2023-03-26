@@ -165,9 +165,32 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
   }
 }
 
+TEST_F(CalcDistsTests, ValueCheckOneDir){
+  // Vector Implementation
+  auto left_cluster_v = cluster::get_cluster<container::VLMC_vector>(path_to_bintrees, 1, background_order);
+  auto right_cluster_v = cluster::get_cluster<container::VLMC_vector>(path_to_bintrees, 1, background_order);
+  matrix_t distances_vector_two_dirs = calculate::calculate_distances<container::VLMC_vector>(left_cluster_v, right_cluster_v, dist_func, 1);
+
+  auto cluster_v = cluster::get_cluster<container::VLMC_vector>(path_to_bintrees, 1, background_order);
+
+  for (int nr_cores = 1; nr_cores < 9; nr_cores++){
+    matrix_t distances_vector = calculate::calculate_distances<container::VLMC_vector>(cluster_v, dist_func, nr_cores);
+    for (int x = 0; x < distances_vector.cols(); x++){
+      for (int y = 0; y < distances_vector.rows(); y++){
+        if (x <= y) {
+          EXPECT_NEAR(distances_vector_two_dirs(x,y), distances_vector(x,y), error_tolerance);
+        } else {
+          EXPECT_DOUBLE_EQ(0.0, distances_vector(x,y));
+        }
+      }
+    }
+  }
+
+}
+
 // Tests for inter-directory comparisons
 TEST_F(CalcDistsTests, SizeOneDir) {
-  for (size_t x = 0; x < 4; x++){
+  for (size_t x = 1; x < 5; x++){
     cluster_c cluster_left = create_cluster(first_vlmc, x);
     matrix_t distances = calculate::calculate_distances(cluster_left, dist_func, 1);
     EXPECT_EQ(distances.size(), x * x); 
