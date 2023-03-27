@@ -456,89 +456,6 @@ void print_kmers_to_file(){
   utils::output_kmer_reps_to_file(path_vlmcs, output_path);
 }
 
-void get_kmer_vector_test(std::filesystem::path path, std::vector<RI_Kmer>& kmers){
-  std::ifstream ifs(path, std::ios::binary);
-  cereal::BinaryInputArchive archive(ifs);
-  vlmc::VLMCKmer input_kmer{};
-
-  while (ifs.peek() != EOF){
-    archive(input_kmer);
-    RI_Kmer ri_kmer(input_kmer); 
-    kmers.push_back(ri_kmer);
-  }
-  ifs.close();
-}
-
-constexpr int reps = 20;
-std::array<double, reps> iterate_kmers_bench(){
-  std::filesystem::path path_fst{"../data/human_VLMCs/human_genome_1.bintree"};
-  std::filesystem::path path_snd{"../data/human_VLMCs/human_genome_2.bintree"};
-
-  std::vector<RI_Kmer> left{};
-  std::vector<RI_Kmer> right{};
-  get_kmer_vector_test(path_fst, left);
-  get_kmer_vector_test(path_snd, right);
-
-  std::sort(left.begin(), left.end());
-  std::sort(right.begin(), right.end());
-  
-  std::array<double, reps> dot_products;
-  auto start = std::chrono::steady_clock::now();
-  for(int i = 0; i < reps; i++){
-    double dot_product = 0.0;
-
-    double left_norm = 0.0;
-    double right_norm = 0.0;
-
-    auto dvstar_fun = [&](auto &left_v, auto &right_v) {
-      dot_product += (left_v.next_char_prob * right_v.next_char_prob).sum();
-      left_norm += left_v.next_char_prob.square().sum();
-      right_norm += right_v.next_char_prob.square().sum();
-    };
-    
-    auto right_it = right.begin();
-    auto right_end = right.end();
-    for(auto &left_kmer : left){
-      while((*right_it) < left_kmer){
-        ++right_it;
-        if(right_it == right_end) break;
-      }
-      if(left_kmer == (*right_it)){
-        dvstar_fun(left_kmer, *right_it);
-        ++right_it;
-      }
-    }
-    /*
-    int left_i = 0;
-    int right_i = 0;  
-    const int left_size = left.size();
-    const int right_size = right.size();
-    while(left_i < left_size && right_i < right_size) {
-      const RI_Kmer &left_kmer = left[left_i];
-      const RI_Kmer &right_kmer = right[right_i];
-      if (right_kmer == left_kmer) {
-        dvstar_fun(left_kmer, right_kmer);
-        left_i++;
-        right_i++;
-      } else if (left_kmer < right_kmer) {
-        left_i++;
-      } else {
-        right_i++;
-      }
-    }
-    */
-    dot_products[i] = dot_product;
-  }
-  auto end = std::chrono::steady_clock::now();
-  auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-  std::cout << "Time : " << time / (float) reps << " [micro sec]" << std::endl; 
-  std::cout << "Dot products for sanity check: " << dot_products[0] << "\n";
-  std::cout << "Size of RI_Kmer: " << sizeof(RI_Kmer) << " bytes" << "\n";
-  std::cout << "Size of RI_Kmer in vector: " << sizeof(left[0]) << " bytes" << "\n";
-  std::cout << "Size of left: " << sizeof(left) + sizeof(RI_Kmer) * left.capacity() << " bytes" << "\n";
-  std::cout << "Size of right: " << sizeof(right) + sizeof(RI_Kmer) * right.capacity() << " bytes" << "\n";
-  return dot_products;
-}
 
 // A function to implement bubble sort
 void bubbleSort(std::vector<RI_Kmer> &container) {
@@ -612,6 +529,179 @@ void time_sorting_algorithms(std::filesystem::path directory){
   }
 }
 
+using out_t = float;
+
+struct new_RI_Kmer {
+  Eigen::Array4f next_char_prob;
+  // std::array<out_t, 4> next_char_prob;
+  int integer_rep;
+  bool is_null = true;
+
+  new_RI_Kmer() = default;
+
+  new_RI_Kmer(const vlmc::VLMCKmer &old_kmer){
+      Eigen::Array4f tmp = {old_kmer.next_symbol_counts[0], 
+                              old_kmer.next_symbol_counts[1],
+                              old_kmer.next_symbol_counts[2],
+                              old_kmer.next_symbol_counts[3]};
+      out_t child_count = tmp.sum() + 4;
+      this->next_char_prob = (tmp + pseudo_count_amount) / child_count;
+      // out_t child_count = old_kmer.next_symbol_counts[0] + old_kmer.next_symbol_counts[1] + old_kmer.next_symbol_counts[2] + old_kmer.next_symbol_counts[3] + 4;
+      // this->next_char_prob = {(old_kmer.next_symbol_counts[0] + pseudo_count_amount) / child_count,
+      //                         (old_kmer.next_symbol_counts[1] + pseudo_count_amount) / child_count,
+      //                         (old_kmer.next_symbol_counts[2] + pseudo_count_amount) / child_count,
+      //                         (old_kmer.next_symbol_counts[3] + pseudo_count_amount) / child_count};
+      this->integer_rep = get_index_rep(old_kmer);
+      this->is_null = false;
+  }
+
+  ~new_RI_Kmer() = default;
+    
+  new_RI_Kmer(const int temp) : integer_rep{temp} {}
+
+  int get_index_rep(const vlmc::VLMCKmer &kmer) {
+    int integer_value = 0;
+    int offset = 1;
+    for (int i = kmer.length - 1; i >= 0; i--) {
+      auto kmer_2_bits = extract2bits(kmer, i) + 1;
+      integer_value += (kmer_2_bits * offset);
+      offset *= 4;
+    }
+    return integer_value;
+  }
+    
+  inline uchar extract2bits(const vlmc::VLMCKmer &kmer, uint32 pos) const {
+    uchar row = pos >> 5;
+    uchar pos_in_row = pos & 31;
+    uchar n_shift_pos_to_end = (62 - pos_in_row * 2);
+    return (kmer.kmer_data[row] >> n_shift_pos_to_end) & 3;
+  }
+
+  inline bool operator<(const new_RI_Kmer &kmer) const {
+    return this->integer_rep < kmer.integer_rep;
+  };
+  inline bool operator>(const new_RI_Kmer &kmer) const {
+    return this->integer_rep > kmer.integer_rep;
+  };
+  inline bool operator>=(const new_RI_Kmer &kmer) const {
+    return this->integer_rep >= kmer.integer_rep;
+  };
+  inline bool operator<=(const new_RI_Kmer &kmer) const {
+    return this->integer_rep <= kmer.integer_rep;
+  };
+  inline bool operator==(const new_RI_Kmer &kmer) const {
+    return this->integer_rep == kmer.integer_rep;
+  };
+};
+
+
+using tmp_Kmer = new_RI_Kmer;
+using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
+#include "utils.hpp"
+
+out_t normalise_dvstar(out_t dot_product, out_t left_norm,
+                        out_t right_norm) {
+
+  left_norm = std::sqrt(left_norm);
+  right_norm = std::sqrt(right_norm);
+  if (left_norm == 0 || right_norm == 0) {
+    return 1.0;
+  } else {
+    out_t Dvstar = dot_product / (left_norm * right_norm);
+
+    out_t dvstar = 0.5 * (1 - Dvstar);
+
+    out_t angular_distance = 2 * std::acos(Dvstar) / M_PI;
+    if (isnan(angular_distance)) {
+      return 0.0;
+    } else {
+      return angular_distance;
+    }
+  }
+}
+
+void get_kmer_vector_test(std::filesystem::path path, std::vector<std::vector<tmp_Kmer>>& vlmcs){
+  std::ifstream ifs(path, std::ios::binary);
+  cereal::BinaryInputArchive archive(ifs);
+  std::vector<tmp_Kmer> vlmc{};
+  vlmc::VLMCKmer input_kmer{};
+
+  while (ifs.peek() != EOF){
+    archive(input_kmer);
+    tmp_Kmer ri_kmer(input_kmer); 
+    vlmc.push_back(ri_kmer);
+  }
+  ifs.close();
+  std::sort(vlmc.begin(), vlmc.end());
+  vlmcs.push_back(vlmc);
+}
+
+constexpr int reps = 1;
+matrix_t iterate_kmers_bench(){
+  std::filesystem::path path_fst{"../data/human_VLMCs/"};
+  std::vector<std::vector<tmp_Kmer>> vlmcs{};
+  for (const auto& dir_entry : recursive_directory_iterator(path_fst)) {
+    get_kmer_vector_test(dir_entry.path(), vlmcs);
+  }
+  
+  matrix_t distances{vlmcs.size(), vlmcs.size()};
+  auto start = std::chrono::steady_clock::now();
+
+  auto fun = [&](auto x, auto y) {
+    std::vector<tmp_Kmer> &left_vlmc = vlmcs[x];
+    std::vector<tmp_Kmer> &right_vlmc = vlmcs[y];
+
+    out_t dot_product = 0.0;
+    out_t left_norm = 0.0;
+    out_t right_norm = 0.0; 
+
+    // auto dvstar_fun = [&](auto &left_v, auto &right_v) {
+    //   dot_product += (left_v.next_char_prob[0] * right_v.next_char_prob[0]) + (left_v.next_char_prob[1] * right_v.next_char_prob[1]) + (left_v.next_char_prob[2] * right_v.next_char_prob[2]) + (left_v.next_char_prob[3] * right_v.next_char_prob[3]);
+    //   left_norm += std::pow(left_v.next_char_prob[0], 2.0) + std::pow(left_v.next_char_prob[1], 2.0) + std::pow(left_v.next_char_prob[2], 2.0) + std::pow(left_v.next_char_prob[3], 2.0);
+    //   right_norm += std::pow(right_v.next_char_prob[0], 2.0) + std::pow(right_v.next_char_prob[1], 2.0) + std::pow(right_v.next_char_prob[2], 2.0) + std::pow(right_v.next_char_prob[3], 2.0);
+    // };
+
+    auto dvstar_fun = [&](auto &left_v, auto &right_v) {
+      dot_product += (left_v.next_char_prob * right_v.next_char_prob).sum();
+      left_norm += left_v.next_char_prob.square().sum();
+      right_norm += right_v.next_char_prob.square().sum();
+    };
+
+    auto right_it = right_vlmc.begin();
+    auto right_end = right_vlmc.end();
+    for(auto &left_kmer : left_vlmc){
+      while((*right_it) < left_kmer){
+        ++right_it;
+        if(right_it == right_end) break;
+      }
+      if(left_kmer == (*right_it)){
+        dvstar_fun(left_kmer, *right_it);
+        ++right_it;
+      }
+    }
+
+    distances(x,y) = normalise_dvstar(dot_product, left_norm, right_norm); 
+  };
+
+  // for (int x = 0; x < vlmcs.size(); x++){
+  //   for (int y = 0; y < vlmcs.size(); y++){
+  //     fun(x,y); 
+  //   }
+  // }
+
+  utils::matrix_recursion(0, vlmcs.size(), 0, vlmcs.size(), fun); 
+
+  std::cout << "Size of RI_kmer struct " << sizeof(RI_Kmer) << " actual object " << sizeof(vlmcs[0][0]) << std::endl; 
+
+  auto end = std::chrono::steady_clock::now();
+  auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+  std::cout << "Time : " << time / (float) reps << " [micro sec]" << std::endl; 
+  std::cout << "Dot products for sanity check: " << distances(0,0) << "\n";
+  // std::cout << "Size of left: " << sizeof(left) + sizeof(RI_Kmer) * left.capacity() << " bytes" << "\n";
+  // std::cout << "Size of right: " << sizeof(right) + sizeof(RI_Kmer) * right.capacity() << " bytes" << "\n";
+  return distances;
+}
+
 int main(int argc, char *argv[]){
   // int num_items = 1500;
 
@@ -629,5 +719,10 @@ int main(int argc, char *argv[]){
   //benchmark_calculate_distance_major();
   //print_kmers_to_file();
   auto array = iterate_kmers_bench();
-  std::cout << array[0] << "\n";
+  for (int x = 0; x < array.rows(); x++){
+    for (int y = 0; y < array.cols(); y++){
+      std::cout << array(x,y) << " ";
+    }
+    std::cout << std::endl; 
+  } 
 }
