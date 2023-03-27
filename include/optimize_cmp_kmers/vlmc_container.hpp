@@ -305,10 +305,9 @@ class VLMC_sorted_vector : public VLMC_Container {
       for(auto &left_kmer : left_kmers){
         while((*right_it) < left_kmer){
           ++right_it;
-          if(right_it == right_end) break;
-        }
-        if(left_kmer == (*right_it)){
-          f(left_kmer, *right_it);
+        } else if ((*left_it) < (*right_it)){
+          ++left_it;
+        } else {
           ++right_it;
         }
       }

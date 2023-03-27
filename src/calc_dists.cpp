@@ -109,7 +109,6 @@ int main(int argc, char *argv[]){
              arguments.out_path.extension() == ".hdf5") {
     std::cout << "Writing to file..." << std::endl;
     HighFive::File file{arguments.out_path, HighFive::File::OpenOrCreate};
-    // write_hdf5(arguments, file, distance_matrix); 
     auto group_name = get_group_name(arguments); 
 
     if (!file.exist(group_name)) {
