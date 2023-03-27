@@ -288,13 +288,22 @@ class VLMC_sorted_vector : public VLMC_Container {
     const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f) override {
       auto right_it = right_kmers.begin();
       auto right_end = right_kmers.end();
-
+      
       auto left_it = left_kmers.begin();
       auto left_end = left_kmers.end();
-      while (left_it != left_end && right_it != right_end){
-        if ((*left_it) == (*right_it)){
+      while(left_it != left_end && right_it != right_end){
+        if(*left_it == *right_it){
           f(*left_it, *right_it);
           ++left_it;
+          ++right_it;
+        } else if(*left_it < *right_it) {
+          ++left_it;
+        }
+        else ++right_it;
+      }
+      /*
+      for(auto &left_kmer : left_kmers){
+        while((*right_it) < left_kmer){
           ++right_it;
         } else if ((*left_it) < (*right_it)){
           ++left_it;
@@ -302,6 +311,7 @@ class VLMC_sorted_vector : public VLMC_Container {
           ++right_it;
         }
       }
+      */
     }
 };
 
