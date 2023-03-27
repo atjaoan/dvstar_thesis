@@ -27,7 +27,7 @@ class TreeNode {
 
     void for_each(const std::function<void(const Kmer &kmer)> &f);
 
-    void second_pass(const Eigen::ArrayX4d &cached_context, 
+    void second_pass(const Eigen::ArrayX4f &cached_context, 
               const size_t background_order, const size_t offset_to_remove);
 
     friend class BTree;
@@ -61,7 +61,7 @@ class BTree {
       }
     }
 
-    void second_pass(const Eigen::ArrayX4d &cached_context, 
+    void second_pass(const Eigen::ArrayX4f &cached_context, 
               const size_t background_order, const size_t offset_to_remove) {
       if (root != NULL) {
         root->second_pass(cached_context, background_order, offset_to_remove);
@@ -105,7 +105,7 @@ void TreeNode::for_each(const std::function<void(const Kmer &kmer)> &f) {
     C[i]->for_each(f);
 }
 
-void TreeNode::second_pass(const Eigen::ArrayX4d &cached_context, 
+void TreeNode::second_pass(const Eigen::ArrayX4f &cached_context, 
               const size_t background_order, const size_t offset_to_remove) {
   int i;
   for (i = 0; i < n; i++) {

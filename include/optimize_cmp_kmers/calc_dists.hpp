@@ -10,7 +10,7 @@
 
 namespace calculate {
 
-using matrix_t  = Eigen::MatrixXd;
+using matrix_t  = Eigen::MatrixXf;
 using vlmc_c    = container::VLMC_Container;  
 using kmer_pair = container::Kmer_Pair;
 
@@ -70,7 +70,7 @@ matrix_t calculate_distances(
     container::Cluster_Container<VC> &cluster, std::function<double(vlmc_c &, vlmc_c &)> &distance_function,
     size_t requested_cores){
 
-  matrix_t distances = Eigen::MatrixXd::Constant(cluster.size(), cluster.size(), 0);
+  matrix_t distances = Eigen::MatrixXf::Constant(cluster.size(), cluster.size(), 0);
 
   // auto fun = [&](size_t start_index, size_t stop_index) {
   //   calculate_reduced_slice<VC>(start_index, stop_index, distances,

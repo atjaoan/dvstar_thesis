@@ -18,7 +18,7 @@
 
 using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
 using RI_Kmer = container::RI_Kmer; 
-using matrix_t = Eigen::MatrixXd;
+using matrix_t = Eigen::MatrixXf;
 
 void prettyPrint(size_t insert_time_fst, size_t insert_time_snd, size_t find_time_fst, size_t find_time_snd, 
       size_t iterate_time, size_t dvstar_time, int items_fst, int items_snd, std::string container){
@@ -533,6 +533,8 @@ std::array<double, reps> iterate_kmers_bench(){
   auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
   std::cout << "Time : " << time / (float) reps << " [micro sec]" << std::endl; 
   std::cout << "Dot products for sanity check: " << dot_products[0] << "\n";
+  std::cout << "Size of RI_Kmer: " << sizeof(RI_Kmer) << " bytes" << "\n";
+  std::cout << "Size of RI_Kmer in vector: " << sizeof(left[0]) << " bytes" << "\n";
   std::cout << "Size of left: " << sizeof(left) + sizeof(RI_Kmer) * left.capacity() << " bytes" << "\n";
   std::cout << "Size of right: " << sizeof(right) + sizeof(RI_Kmer) * right.capacity() << " bytes" << "\n";
   return dot_products;

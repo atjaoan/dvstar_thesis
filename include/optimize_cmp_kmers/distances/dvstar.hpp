@@ -17,7 +17,7 @@ namespace distance {
 using vlmc_c = container::VLMC_Container;  
 using Kmer = container::RI_Kmer;
 using bucket_t = std::vector<container::Kmer_Pair>;
-using matrix_t = Eigen::MatrixXd;
+using matrix_t = Eigen::MatrixXf;
 
 struct Intermediate_matrix_val{
   int left_id;

@@ -14,6 +14,7 @@
 class RIKmerTest : public ::testing::Test {
 protected:
   void SetUp() override {}
+  double error_tolerance = 1E-5;
 };
 
 TEST_F(RIKmerTest, EmptyConstructor) {
@@ -31,7 +32,7 @@ TEST_F(RIKmerTest, KmerConstructorProb) {
   
   container::RI_Kmer kmer{old_kmer};
   for (size_t i = 0; i < 4; i++){
-    EXPECT_DOUBLE_EQ(kmer.next_char_prob[i], (old_kmer.next_symbol_counts[i] + 1)/sum_children);
+    EXPECT_NEAR(kmer.next_char_prob[i], (old_kmer.next_symbol_counts[i] + 1)/sum_children, error_tolerance);
   }
   EXPECT_FALSE(kmer.is_null);
 }

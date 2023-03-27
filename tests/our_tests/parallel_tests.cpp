@@ -12,7 +12,7 @@
 #include "optimize_cmp_kmers/get_cluster.hpp"
 #include "optimize_cmp_kmers/calc_dists.hpp"
 
-using matrix_t  = Eigen::MatrixXd;
+using matrix_t  = Eigen::MatrixXf;
 using vlmc_t = container::VLMC_Container;
 
 class ParallelTest : public ::testing::Test {
@@ -28,7 +28,7 @@ protected:
       return distance::dvstar(left, right, background_order);
   };
 
-  double error_tolerance = 1E-7;
+  double error_tolerance = 1E-5;
 };
 
 TEST_F(ParallelTest, SequentialEqParallel) {

@@ -38,7 +38,7 @@ protected:
       return distance::dvstar(left, right, background_order);
   };
 
-  double error_tolerance = 1E-7;
+  double error_tolerance = 1E-6;
 };
 
 TEST_F(DvstarTests, BackgroundOrderTest) {
@@ -59,7 +59,7 @@ TEST_F(DvstarTests, Identity_vector) {
   VLMC_vector first_vlmc{first_bintree};
 
   double dist_vector = dist_func(first_vlmc, first_vlmc);
-  EXPECT_DOUBLE_EQ(0.0, dist_vector);
+  EXPECT_NEAR(0.0, dist_vector, error_tolerance);
   double old_dvstar_implementation = vlmc::dvstar(first_bintree, first_bintree, background_order);
   EXPECT_DOUBLE_EQ(0.0, old_dvstar_implementation);
 }
@@ -101,7 +101,7 @@ TEST_F(DvstarTests, Identity_indexing) {
   VLMC_Indexing first_vlmc{first_bintree};
 
   double dist_multi_vector = dist_func(first_vlmc, first_vlmc);
-  EXPECT_DOUBLE_EQ(0.0, dist_multi_vector);
+  EXPECT_NEAR(0.0, dist_multi_vector, error_tolerance);
   double old_dvstar_implementation = vlmc::dvstar(first_bintree, first_bintree, background_order);
   EXPECT_DOUBLE_EQ(0.0, old_dvstar_implementation);
 }

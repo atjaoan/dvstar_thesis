@@ -68,7 +68,7 @@ container::Kmer_Cluster get_kmer_cluster(const std::filesystem::path &directory,
   size_t id = 0; 
   for (const auto& dir_entry : recursive_directory_iterator(directory)) {
     std::vector<container::RI_Kmer> input_vector{};  
-    Eigen::ArrayX4d cached_context((int)std::pow(4, background_order), 4);
+    Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
 
     auto fun = [&](const RI_Kmer &kmer) { input_vector.push_back(kmer); }; 
 

@@ -19,7 +19,7 @@
 #include "vlmc_from_kmers/dvstar.hpp"
 #include "vlmc_from_kmers/build_vlmc.hpp"
 
-using matrix_t  = Eigen::MatrixXd;
+using matrix_t  = Eigen::MatrixXf;
 using vlmc_c = container::VLMC_vector;
 using vlmc_t = container::VLMC_Container;
 using cluster_c = container::Cluster_Container<vlmc_c>;
@@ -44,7 +44,7 @@ protected:
       return distance::dvstar(left, right, background_order);
   };
 
-  double error_tolerance = 1E-7;
+  double error_tolerance = 1E-5;
 };
 
 cluster_c create_cluster(vlmc_c &vlmc, size_t size) {

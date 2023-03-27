@@ -45,7 +45,7 @@ class VLMC_Container{
     const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f){};
 };
 
-int load_VLMCs_from_file(const std::filesystem::path &path_to_bintree, Eigen::ArrayX4d &cached_context, 
+int load_VLMCs_from_file(const std::filesystem::path &path_to_bintree, Eigen::ArrayX4f &cached_context, 
         const std::function<void(const RI_Kmer &kmer)> f, const size_t background_order = 0) {
   std::ifstream ifs(path_to_bintree, std::ios::binary);
   cereal::BinaryInputArchive archive(ifs);
@@ -87,7 +87,7 @@ class VLMC_vector : public VLMC_Container {
 
     VLMC_vector(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
       // cached_context : pointer to array which for each A, C, T, G has the next char probs
-      Eigen::ArrayX4d cached_context((int)std::pow(4, background_order), 4);
+      Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
 
       auto fun = [&](const RI_Kmer &kmer) { push(kmer); }; 
 
@@ -163,7 +163,7 @@ class VLMC_Indexing : public VLMC_Container {
     VLMC_Indexing(const std::filesystem::path &path_to_bintree, const size_t background_order = 0, const int initial_size = 50) 
       : container(initial_size, null_kmer), container_size{initial_size} {
       // cached_context : pointer to array which for each A, C, T, G has the next char probs
-      Eigen::ArrayX4d cached_context((int)std::pow(4, background_order), 4);
+      Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
 
       auto fun = [&](const RI_Kmer &kmer) { push(kmer); }; 
 
@@ -238,7 +238,7 @@ class VLMC_sorted_vector : public VLMC_Container {
 
     VLMC_sorted_vector(const std::filesystem::path &path_to_bintree, const size_t background_order = 0, bool use_new = false) {
       // cached_context : pointer to array which for each A, C, T, G has the next char probs
-      Eigen::ArrayX4d cached_context((int)std::pow(4, background_order), 4);
+      Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
 
       auto fun = [&](const RI_Kmer &kmer) { push(kmer); }; 
 
@@ -316,7 +316,7 @@ class VLMC_B_tree : public VLMC_Container {
 
     VLMC_B_tree(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
       // cached_context : pointer to array which for each A, C, T, G has the next char probs
-      Eigen::ArrayX4d cached_context((int)std::pow(4, background_order), 4);
+      Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
 
       auto fun = [&](const RI_Kmer &kmer) { push(kmer); }; 
 
@@ -364,7 +364,7 @@ class VLMC_hashmap : public VLMC_Container {
 
     VLMC_hashmap(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
       // cached_context : pointer to array which for each A, C, T, G has the next char probs
-      Eigen::ArrayX4d cached_context((int)std::pow(4, background_order), 4);
+      Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
 
       auto fun = [&](const RI_Kmer &kmer) { push(kmer); }; 
 
@@ -425,7 +425,7 @@ class VLMC_Combo : public VLMC_Container {
 
     VLMC_Combo(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
       // cached_context : pointer to array which for each A, C, T, G has the next char probs
-      Eigen::ArrayX4d cached_context((int)std::pow(4, background_order), 4);
+      Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
 
       auto fun = [&](const RI_Kmer &kmer) { push(kmer); }; 
 
@@ -537,7 +537,7 @@ class VLMC_Veb : public VLMC_Container {
 
       Kmer input_kmer{};
 
-      Eigen::ArrayX4d cached_context((int)std::pow(4, background_order), 4);
+      Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
       std::vector<RI_Kmer> tmp_container{};
 
       auto offset_to_remove = 0;
@@ -626,7 +626,7 @@ class VLMC_Set : public VLMC_Container {
 
       Kmer input_kmer{};
 
-      Eigen::ArrayX4d cached_context((int)std::pow(4, background_order), 4);
+      Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
       std::vector<RI_Kmer> tmp_container{};
 
       auto offset_to_remove = 0;

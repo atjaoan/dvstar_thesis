@@ -12,7 +12,7 @@
 
 using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
 using RI_Kmer = container::RI_Kmer;
-using matrix_t = Eigen::MatrixXd;
+using matrix_t = Eigen::MatrixXf;
 
 namespace utils {
   
