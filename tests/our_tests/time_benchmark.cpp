@@ -495,7 +495,7 @@ std::array<double, reps> iterate_kmers_bench(){
       left_norm += left_v.next_char_prob.square().sum();
       right_norm += right_v.next_char_prob.square().sum();
     };
-    
+    /*
     auto right_it = right.begin();
     auto right_end = right.end();
     for(auto &left_kmer : left){
@@ -508,7 +508,7 @@ std::array<double, reps> iterate_kmers_bench(){
         ++right_it;
       }
     }
-    /*
+    */
     int left_i = 0;
     int right_i = 0;  
     const int left_size = left.size();
@@ -526,7 +526,7 @@ std::array<double, reps> iterate_kmers_bench(){
         right_i++;
       }
     }
-    */
+    
     dot_products[i] = dot_product;
   }
   auto end = std::chrono::steady_clock::now();
@@ -537,6 +537,10 @@ std::array<double, reps> iterate_kmers_bench(){
   std::cout << "Size of RI_Kmer in vector: " << sizeof(left[0]) << " bytes" << "\n";
   std::cout << "Size of left: " << sizeof(left) + sizeof(RI_Kmer) * left.capacity() << " bytes" << "\n";
   std::cout << "Size of right: " << sizeof(right) + sizeof(RI_Kmer) * right.capacity() << " bytes" << "\n";
+  std::cout << "Address first element left: " << &left[0] << "\n";
+  std::cout << "Address first element right: " << &right[0] << "\n";
+  std::cout << "Address left: " << &left << "\n";
+  std::cout << "Address right: " << &right << "\n";
   return dot_products;
 }
 
