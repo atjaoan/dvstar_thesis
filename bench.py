@@ -113,6 +113,17 @@ def our_calculate_distances(dist_func: str, set_size: int, genome_path: str, vlm
 
     return subprocess.run(args, capture_output=True, text=True)
 
+def cache_ref_to_vec_size(size: int) -> subprocess.CompletedProcess:
+    args = (
+        "perf",
+        "stat",
+        "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
+        cwd / "build/dev", 
+        str(size)
+    )
+
+    return subprocess.run(args, capture_output=True, text=True)
+
 def calculate_distances_only_oh() -> subprocess.CompletedProcess:
     args = (
         "perf",
@@ -249,6 +260,23 @@ def benchmark():
     ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order)
     stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order, "kmer-major")
     ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_hashmap, 8)
+
+@app.command()
+def vecsize():
+    r1 = cache_ref_to_vec_size(500)
+    r2 = cache_ref_to_vec_size(5000)
+    r3 = cache_ref_to_vec_size(50000)
+    r4 = cache_ref_to_vec_size(500000)
+    r5 = cache_ref_to_vec_size(5000000)
+    r6 = cache_ref_to_vec_size(50000000)
+    r7 = cache_ref_to_vec_size(1000000000)
+    print(r1.stderr)
+    print(r2.stderr)
+    print(r3.stderr)
+    print(r4.stderr)
+    print(r5.stderr)
+    print(r6.stderr)
+    print(r7.stderr)
 
 @app.command()
 def record():

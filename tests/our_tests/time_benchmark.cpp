@@ -470,7 +470,7 @@ void get_kmer_vector_test(std::filesystem::path path, std::vector<RI_Kmer>& kmer
 }
 
 constexpr int reps = 20;
-std::array<double, reps> iterate_kmers_bench(){
+std::array<double, reps> iterate_kmers_bench_old(){
   std::filesystem::path path_fst{"../data/human_VLMCs/human_genome_1.bintree"};
   std::filesystem::path path_snd{"../data/human_VLMCs/human_genome_2.bintree"};
 
@@ -723,7 +723,6 @@ void get_kmer_vector_test(std::filesystem::path path, std::vector<std::vector<tm
   vlmcs.push_back(vlmc);
 }
 
-constexpr int reps = 1;
 matrix_t iterate_kmers_bench(){
   std::filesystem::path path_fst{"../data/human_VLMCs/"};
   std::vector<std::vector<tmp_Kmer>> vlmcs{};
@@ -782,7 +781,7 @@ matrix_t iterate_kmers_bench(){
 
   auto end = std::chrono::steady_clock::now();
   auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-  std::cout << "Time : " << time / (float) reps << " [micro sec]" << std::endl; 
+  std::cout << "Time : " << time << " [micro sec]" << std::endl; 
   std::cout << "Dot products for sanity check: " << distances(0,0) << "\n";
   // std::cout << "Size of left: " << sizeof(left) + sizeof(RI_Kmer) * left.capacity() << " bytes" << "\n";
   // std::cout << "Size of right: " << sizeof(right) + sizeof(RI_Kmer) * right.capacity() << " bytes" << "\n";
