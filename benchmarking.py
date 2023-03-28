@@ -214,37 +214,40 @@ def Pst_normal_benchmaking(dataset: str):
 def normal_benchmaking(dataset: str, implementation: str, dataset_outer_dir: str):
     csv_filename = get_csv_name(dataset, implementation + "_")
     print(csv_filename)
-    nb_files = count_nb_files(cwd / dataset / "small")
+    for i in range(0,5):
+        nb_files = count_nb_files(cwd / dataset / "small")
+        if (nb_files > 10000):
+            nb_files = int(nb_files / 2) 
 
-    if (nb_files > 10000):
-        nb_files = int(nb_files / 2) 
+        th_small, min_small, max_small = get_parameter_from_bintree(os.listdir(cwd / dataset / "small")[0])
+        th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(cwd / dataset / "medium")[0])
+        th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(cwd / dataset / "large")[0])
 
-    th_small, min_small, max_small = get_parameter_from_bintree(os.listdir(cwd / dataset / "small")[0])
-    th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(cwd / dataset / "medium")[0])
-    th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(cwd / dataset / "large")[0])
+        while(nb_files > 2):
+            print("Benchmarking with " + str(nb_files) + " VLMCs...")
+            print("Small " + implementation + ".")
+            res_our_small  = calculate_distance(nb_files, dataset + "/small", "hdf5_results/distances_small.hdf5", implementation, 8, 0)
+            print("Medium " + implementation + ".")
+            res_our_medium = calculate_distance(nb_files, dataset + "/medium", "hdf5_results/distances_medium.hdf5", implementation, 8, 0)
+            print("Large " + implementation + ".")
+            res_our_large  = calculate_distance(nb_files, dataset + "/large", "hdf5_results/distances_large.hdf5", implementation, 8, 0)
 
-    while(nb_files > 2):
-        print("Benchmarking with " + str(nb_files) + " VLMCs...")
-        print("Small " + implementation + ".")
-        res_our_small  = calculate_distance(nb_files, dataset + "/small", "hdf5_results/distances_small.hdf5", implementation, 8, 0)
-        print("Medium " + implementation + ".")
-        res_our_medium = calculate_distance(nb_files, dataset + "/medium", "hdf5_results/distances_medium.hdf5", implementation, 8, 0)
-        print("Large " + implementation + ".")
-        res_our_large  = calculate_distance(nb_files, dataset + "/large", "hdf5_results/distances_large.hdf5", implementation, 8, 0)
+            compare_hdf5_files("", "_small", implementation, dataset_outer_dir + "_small", 8, nb_files, 0)
+            compare_hdf5_files("", "_medium", implementation, dataset_outer_dir + "_medium", 8, nb_files, 0)
+            compare_hdf5_files("", "_large", implementation, dataset_outer_dir + "_large", 8, nb_files, 0)
 
-        compare_hdf5_files("", "_small", implementation, dataset_outer_dir + "_small", 8, nb_files, 0)
-        compare_hdf5_files("", "_medium", implementation, dataset_outer_dir + "_medium", 8, nb_files, 0)
-        compare_hdf5_files("", "_large", implementation, dataset_outer_dir + "_large", 8, nb_files, 0)
+            catch_and_save(res_our_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, implementation, 8)
+            catch_and_save(res_our_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, implementation, 8)
+            catch_and_save(res_our_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, implementation, 8)
 
-        catch_and_save(res_our_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, implementation, 8)
-        catch_and_save(res_our_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, implementation, 8)
-        catch_and_save(res_our_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, implementation, 8)
+            nb_files = int(nb_files / 2)
 
-        nb_files = int(nb_files / 2)
-    
-    os.remove(cwd / "hdf5_results/distances_small.hdf5")
-    os.remove(cwd / "hdf5_results/distances_medium.hdf5")
-    os.remove(cwd / "hdf5_results/distances_large.hdf5")
+        if (os.path.isfile(cwd / "hdf5_results/distances_small.hdf5")):
+            os.remove(cwd / "hdf5_results/distances_small.hdf5")
+        if (os.path.isfile(cwd / "hdf5_results/distances_medium.hdf5")):
+            os.remove(cwd / "hdf5_results/distances_medium.hdf5")
+        if (os.path.isfile(cwd / "hdf5_results/distances_large.hdf5")):
+            os.remove(cwd / "hdf5_results/distances_large.hdf5")
 
 #####################################
 # Function for benchmarking degree  #
@@ -310,7 +313,7 @@ def compare_hdf5_files(bench: str, vlmc_size: str, vlmc: str, path: str, dop: in
 def benchmark():
     # normal_benchmaking("data/benchmarking/ecoli", "sorted-vector", "ecoli")
     # normal_benchmaking("data/benchmarking/ecoli", "hashmap", "ecoli")
-    normal_benchmaking("data/benchmarking/ecoli", "combo", "ecoli")
+    normal_benchmaking("data/benchmarking/human", "sorted-vector", "human")
     # normal_benchmaking("data/benchmarking/human", "veb", "human")
     # combo_parameter_sweep("data/benchmarking/ecoli", "combo", "ecoli")
     # normal_benchmaking("data/benchmarking/human", "sorted-vector", "human")
