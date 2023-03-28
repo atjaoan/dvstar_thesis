@@ -38,7 +38,7 @@ float normalise_dvstar_test(float dot_product, float left_norm,
   }
 }
 
-void get_kmer_vector_dev(std::filesystem::path path, std::vector<std::vector<RI_Kmer>>& vlmcs, int max_size){
+void get_kmer_vector_dev(std::filesystem::path path, std::vector<std::vector<RI_Kmer>>& vlmcs, int max_size, int offset){
   std::ifstream ifs(path, std::ios::binary);
   cereal::BinaryInputArchive archive(ifs);
   std::vector<RI_Kmer> vlmc{};
@@ -52,14 +52,17 @@ void get_kmer_vector_dev(std::filesystem::path path, std::vector<std::vector<RI_
   }
   ifs.close();
   std::sort(vlmc.begin(), vlmc.end());
+  vlmc.reserve(vlmc.size() + offset);
   vlmcs.push_back(vlmc);
 }
 
 matrix_t iterate_kmers_bench_dev(int max_size){
-  std::filesystem::path path_fst{"./data/human_VLMCs"};
+  std::filesystem::path path_fst{"../data/human_VLMCs"};
   std::vector<std::vector<RI_Kmer>> vlmcs{};
+  int offset = 0;
   for (const auto& dir_entry : recursive_directory_iterator(path_fst)) {
-    get_kmer_vector_dev(dir_entry.path(), vlmcs, max_size);
+    get_kmer_vector_dev(dir_entry.path(), vlmcs, max_size, offset);
+    offset += 257;
   }
   
   matrix_t distances{vlmcs.size(), vlmcs.size()};
