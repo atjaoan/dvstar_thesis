@@ -50,6 +50,8 @@ void get_kmer_vector_dev(std::filesystem::path path, std::vector<std::vector<RI_
     vlmc.push_back(ri_kmer);
     curr_size++;
   }
+  //curr_size = 0;
+  //ifs.seekg(0, ifs.beg);
   ifs.close();
   std::sort(vlmc.begin(), vlmc.end());
   vlmc.reserve(vlmc.size() + offset);
@@ -57,7 +59,7 @@ void get_kmer_vector_dev(std::filesystem::path path, std::vector<std::vector<RI_
 }
 
 matrix_t iterate_kmers_bench_dev(int max_size){
-  std::filesystem::path path_fst{"../data/human_VLMCs"};
+  std::filesystem::path path_fst{"./data/human_VLMCs"};
   std::vector<std::vector<RI_Kmer>> vlmcs{};
   int offset = 0;
   for (const auto& dir_entry : recursive_directory_iterator(path_fst)) {
