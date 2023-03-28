@@ -456,6 +456,93 @@ void print_kmers_to_file(){
   utils::output_kmer_reps_to_file(path_vlmcs, output_path);
 }
 
+void get_kmer_vector_test(std::filesystem::path path, std::vector<RI_Kmer>& kmers){
+  std::ifstream ifs(path, std::ios::binary);
+  cereal::BinaryInputArchive archive(ifs);
+  vlmc::VLMCKmer input_kmer{};
+
+  while (ifs.peek() != EOF){
+    archive(input_kmer);
+    RI_Kmer ri_kmer(input_kmer); 
+    kmers.push_back(ri_kmer);
+  }
+  ifs.close();
+}
+
+constexpr int reps = 20;
+std::array<double, reps> iterate_kmers_bench(){
+  std::filesystem::path path_fst{"../data/human_VLMCs/human_genome_1.bintree"};
+  std::filesystem::path path_snd{"../data/human_VLMCs/human_genome_2.bintree"};
+
+  std::vector<RI_Kmer> left{};
+  std::vector<RI_Kmer> right{};
+  get_kmer_vector_test(path_fst, left);
+  get_kmer_vector_test(path_snd, right);
+
+  std::sort(left.begin(), left.end());
+  std::sort(right.begin(), right.end());
+  
+  std::array<double, reps> dot_products;
+  auto start = std::chrono::steady_clock::now();
+  for(int i = 0; i < reps; i++){
+    double dot_product = 0.0;
+
+    double left_norm = 0.0;
+    double right_norm = 0.0;
+
+    auto dvstar_fun = [&](auto &left_v, auto &right_v) {
+      dot_product += (left_v.next_char_prob * right_v.next_char_prob).sum();
+      left_norm += left_v.next_char_prob.square().sum();
+      right_norm += right_v.next_char_prob.square().sum();
+    };
+    /*
+    auto right_it = right.begin();
+    auto right_end = right.end();
+    for(auto &left_kmer : left){
+      while((*right_it) < left_kmer){
+        ++right_it;
+        if(right_it == right_end) break;
+      }
+      if(left_kmer == (*right_it)){
+        dvstar_fun(left_kmer, *right_it);
+        ++right_it;
+      }
+    }
+    */
+    int left_i = 0;
+    int right_i = 0;  
+    const int left_size = left.size();
+    const int right_size = right.size();
+    while(left_i < left_size && right_i < right_size) {
+      const RI_Kmer &left_kmer = left[left_i];
+      const RI_Kmer &right_kmer = right[right_i];
+      if (right_kmer == left_kmer) {
+        dvstar_fun(left_kmer, right_kmer);
+        left_i++;
+        right_i++;
+      } else if (left_kmer < right_kmer) {
+        left_i++;
+      } else {
+        right_i++;
+      }
+    }
+    
+    dot_products[i] = dot_product;
+  }
+  auto end = std::chrono::steady_clock::now();
+  auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+  std::cout << "Time : " << time / (float) reps << " [micro sec]" << std::endl; 
+  std::cout << "Dot products for sanity check: " << dot_products[0] << "\n";
+  std::cout << "Size of RI_Kmer: " << sizeof(RI_Kmer) << " bytes" << "\n";
+  std::cout << "Size of RI_Kmer in vector: " << sizeof(left[0]) << " bytes" << "\n";
+  std::cout << "Size of left: " << sizeof(left) + sizeof(RI_Kmer) * left.capacity() << " bytes" << "\n";
+  std::cout << "Size of right: " << sizeof(right) + sizeof(RI_Kmer) * right.capacity() << " bytes" << "\n";
+  std::cout << "Address first element left: " << &left[0] << "\n";
+  std::cout << "Address first element right: " << &right[0] << "\n";
+  std::cout << "Address left: " << &left << "\n";
+  std::cout << "Address right: " << &right << "\n";
+  return dot_products;
+}
 
 // A function to implement bubble sort
 void bubbleSort(std::vector<RI_Kmer> &container) {
