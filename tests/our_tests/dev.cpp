@@ -111,7 +111,49 @@ matrix_t iterate_kmers_bench_dev(int max_size){
   return distances;
 }
 
+matrix_t iterate_vectors_int(int max_size){
+  auto container = std::vector<int>(max_size);
+  matrix_t distances{24, 24};
+  
+  auto container_it = container.begin();
+  auto container_end = container.end();
+  int i = 0;
+  while(container_it != container_end){
+    //*container_it += 2;
+    distances(i%24,i%24) = (*container_it) + 5;
+    ++container_it;
+    i++;
+  }
+
+  return distances;
+}
+
+matrix_t iterate_vectors_RI_Kmer(int max_size){
+  auto container = std::vector<RI_Kmer>(max_size);
+  matrix_t distances{24, 24};
+  
+  auto container_it = container.begin();
+  auto container_end = container.end();
+  int i = 0;
+  while(container_it != container_end){
+    distances(i%24,i%24) = (*container_it).next_char_prob[2] + 5.0;
+    ++container_it;
+    i++;
+  }
+
+  return distances;
+}
+
 int main(int argc, char *argv[]){
-  int max_size = std::stoi(argv[1]);
-  auto array = iterate_kmers_bench_dev(max_size);
+  int max_size = std::stoi(argv[2]);
+  //auto array = iterate_kmers_bench_dev(max_size);
+  matrix_t array;
+  if(argv[1] == 'i'){
+    array = iterate_vectors_int(max_size);
+  } else {
+    array = iterate_vectors_RI_Kmer(max_size);
+  }
+  for(int i = 0; i < 10; i++){
+    if(i < 10) std::cout << array(i,0);
+  }
 }
