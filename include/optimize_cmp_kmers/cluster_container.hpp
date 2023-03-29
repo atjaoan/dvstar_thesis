@@ -36,7 +36,7 @@ class Cluster_Container {
       }
     }
 
-    VLMC_Container &get(const int i) { return container[i]; }
+    VC &get(const int i) { return container[i]; }
 
     VC &operator[](size_t index){ return container[index]; }
 

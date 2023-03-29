@@ -11,11 +11,8 @@
 
 // Distance Functions 
 #include "distances/dvstar.hpp"
-#include "distances/kl_divergence.hpp"
 
 namespace parser {
-
-using vlmc_c = container::VLMC_Container;
 
 enum Mode {
   compare,
@@ -64,17 +61,14 @@ struct cli_arguments {
   size_t background_order {0}; 
 };
 
-std::function<double(vlmc_c &, vlmc_c &)>
-parse_distance_function(cli_arguments arguments) {
+template <typename VC>
+std::function<double(VC &, VC &)> parse_distance_function(cli_arguments arguments) {
   if (arguments.dist_fn == parser::Distance_function::dvstar) {
     auto fun = [&](auto &left, auto &right) {
-      return distance::dvstar(left, right, arguments.background_order);
+      return distance::dvstar<VC>(left, right, arguments.background_order);
     };
     return fun; 
   } 
-  else if (arguments.dist_fn ==  parser::Distance_function::kl) {
-    return distance::kl; 
-  }  
   throw std::invalid_argument("Invalid distance function name.");
 }
 

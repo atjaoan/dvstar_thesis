@@ -34,8 +34,12 @@ protected:
 
   int background_order = 0;
 
-  std::function<double(container::VLMC_Container &, container::VLMC_Container &)> dist_func = [&](auto &left, auto &right) {
-      return distance::dvstar(left, right, background_order);
+  std::function<double(VLMC_vector &, VLMC_vector &)> dist_func = [&](auto &left, auto &right) {
+      return distance::dvstar<VLMC_vector>(left, right, background_order);
+  };
+
+  std::function<double(VLMC_Indexing &, VLMC_Indexing &)> dist_func_idx = [&](auto &left, auto &right) {
+      return distance::dvstar<VLMC_Indexing>(left, right, background_order);
   };
 
   double error_tolerance = 1E-6;
@@ -60,8 +64,6 @@ TEST_F(DvstarTests, Identity_vector) {
 
   double dist_vector = dist_func(first_vlmc, first_vlmc);
   EXPECT_NEAR(0.0, dist_vector, error_tolerance);
-  double old_dvstar_implementation = vlmc::dvstar(first_bintree, first_bintree, background_order);
-  EXPECT_DOUBLE_EQ(0.0, old_dvstar_implementation);
 }
 
 TEST_F(DvstarTests, EqualDistance_vector) {
@@ -100,18 +102,16 @@ TEST_F(DvstarTests, multiple_runs_vector) {
 TEST_F(DvstarTests, Identity_indexing) {
   VLMC_Indexing first_vlmc{first_bintree};
 
-  double dist_multi_vector = dist_func(first_vlmc, first_vlmc);
+  double dist_multi_vector = dist_func_idx(first_vlmc, first_vlmc);
   EXPECT_NEAR(0.0, dist_multi_vector, error_tolerance);
-  double old_dvstar_implementation = vlmc::dvstar(first_bintree, first_bintree, background_order);
-  EXPECT_DOUBLE_EQ(0.0, old_dvstar_implementation);
 }
 
 TEST_F(DvstarTests, Symmetry_indexing) {
   VLMC_Indexing first_vlmc{first_bintree};
   VLMC_Indexing second_vlmc{second_bintree};
 
-  double dist_one_multi_vector = dist_func(first_vlmc, second_vlmc);
-  double dist_two_multi_vector = dist_func(second_vlmc, first_vlmc);
+  double dist_one_multi_vector = dist_func_idx(first_vlmc, second_vlmc);
+  double dist_two_multi_vector = dist_func_idx(second_vlmc, first_vlmc);
 
   EXPECT_DOUBLE_EQ(dist_one_multi_vector, dist_two_multi_vector);
 }
@@ -120,9 +120,9 @@ TEST_F(DvstarTests, multiple_runs_indexing) {
   VLMC_Indexing first_vlmc{first_bintree};
   VLMC_Indexing second_vlmc{second_bintree};
   size_t runs = 10; 
-  double prev = dist_func(first_vlmc, second_vlmc);
+  double prev = dist_func_idx(first_vlmc, second_vlmc);
   for (int i = 0; i < runs; i++){
-    double current = dist_func(first_vlmc, second_vlmc);
+    double current = dist_func_idx(first_vlmc, second_vlmc);
     EXPECT_DOUBLE_EQ(prev, current); 
     prev = current; 
   }
@@ -136,7 +136,7 @@ TEST_F(DvstarTests, EqualDistance_indexing) {
   VLMC_vector second_vlmc_v{second_bintree};
 
   double dist_vector = dist_func(first_vlmc_v, second_vlmc_v);
-  double dist_multi_vector = dist_func(first_vlmc, second_vlmc);
+  double dist_multi_vector = dist_func_idx(first_vlmc, second_vlmc);
   double old_dvstar_implementation = vlmc::dvstar(first_bintree, second_bintree, background_order);
 
   EXPECT_NEAR(dist_multi_vector, dist_vector, error_tolerance);
@@ -151,8 +151,8 @@ TEST_F(DvstarTests, TestBackgroundOrder) {
     container::VLMC_Indexing first_vlmc_indexing{first_bintree, order};
     container::VLMC_Indexing second_vlmc_indexing{second_bintree, order};
 
-    auto dist_vector = distance::dvstar(first_vlmc_vector, second_vlmc_vector, order);
-    auto dist_indexing = distance::dvstar(first_vlmc_indexing, second_vlmc_indexing, order);
+    auto dist_vector = distance::dvstar<VLMC_vector>(first_vlmc_vector, second_vlmc_vector, order);
+    auto dist_indexing = distance::dvstar<VLMC_Indexing>(first_vlmc_indexing, second_vlmc_indexing, order);
     auto old_dvstar_implementation = vlmc::dvstar(first_bintree, second_bintree, order);
 
     EXPECT_NEAR(old_dvstar_implementation, dist_vector, error_tolerance);

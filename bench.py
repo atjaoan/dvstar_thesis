@@ -93,7 +93,7 @@ def our_calculate_distances(dist_func: str, set_size: int, genome_path: str, vlm
     args = (
         "perf",
         "stat",
-        "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
+        "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses,L1-dcache-load-misses,L1-dcache-loads,L1-dcache-stores,l2_rqsts.miss,LLC-load-misses,LLC-loads,LLC-prefetch-misses,LLC-store-misses,LLC-stores,cycle_activity.stalls_l3_miss",
         cwd / "build/dist", 
         "-p",
         cwd / genome_path,
@@ -143,6 +143,7 @@ def save_to_csv(res: subprocess.CompletedProcess, csv_path: Path, dist_func: str
 
     print("For implementation -> " + implementation + "\n")
     print(res.stderr)
+    return
 
     data = [get_git_commit_version(), implementation, dist_func, set_size, threshold, min_count, max_depth]
     columns = ["repo_version", "implementation", "distance_function", "set_size", "threshold", "min_count", "max_depth"]
@@ -251,14 +252,16 @@ def stat_new(set_size: int = -1, dist_func: Distance_Function = Distance_Functio
 @app.command()
 def benchmark():
     background_order = 0
-    genome_path = "data/medium_test"
-    stat(-1, Distance_Function.dvstar, genome_path, background_order)
+    genome_path = "data/benchmarking/human/large"
+    # stat(-1, Distance_Function.dvstar, genome_path, background_order)
     ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_multi_vector, 8)
+    stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_sorted_vector, 2, background_order)
+    stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_sorted_vector, 4, background_order)
     stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_sorted_vector, 8, background_order)
-    stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order)
+    # stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order)
     ##stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_veb, 8, background_order)
     ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order)
-    stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order, "kmer-major")
+    # stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order, "kmer-major")
     ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_hashmap, 8)
 
 @app.command()

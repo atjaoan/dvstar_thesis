@@ -470,7 +470,7 @@ void get_kmer_vector_test(std::filesystem::path path, std::vector<RI_Kmer>& kmer
 }
 
 constexpr int reps = 20;
-std::array<double, reps> iterate_kmers_bench_old(){
+std::array<double, reps> iterate_kmers_bench_johans(){
   std::filesystem::path path_fst{"../data/human_VLMCs/human_genome_1.bintree"};
   std::filesystem::path path_snd{"../data/human_VLMCs/human_genome_2.bintree"};
 
@@ -724,7 +724,7 @@ void get_kmer_vector_test(std::filesystem::path path, std::vector<std::vector<tm
 }
 
 matrix_t iterate_kmers_bench(){
-  std::filesystem::path path_fst{"../data/human_VLMCs/"};
+  std::filesystem::path path_fst{"../data/benchmarking/human/large"};
   std::vector<std::vector<tmp_Kmer>> vlmcs{};
   for (const auto& dir_entry : recursive_directory_iterator(path_fst)) {
     get_kmer_vector_test(dir_entry.path(), vlmcs);

@@ -14,7 +14,6 @@
 
 namespace distance {
 
-using vlmc_c = container::VLMC_Container;  
 using Kmer = container::RI_Kmer;
 using bucket_t = std::vector<container::Kmer_Pair>;
 using matrix_t = Eigen::MatrixXf;
@@ -95,26 +94,13 @@ double normalise_dvstar(double dot_product, double left_norm,
   }
 }
 
-double dvstar(vlmc_c &left, vlmc_c &right, size_t background_order){
-
-  double dot_product = 0.0;
-
-  double left_norm = 0.0;
-  double right_norm = 0.0;
-
-  auto dvstar_fun = [&](auto &left_v, auto &right_v) {
-    dot_product += (left_v.next_char_prob * right_v.next_char_prob).sum();
-    left_norm += left_v.next_char_prob.square().sum();
-    right_norm += right_v.next_char_prob.square().sum();
-    };
-
+template <typename VC>
+float dvstar(VC &left, VC &right, size_t background_order){
   if (left.size() < right.size()){
-    left.iterate_kmers(left, right, dvstar_fun);
+    return container::iterate_kmers(left, right);
   } else {
-    right.iterate_kmers(right, left, dvstar_fun);
+    return container::iterate_kmers(right, left);
   }
-      
-  return normalise_dvstar(dot_product, left_norm, right_norm);
 }
 
 void dvstar_kmer_major(bucket_t &left_vector, bucket_t &right_vector, 

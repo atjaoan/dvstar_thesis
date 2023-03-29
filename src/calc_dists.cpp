@@ -8,7 +8,7 @@ using matrix_t = Eigen::MatrixXf;
 
 template <typename VC>
 matrix_t calculate_cluster_distance(parser::cli_arguments arguments, const size_t nr_cores){
-  auto distance_function = parser::parse_distance_function(arguments);
+  auto distance_function = parser::parse_distance_function<VC>(arguments);
   auto cluster = cluster::get_cluster<VC>(arguments.first_VLMC_path, nr_cores, arguments.background_order, arguments.set_size);
   if (arguments.second_VLMC_path.empty()){
     return calculate::calculate_distances<VC>(cluster, distance_function, nr_cores);

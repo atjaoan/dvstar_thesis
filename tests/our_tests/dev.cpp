@@ -57,7 +57,7 @@ void get_kmer_vector_dev(std::filesystem::path path, std::vector<std::vector<RI_
 }
 
 matrix_t iterate_kmers_bench_dev(int max_size){
-  std::filesystem::path path_fst{"../data/human_VLMCs"};
+  std::filesystem::path path_fst{"./data/benchmarking/human/large"};
   std::vector<std::vector<RI_Kmer>> vlmcs{};
   int offset = 0;
   for (const auto& dir_entry : recursive_directory_iterator(path_fst)) {

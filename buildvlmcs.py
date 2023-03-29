@@ -69,10 +69,10 @@ def build_ecoli():
 
 @app.command()
 def build():
-    ## print("Building Human Sequences...")
-    ## build_human()
-    print("Building E-coli Sequences...")
-    build_ecoli()
+    print("Building Human Sequences...")
+    build_human()
+    # print("Building E-coli Sequences...")
+    # build_ecoli()
 
 
 if __name__ == "__main__":

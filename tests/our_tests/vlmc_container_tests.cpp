@@ -98,11 +98,11 @@ TEST_F(VlmcContainerTest, AddManyReadInKmerToIndexByValue) {
   }
 }
 
-TEST_F(VlmcContainerTest, CopyNextCharProbIntoCahe) {
-  container::VLMC_Indexing container0(path_bintree, 0, 50);
-  container::VLMC_Indexing container1(path_bintree, 1, 50);
-  container::VLMC_Indexing container2(path_bintree, 2, 50);
-}
+// TEST_F(VlmcContainerTest, CopyNextCharProbIntoCahe) {
+//   container::VLMC_Indexing container0(path_bintree, 0, 50);
+//   container::VLMC_Indexing container1(path_bintree, 1, 50);
+//   container::VLMC_Indexing container2(path_bintree, 2, 50);
+// }
 
 TEST_F(VlmcContainerTest, EmptyBintreeTest) {
   container::VLMC_sorted_vector container_s(path_corner_case, 0);
