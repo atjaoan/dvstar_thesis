@@ -78,7 +78,7 @@ if(MAIN_PROJECT)
     endif()
     add_executable(dist src/calc_dists.cpp)
     add_executable(time_benchmark tests/our_tests/time_benchmark.cpp)
-    #add_executable(dev tests/our_tests/dev.cpp)
+    add_executable(dev tests/our_tests/dev.cpp)
     target_link_libraries(dist ${CountVLMC_LIBRARIES})
     target_link_libraries(time_benchmark ${CountVLMC_LIBRARIES})
 

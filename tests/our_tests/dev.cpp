@@ -1,22 +1,23 @@
 #pragma once 
-
+#include <iostream>
+#include <math.h>
+#include <Eigen/Core>
 #include <functional>
 #include <filesystem>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
-#include <Eigen/Core>
-#include <math.h>
-#include <iostream>
 #include <string>
-
 #include "read_in_kmer.hpp"
-
 using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
 using RI_Kmer = container::RI_Kmer; 
 using matrix_t = Eigen::MatrixXf;
+/*
+
 #include "utils.hpp"
 
+*/
+/*
 float normalise_dvstar_test(float dot_product, float left_norm,
                         float right_norm) {
 
@@ -110,7 +111,7 @@ matrix_t iterate_kmers_bench_dev(int max_size){
   }
   return distances;
 }
-
+*/
 matrix_t iterate_vectors_int(int max_size){
   auto container = std::vector<int>(max_size);
   matrix_t distances{24, 24};
@@ -124,6 +125,8 @@ matrix_t iterate_vectors_int(int max_size){
     ++container_it;
     i++;
   }
+
+  std::cout << sizeof(container) + sizeof(int) * container.capacity() << std::endl;
 
   return distances;
 }
@@ -141,6 +144,8 @@ matrix_t iterate_vectors_RI_Kmer(int max_size){
     i++;
   }
 
+  std::cout << sizeof(container) + sizeof(RI_Kmer) * container.capacity() << std::endl;
+
   return distances;
 }
 
@@ -154,6 +159,6 @@ int main(int argc, char *argv[]){
     array = iterate_vectors_RI_Kmer(max_size);
   }
   for(int i = 0; i < 10; i++){
-    if(i < 10) std::cout << array(i,0);
+    //if(i < 10) std::cout << array(i,0);
   }
 }
