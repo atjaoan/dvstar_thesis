@@ -26,7 +26,7 @@ struct Veb_array{
 
 inline int power_of_two(int exponent) { return 1 << exponent; }
 
-void hyper_compute(int n, int& d, int& D, int& subtree_size, int& subtree_leaf_count){	
+void get_group_index_size_count(int n, int& d, int& D, int& subtree_size, int& subtree_leaf_count){	
 	int h = (int)ceil(log((float)n+1)/log(2.0f));
 	d = h / 2;
 	D = power_of_two(d) - 1;
@@ -61,30 +61,34 @@ void insert(int n){
   container[get_index(n, height)] = n;
 }
 
-int veb_search(const int *tree, int size, int elt){ 
+int get_elem(int n){
+  return container[get_index(n, height)];
+}
+
+int veb_search(const int *tree, int size, int element){ 
   int d, D, subtree_size, subtree_leaf_count;
-	hyper_compute(size, d, D, subtree_size, subtree_leaf_count);
+	get_group_index_size_count(size, d, D, subtree_size, subtree_leaf_count);
 
 	if (size > 1) {
 		// Recurse on top half of tree
-		int subtree_index = veb_search(tree, D, elt);
+		int subtree_index = veb_search(tree, D, element);
 		if (subtree_index < 0) return subtree_index;
 
 		int offset = subtree_index * subtree_size + D;
 
 		// If not in top half, use subtree index to find place in bottom half
-		int bottom_subtree_index = veb_search(tree + offset, subtree_size, elt);
+		int bottom_subtree_index = veb_search(tree + offset, subtree_size, element);
 		return subtree_leaf_count*subtree_index + bottom_subtree_index;
 	} else {
 		int root = tree[0];
 
-		if (elt == root) {
-			std::cout << "Found " << elt << " at index " 
+		if (element == root) {
+			std::cout << "Found " << element << " at index " 
 				  << (int)(tree - container.data()) << std::endl;
 			return -1;
 		}
 
-		return (elt < root) ? 0 : 1;		
+		return (element < root) ? 0 : 1;
 	}
 }
 };

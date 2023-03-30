@@ -66,3 +66,21 @@ TEST_F(VebArrayTest, InsertFn){
   EXPECT_EQ(16, power);
   EXPECT_EQ(4, tree.height);
 }
+
+TEST_F(VebArrayTest, VebSearch){
+  veb::Veb_array tree(16);
+  tree.insert(5);
+  tree.insert(1);
+  tree.insert(2);
+  EXPECT_EQ(5, tree.get_elem(5));
+  EXPECT_EQ(1, tree.get_elem(1));
+  EXPECT_EQ(2, tree.get_elem(2));
+  //tree.insert(9);
+  //std::cout << tree.veb_search(tree.container.data(), tree.height, 1) << "\n";
+  //std::cout << tree.veb_search(tree.container.data(), tree.size, 5) << "\n";
+  //std::cout << tree.veb_search(tree.container.data(), tree.size, 2) << "\n";
+  //EXPECT_EQ(5, tree.veb_search(tree.container.data(), tree.size, 5));
+  //EXPECT_EQ(1, tree.veb_search(tree.container.data(), tree.height, 1));
+  //EXPECT_EQ(2, tree.veb_search(tree.container.data(), tree.height, 2));
+  //EXPECT_EQ(9, tree.veb_search(tree.container.data(), tree.height, 9));
+}
