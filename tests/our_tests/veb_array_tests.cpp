@@ -51,3 +51,18 @@ TEST_F(VebArrayTest, Size10TreeInsert){
   EXPECT_EQ(4, tree.height);
 }
 
+TEST_F(VebArrayTest, InsertFn){
+  veb::Veb_array tree(10);
+  int power = tree.power_of_two((int)(ceil(log((float)10)/log(2.0))));
+
+  int height = tree.height;
+
+  tree.insert(5);
+  for(int i = 0; i < tree.size; i++){
+    if(i != 8)
+      EXPECT_EQ(0, tree.container[i]);
+  }
+  EXPECT_EQ(5, tree.container[8]);
+  EXPECT_EQ(16, power);
+  EXPECT_EQ(4, tree.height);
+}

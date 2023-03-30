@@ -57,6 +57,10 @@ int get_index(int n, int height){
 	return top_address + bot_address;
 }
 
+void insert(int n){
+  container[get_index(n, height)] = n;
+}
+
 int veb_search(const int *tree, int size, int elt){ 
   int d, D, subtree_size, subtree_leaf_count;
 	hyper_compute(size, d, D, subtree_size, subtree_leaf_count);
