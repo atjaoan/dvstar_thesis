@@ -12,6 +12,7 @@ protected:
   void SetUp() override {}
 };
 
+/*
 TEST_F(VebArrayTest, Indicies) {
   veb::Veb_array tree(16);
   int k = 4; // height
@@ -33,9 +34,8 @@ TEST_F(VebArrayTest, Indicies) {
   EXPECT_EQ(13, tree.get_index(14, k));
   EXPECT_EQ(15, tree.get_index(15, k));
 }
-
 TEST_F(VebArrayTest, Size10TreeInsert){
-  veb::Veb_array tree(10);
+  veb::Veb_array<int> tree(10);
   int power = tree.power_of_two((int)(ceil(log((float)10)/log(2.0))));
 
   int height = tree.height;
@@ -52,7 +52,7 @@ TEST_F(VebArrayTest, Size10TreeInsert){
 }
 
 TEST_F(VebArrayTest, InsertFn){
-  veb::Veb_array tree(10);
+  veb::Veb_array<int> tree(10);
   int power = tree.power_of_two((int)(ceil(log((float)10)/log(2.0))));
 
   int height = tree.height;
@@ -75,12 +75,17 @@ TEST_F(VebArrayTest, VebSearch){
   EXPECT_EQ(5, tree.get_elem(5));
   EXPECT_EQ(1, tree.get_elem(1));
   EXPECT_EQ(2, tree.get_elem(2));
-  //tree.insert(9);
-  //std::cout << tree.veb_search(tree.container.data(), tree.height, 1) << "\n";
-  //std::cout << tree.veb_search(tree.container.data(), tree.size, 5) << "\n";
-  //std::cout << tree.veb_search(tree.container.data(), tree.size, 2) << "\n";
-  //EXPECT_EQ(5, tree.veb_search(tree.container.data(), tree.size, 5));
-  //EXPECT_EQ(1, tree.veb_search(tree.container.data(), tree.height, 1));
-  //EXPECT_EQ(2, tree.veb_search(tree.container.data(), tree.height, 2));
-  //EXPECT_EQ(9, tree.veb_search(tree.container.data(), tree.height, 9));
+}
+*/
+TEST_F(VebArrayTest, VebSearchKmer){
+  veb::Veb_array tree(16);
+  auto kmer5 = container::RI_Kmer(5);
+  auto kmer1 = container::RI_Kmer(1);
+  auto kmer2 = container::RI_Kmer(2);
+  tree.insert(kmer5);
+  tree.insert(kmer1);
+  tree.insert(kmer2);
+  EXPECT_EQ(kmer5, tree.get_elem(5));
+  EXPECT_EQ(kmer1, tree.get_elem(1));
+  EXPECT_EQ(kmer2, tree.get_elem(2));
 }

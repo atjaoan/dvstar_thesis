@@ -14,9 +14,10 @@
 
 
 namespace veb{
- 
+
 struct Veb_array{
-  std::vector<int> container{};
+  std::vector<container::RI_Kmer> container{};
+	container::RI_Kmer null_kmer = container::RI_Kmer(-1);
   int size;
 	int height;
 
@@ -57,14 +58,28 @@ int get_index(int n, int height){
 	return top_address + bot_address;
 }
 
-void insert(int n){
-  container[get_index(n, height)] = n;
+container::RI_Kmer& retrive_on_index(const int i){
+	return container[i];
 }
 
-int get_elem(int n){
-  return container[get_index(n, height)];
+void insert(const container::RI_Kmer kmer){
+	int idx = get_index(kmer.integer_rep, height);
+	if(idx > container.size() - 1) return;
+  container[idx] = kmer;
 }
 
+container::RI_Kmer& get_elem(int n){
+	int idx = get_index(n, height);
+	if(idx > container.size() - 1) return null_kmer;
+	return container[get_index(n, height)];
+}
+
+void print_array(){
+	for(int i = 0; i < container.size(); i++){
+		std::cout << container[i].integer_rep << " at index " << i << "\n";
+	}
+}
+/*
 int veb_search(const int *tree, int size, int element){ 
   int d, D, subtree_size, subtree_leaf_count;
 	get_group_index_size_count(size, d, D, subtree_size, subtree_leaf_count);
@@ -83,13 +98,14 @@ int veb_search(const int *tree, int size, int element){
 		int root = tree[0];
 
 		if (element == root) {
-			std::cout << "Found " << element << " at index " 
-				  << (int)(tree - container.data()) << std::endl;
+			//std::cout << "Found " << element << " at index " 
+			//	  << (int)(tree - container.data()) << std::endl;
 			return -1;
 		}
 
 		return (element < root) ? 0 : 1;
 	}
 }
+*/
 };
 }
