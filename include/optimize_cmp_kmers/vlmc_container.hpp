@@ -17,35 +17,9 @@
 #include "veb_array.hpp"
 #include "Eigen/Core"
 
-/*
-  Stores VLMC (multiple k-mers) in a container. 
-*/
-constexpr int misses_before_skip = 6;
-
 using Kmer = vlmc::VLMCKmer; 
 
 namespace container{
- 
-class VLMC_Container{
-
-  public:
-    VLMC_Container() = default;
-    ~VLMC_Container() = default;
-    VLMC_Container(const std::filesystem::path &path_to_bintree, const size_t background_order){}; 
-
-    RI_Kmer null_kmer{};
-    virtual size_t size() const { return 0;};
-    virtual void push(const RI_Kmer &kmer){};
-    virtual RI_Kmer &get(const int i) { std::cout << "Hello from bad place" << std::endl; return null_kmer; };
-    virtual RI_Kmer find(const int idx) { std::cout << "Bad place" << std::endl; return null_kmer; }
-    virtual int get_max_kmer_index() const { return INT_MAX; }
-    virtual int get_min_kmer_index() const { return 0; }
-    virtual std::vector<RI_Kmer>::iterator begin() { return std::vector<RI_Kmer>{}.begin(); };
-    virtual std::vector<RI_Kmer>::iterator end() { return std::vector<RI_Kmer>{}.end(); };
-
-    virtual void iterate_kmers(VLMC_Container &left_kmers, VLMC_Container &right_kmers,
-    const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f){};
-};
 
 int load_VLMCs_from_file(const std::filesystem::path &path_to_bintree, Eigen::ArrayX4f &cached_context, 
         const std::function<void(const RI_Kmer &kmer)> f, const size_t background_order = 0) {
@@ -110,14 +84,12 @@ class VLMC_vector {
     ~VLMC_vector() = default; 
 
     VLMC_vector(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
-      // cached_context : pointer to array which for each A, C, T, G has the next char probs
       Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
 
       auto fun = [&](const RI_Kmer &kmer) { push(kmer); }; 
 
       int offset_to_remove = load_VLMCs_from_file(path_to_bintree, cached_context, fun, background_order);
 
-      // Second pass - Comment this and select in dvstar.hpp row 120 to 128 to use old or new implementation. 
       for (size_t i = 0; i <= get_max_kmer_index(); i++){
         RI_Kmer kmer = get(i);
         int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
@@ -183,7 +155,7 @@ class VLMC_Indexing {
     std::vector<RI_Kmer> container{}; 
     int c_size = 0;
     int max_kmer_index = 0;
-    int min_kmer_index = 0; // <- cant be set to MAX_INT when all kmers are inserted in order (0,1,2,3,4...)
+    int min_kmer_index = 0; 
     int container_size = -1; 
     RI_Kmer null_kmer{};
 
@@ -193,14 +165,12 @@ class VLMC_Indexing {
 
     VLMC_Indexing(const std::filesystem::path &path_to_bintree, const size_t background_order = 0, const int initial_size = 50) 
       : container(initial_size, null_kmer), container_size{initial_size} {
-      // cached_context : pointer to array which for each A, C, T, G has the next char probs
       Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
 
       auto fun = [&](const RI_Kmer &kmer) { push(kmer); }; 
 
       int offset_to_remove = load_VLMCs_from_file(path_to_bintree, cached_context, fun, background_order);
 
-      // Second Pass
       for (size_t i = 0; i <= max_kmer_index; i++){
         RI_Kmer kmer = container[i];
         if(kmer.is_null) continue;
@@ -275,7 +245,6 @@ class VLMC_sorted_vector {
     ~VLMC_sorted_vector() = default; 
 
     VLMC_sorted_vector(const std::filesystem::path &path_to_bintree, const size_t background_order = 0, bool use_new = false) {
-      // cached_context : pointer to array which for each A, C, T, G has the next char probs
       Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
 
       auto fun = [&](const RI_Kmer &kmer) { push(kmer); }; 
@@ -334,8 +303,6 @@ float iterate_kmers(VLMC_sorted_vector &left_kmers, VLMC_sorted_vector &right_km
   auto left_end = left_kmers.end();
   
   while(left_it != left_end && right_it != right_end){
-    // __builtin_prefetch(&*(right_it + 1).next_char_prob, 0, 3);
-    // __builtin_prefetch(&*(left_it + 1).next_char_prob, 0, 3);
     auto left_kmer = *left_it;
     auto right_kmer = *right_it;
     if(left_kmer == right_kmer){
@@ -368,14 +335,12 @@ class VLMC_B_tree {
     ~VLMC_B_tree() = default; 
 
     VLMC_B_tree(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
-      // cached_context : pointer to array which for each A, C, T, G has the next char probs
       Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
 
       auto fun = [&](const RI_Kmer &kmer) { push(kmer); }; 
 
       int offset_to_remove = load_VLMCs_from_file(path_to_bintree, cached_context, fun, background_order);
-
-      // Second pass - Comment this and select in dvstar.hpp row 120 to 128 to use old or new implementation.  
+ 
       container.second_pass(cached_context, background_order, offset_to_remove);
     } 
 
@@ -431,7 +396,6 @@ class VLMC_hashmap {
 
       int offset_to_remove = load_VLMCs_from_file(path_to_bintree, cached_context, fun, background_order);
 
-      // Second pass - Comment this and select in dvstar.hpp row 120 to 128 to use old or new implementation. 
       for (auto &[i_rep, kmer] : container) {
         int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
         int offset = background_idx - offset_to_remove;
@@ -502,7 +466,6 @@ class VLMC_Combo {
 
       std::sort(container_sorted.begin(), container_sorted.end());
 
-      // Second pass - Comment this and select in dvstar.hpp row 120 to 128 to use old or new implementation. 
       for (size_t i = 0; i < max_idx; i++){
         RI_Kmer kmer = container_ibv[i];
         if(kmer.is_null) continue;

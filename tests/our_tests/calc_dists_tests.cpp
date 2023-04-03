@@ -20,7 +20,6 @@
 #include "vlmc_from_kmers/build_vlmc.hpp"
 
 using matrix_t  = Eigen::MatrixXf;
-using vlmc_t = container::VLMC_Container;
 using cluster_c = container::Cluster_Container<container::VLMC_vector>;
 
 class CalcDistsTests : public ::testing::Test {

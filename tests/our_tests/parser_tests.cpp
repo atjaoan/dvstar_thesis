@@ -13,7 +13,6 @@
 #include "parser.hpp"
 
 using vlmc_c = container::VLMC_vector;
-using vlmc_t = container::VLMC_Container;
 
 class ParserTests : public ::testing::Test {
 protected:

@@ -13,7 +13,6 @@
 #include "optimize_cmp_kmers/calc_dists.hpp"
 
 using matrix_t  = Eigen::MatrixXf;
-using vlmc_t = container::VLMC_Container;
 
 class ParallelTest : public ::testing::Test {
 protected:
