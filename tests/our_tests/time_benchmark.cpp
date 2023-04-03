@@ -707,31 +707,36 @@ out_t normalise_dvstar(out_t dot_product, out_t left_norm,
   }
 }
 
-void get_kmer_vector_test(std::filesystem::path path, std::vector<std::vector<tmp_Kmer>>& vlmcs){
+void get_kmer_vector_test(std::filesystem::path path, std::vector<std::vector<tmp_Kmer>>& vlmcs, int max_size){
   std::ifstream ifs(path, std::ios::binary);
   cereal::BinaryInputArchive archive(ifs);
   std::vector<tmp_Kmer> vlmc{};
   vlmc::VLMCKmer input_kmer{};
+  int count = 0; 
 
   while (ifs.peek() != EOF){
+    if (count > max_size) break; 
     archive(input_kmer);
     tmp_Kmer ri_kmer(input_kmer); 
     vlmc.push_back(ri_kmer);
+    count++; 
   }
   ifs.close();
   std::sort(vlmc.begin(), vlmc.end());
   vlmcs.push_back(vlmc);
 }
 
-matrix_t iterate_kmers_bench(){
-  std::filesystem::path path_fst{"../data/benchmarking/human/large"};
+matrix_t iterate_kmers_bench(int max_size){
+  std::filesystem::path path_fst{"./data/benchmarking/human/large"};
   std::vector<std::vector<tmp_Kmer>> vlmcs{};
   for (const auto& dir_entry : recursive_directory_iterator(path_fst)) {
-    get_kmer_vector_test(dir_entry.path(), vlmcs);
+    get_kmer_vector_test(dir_entry.path(), vlmcs, max_size);
   }
   
+  std::cout << sizeof(vlmcs[0]) + sizeof(tmp_Kmer) * vlmcs[0].capacity() << std::endl;
+
   matrix_t distances{vlmcs.size(), vlmcs.size()};
-  auto start = std::chrono::steady_clock::now();
+  // auto start = std::chrono::steady_clock::now();
 
   auto fun = [&](auto x, auto y) {
     std::vector<tmp_Kmer> &left_vlmc = vlmcs[x];
@@ -777,12 +782,11 @@ matrix_t iterate_kmers_bench(){
 
   utils::matrix_recursion(0, vlmcs.size(), 0, vlmcs.size(), fun); 
 
-  std::cout << "Size of RI_kmer struct " << sizeof(RI_Kmer) << " actual object " << sizeof(vlmcs[0][0]) << std::endl; 
-
-  auto end = std::chrono::steady_clock::now();
-  auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-  std::cout << "Time : " << time << " [micro sec]" << std::endl; 
-  std::cout << "Dot products for sanity check: " << distances(0,0) << "\n";
+  // std::cout << "Size of RI_kmer struct " << sizeof(RI_Kmer) << " actual object " << sizeof(vlmcs[0][0]) << std::endl; 
+  // auto end = std::chrono::steady_clock::now();
+  // auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+  // std::cout << "Time : " << time << " [micro sec]" << std::endl; 
+  // std::cout << "Dot products for sanity check: " << distances(0,0) << "\n";
   // std::cout << "Size of left: " << sizeof(left) + sizeof(RI_Kmer) * left.capacity() << " bytes" << "\n";
   // std::cout << "Size of right: " << sizeof(right) + sizeof(RI_Kmer) * right.capacity() << " bytes" << "\n";
   return distances;
@@ -804,7 +808,8 @@ int main(int argc, char *argv[]){
   //benchmark_kmer_major_load_calc(8);
   //benchmark_calculate_distance_major();
   //print_kmers_to_file();
-  auto array = iterate_kmers_bench();
+  int max_size = std::stoi(argv[1]);
+  auto array = iterate_kmers_bench(max_size);
   for (int x = 0; x < array.rows(); x++){
     for (int y = 0; y < array.cols(); y++){
       std::cout << array(x,y) << " ";

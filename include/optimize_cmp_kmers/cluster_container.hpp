@@ -78,6 +78,15 @@ class Kmer_Cluster {
       container[kmer_pair.kmer.integer_rep].push_back(kmer_pair); 
     }
 
+    void push_all(Kmer_Cluster cluster){
+      auto begin_it = cluster.get_begin();
+      auto end_it = cluster.get_end();
+      while(begin_it != end_it){
+        container[begin_it->first].insert(container[begin_it->first].end(), begin_it->second.begin(), begin_it->second.end());
+        begin_it++; 
+      }
+    }
+
     std::vector<Kmer_Pair> &get(int bucket_num){
       return container[bucket_num]; 
     }

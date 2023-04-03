@@ -1,22 +1,23 @@
 #pragma once 
-
+#include <iostream>
+#include <math.h>
+#include <Eigen/Core>
 #include <functional>
 #include <filesystem>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
-#include <Eigen/Core>
-#include <math.h>
-#include <iostream>
 #include <string>
-
 #include "read_in_kmer.hpp"
-
 using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
 using RI_Kmer = container::RI_Kmer; 
 using matrix_t = Eigen::MatrixXf;
+/*
+
 #include "utils.hpp"
 
+*/
+/*
 float normalise_dvstar_test(float dot_product, float left_norm,
                         float right_norm) {
 
@@ -50,6 +51,8 @@ void get_kmer_vector_dev(std::filesystem::path path, std::vector<std::vector<RI_
     vlmc.push_back(ri_kmer);
     curr_size++;
   }
+  //curr_size = 0;
+  //ifs.seekg(0, ifs.beg);
   ifs.close();
   std::sort(vlmc.begin(), vlmc.end());
   vlmc.reserve(vlmc.size() + offset);
@@ -108,8 +111,54 @@ matrix_t iterate_kmers_bench_dev(int max_size){
   }
   return distances;
 }
+*/
+matrix_t iterate_vectors_int(int max_size){
+  auto container = std::vector<int>(max_size);
+  matrix_t distances{24, 24};
+  
+  auto container_it = container.begin();
+  auto container_end = container.end();
+  int i = 0;
+  while(container_it != container_end){
+    //*container_it += 2;
+    distances(i%24,i%24) = (*container_it) + 5;
+    ++container_it;
+    i++;
+  }
+
+  std::cout << sizeof(container) + sizeof(int) * container.capacity() << std::endl;
+
+  return distances;
+}
+
+matrix_t iterate_vectors_RI_Kmer(int max_size){
+  auto container = std::vector<RI_Kmer>(max_size);
+  matrix_t distances{24, 24};
+  
+  auto container_it = container.begin();
+  auto container_end = container.end();
+  int i = 0;
+  while(container_it != container_end){
+    distances(i%24,i%24) = (*container_it).next_char_prob[2] + 5.0;
+    ++container_it;
+    i++;
+  }
+
+  std::cout << sizeof(container) + sizeof(RI_Kmer) * container.capacity() << std::endl;
+
+  return distances;
+}
 
 int main(int argc, char *argv[]){
-  int max_size = std::stoi(argv[1]);
-  auto array = iterate_kmers_bench_dev(max_size);
+  int max_size = std::stoi(argv[2]);
+  //auto array = iterate_kmers_bench_dev(max_size);
+  matrix_t array;
+  if(argv[1] == 'i'){
+    array = iterate_vectors_int(max_size);
+  } else {
+    array = iterate_vectors_RI_Kmer(max_size);
+  }
+  for(int i = 0; i < 10; i++){
+    //if(i < 10) std::cout << array(i,0);
+  }
 }

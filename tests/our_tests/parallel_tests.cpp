@@ -24,8 +24,6 @@ protected:
 
   size_t background_order = 0; 
 
-  double error_tolerance = 1E-4;
-
   std::function<double(container::VLMC_vector &, container::VLMC_vector &)> distance_function = [&](auto &left, auto &right) {
       return distance::dvstar(left, right, background_order);
   };
@@ -33,6 +31,7 @@ protected:
   std::function<double(container::VLMC_sorted_vector &, container::VLMC_sorted_vector &)> distance_function_sv = [&](auto &left, auto &right) {
       return distance::dvstar(left, right, background_order);
   };
+  double error_tolerance = 3E-5;
 };
 
 TEST_F(ParallelTest, SequentialEqParallel) {

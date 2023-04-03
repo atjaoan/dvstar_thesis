@@ -98,7 +98,7 @@ test_case(our_tests/vlmc_container_tests.cpp)
 test_case(our_tests/veb_tree_tests.cpp)
 test_case(our_tests/read_in_kmer_tests.cpp)
 test_case(our_tests/b_tree_tests.cpp)
-
+test_case(our_tests/veb_array_tests.cpp)
 
 # benchmark_case(benchmarks.cpp)
 # benchmark_case(method_benchmarks.cpp)

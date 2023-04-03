@@ -88,8 +88,8 @@ def calculate_distance(set_size: int, genome_path: str, out_path: str, vlmc_cont
         "-v", vlmc_container,
         "-n", str(nr_cores),
         "-b", str(background_order),
-        "-a", str(set_size),
-        "-o", str(out_path)
+        "-a", str(set_size)
+        #"-o", str(out_path)
     )
     return subprocess.run(args, capture_output=True, text=True)
 
@@ -261,29 +261,29 @@ def parallelization_benchmark(dataset: str, implementation: str, dataset_outer_d
     nb_files = int(nb_files / 2)
     nr_cores = 1
 
-    th_small, min_small, max_small = get_parameter_from_bintree(os.listdir(cwd / dataset / "small")[0])
-    th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(cwd / dataset / "medium")[0])
+    #th_small, min_small, max_small = get_parameter_from_bintree(os.listdir(cwd / dataset / "small")[0])
+    #th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(cwd / dataset / "medium")[0])
     th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(cwd / dataset / "large")[0])
-    while (nr_cores <= 8):
-        print("Benchmarking small with " + str(nr_cores) + " cores.")
-        res_our_small  = calculate_distance(nb_files, dataset + "/small", "hdf5_results/distances_parallel_small.hdf5", implementation, nr_cores, 0)
-        print("Benchmarking medium with " + str(nr_cores) + " cores.")
-        res_our_medium = calculate_distance(nb_files, dataset + "/medium", "hdf5_results/distances_parallel_medium.hdf5", implementation, nr_cores, 0)
+    while (nr_cores <= 16):
+        #print("Benchmarking small with " + str(nr_cores) + " cores.")
+        #res_our_small  = calculate_distance(nb_files, dataset + "/small", "hdf5_results/distances_parallel_small.hdf5", implementation, nr_cores, 0)
+        #print("Benchmarking medium with " + str(nr_cores) + " cores.")
+        #res_our_medium = calculate_distance(nb_files, dataset + "/medium", "hdf5_results/distances_parallel_medium.hdf5", implementation, nr_cores, 0)
         print("Benchmarking large with " + str(nr_cores) + " cores.")
         res_our_large  = calculate_distance(nb_files, dataset + "/large", "hdf5_results/distances_parallel_large.hdf5", implementation, nr_cores, 0)
 
-        compare_hdf5_files("_parallel", "_small", implementation, dataset_outer_dir + "_small", nr_cores, nb_files, 0)
-        compare_hdf5_files("_parallel", "_medium", implementation, dataset_outer_dir + "_medium", nr_cores, nb_files, 0)
-        compare_hdf5_files("_parallel", "_large", implementation, dataset_outer_dir + "_large", nr_cores, nb_files, 0)
+        #compare_hdf5_files("_parallel", "_small", implementation, dataset_outer_dir + "_small", nr_cores, nb_files, 0)
+        #compare_hdf5_files("_parallel", "_medium", implementation, dataset_outer_dir + "_medium", nr_cores, nb_files, 0)
+        #compare_hdf5_files("_parallel", "_large", implementation, dataset_outer_dir + "_large", nr_cores, nb_files, 0)
 
-        catch_and_save(res_our_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, implementation, nr_cores)
-        catch_and_save(res_our_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, implementation, nr_cores)
+        #catch_and_save(res_our_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, implementation, nr_cores)
+        #catch_and_save(res_our_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, implementation, nr_cores)
         catch_and_save(res_our_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, implementation, nr_cores)
         nr_cores = nr_cores * 2
     
-    os.remove(cwd / "hdf5_results/distances_small.hdf5")
-    os.remove(cwd / "hdf5_results/distances_medium.hdf5")
-    os.remove(cwd / "hdf5_results/distances_large.hdf5")
+    #os.remove(cwd / "hdf5_results/distances_small.hdf5")
+    #os.remove(cwd / "hdf5_results/distances_medium.hdf5")
+    #os.remove(cwd / "hdf5_results/distances_large.hdf5")
 
 def compare_hdf5_files(bench: str, vlmc_size: str, vlmc: str, path: str, dop: int, set_size: int, background_order: int):
     vlmc_file = h5py.File(cwd / ("hdf5_results/distances" + bench + vlmc_size + ".hdf5"), 'r')
@@ -313,11 +313,11 @@ def compare_hdf5_files(bench: str, vlmc_size: str, vlmc: str, path: str, dop: in
 def benchmark():
     # normal_benchmaking("data/benchmarking/ecoli", "sorted-vector", "ecoli")
     # normal_benchmaking("data/benchmarking/ecoli", "hashmap", "ecoli")
-    normal_benchmaking("data/benchmarking/human", "sorted-vector", "human")
+    #normal_benchmaking("data/benchmarking/human", "sorted-vector", "human")
     # normal_benchmaking("data/benchmarking/human", "veb", "human")
     # combo_parameter_sweep("data/benchmarking/ecoli", "combo", "ecoli")
     # normal_benchmaking("data/benchmarking/human", "sorted-vector", "human")
-    # parallelization_benchmark("data/benchmarking/human", "sorted-vector", "human")
+    parallelization_benchmark("data/benchmarking/ecoli", "sorted-vector", "ecoli")
 
 if __name__ == "__main__":
     app()

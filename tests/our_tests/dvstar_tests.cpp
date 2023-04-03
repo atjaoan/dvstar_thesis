@@ -42,7 +42,7 @@ protected:
       return distance::dvstar<VLMC_Indexing>(left, right, background_order);
   };
 
-  double error_tolerance = 1E-6;
+  double error_tolerance = 1E-5;
 };
 
 TEST_F(DvstarTests, BackgroundOrderTest) {

@@ -14,6 +14,7 @@
 #include "robin_hood.h"
 #include "unordered_dense.h"
 #include "veb_tree.hpp"
+#include "veb_array.hpp"
 #include "Eigen/Core"
 
 /*
@@ -599,12 +600,12 @@ float iterate_kmers(VLMC_Combo &left_kmers, VLMC_Combo &right_kmers) {
 class VLMC_Veb {
 
   private: 
+    veb::Veb_array veb;
     int min_index = INT_MAX;
     int max_index = -1;
     RI_Kmer null_kmer{};
 
-  public: 
-    veb::Veb_tree veb = veb::Veb_tree(500000);
+  public:
     VLMC_Veb() = default;
     ~VLMC_Veb() = default; 
 
@@ -640,31 +641,29 @@ class VLMC_Veb {
       }
 
       ifs.close();
+      veb = veb::Veb_array(tmp_container.size());
       for(auto kmer : tmp_container){
         int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
         int offset = background_idx - offset_to_remove;
         kmer.next_char_prob *= cached_context.row(offset).rsqrt();
-        veb::insert(veb, kmer);
+        veb.insert(kmer);
       }
     } 
 
-    size_t size() const { return veb.size; }
+    size_t size() const { return veb.container.size(); }
 
     void push(const RI_Kmer &kmer) { 
-      if(veb.size < kmer.integer_rep){
-        std::cout << "Too enourmous kmer : " << kmer.integer_rep << std::endl;
-        std::cout << "Supports max : " << veb.size << std::endl;
-        return;
-      }
-      veb::insert(veb, kmer); 
+      veb.insert(kmer); 
     }
 
-    RI_Kmer &get(const int i) { return null_kmer; }
+    RI_Kmer &get(const int i) { ;
+      return veb.retrive_on_index(i);
+    }
 
     int get_max_kmer_index() const { return max_index; }
     int get_min_kmer_index() const { return min_index; }
 
-    RI_Kmer find(const int i_rep) { return veb::find(veb, i_rep); }
+    RI_Kmer find(const int i_rep) { return veb.get_elem(i_rep); }
 };
 
 float iterate_kmers(VLMC_Veb &left_kmers, VLMC_Veb &right_kmers) {
@@ -672,20 +671,19 @@ float iterate_kmers(VLMC_Veb &left_kmers, VLMC_Veb &right_kmers) {
   float left_norm = 0.0;
   float right_norm = 0.0;
 
-  RI_Kmer left_kmer = left_kmers.find(left_kmers.get_min_kmer_index());
-  RI_Kmer right_kmer = right_kmers.find(left_kmers.get_min_kmer_index());
-  while(true){
-    // Check if right_kmers has this succeeding left_kmer
-    // if, apply f
+  int idx = 0;
+  RI_Kmer& left_kmer = left_kmers.get(idx);
+  RI_Kmer right_kmer = right_kmers.find(left_kmer.integer_rep);
+      
+  while(idx < left_kmers.size()){
     if(left_kmer == right_kmer){
       dot_product += (left_kmer.next_char_prob * right_kmer.next_char_prob).sum();
       left_norm += left_kmer.next_char_prob.square().sum();
       right_norm += right_kmer.next_char_prob.square().sum();
     }
-    // Iterating left
-    left_kmer = veb::succ(left_kmers.veb, left_kmer);
-    if(left_kmer.integer_rep == -1){
-      return;
+    while(idx < left_kmers.size()){
+      left_kmer = left_kmers.get(++idx);
+      if(left_kmer > 0) break;
     }
     right_kmer = right_kmers.find(left_kmer.integer_rep);
   }
