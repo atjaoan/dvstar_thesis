@@ -113,6 +113,18 @@ def our_calculate_distances(dist_func: str, set_size: int, genome_path: str, vlm
 
     return subprocess.run(args, capture_output=True, text=True)
 
+def run_dev(nr_elements: int) -> subprocess.CompletedProcess:
+    args = (
+        "perf",
+        "stat",
+        "-r 10",
+        "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
+        cwd / "build/time_benchmark",
+        str(nr_elements)
+    )
+
+    return subprocess.run(args, capture_output=True, text=True)
+
 def cache_ref_to_vec_size(size: int) -> subprocess.CompletedProcess:
     args = (
         "perf",
@@ -189,6 +201,56 @@ def save_to_csv(res: subprocess.CompletedProcess, csv_path: Path, dist_func: str
     df.loc[len(df)] = data
     df.to_csv(csv_path, index=False)
 
+def save_to_csv_dev(res: subprocess.CompletedProcess, csv_path: Path, nr_elements: int):
+    new_line_separated_attr = res.stderr.split('\n')
+
+    data = [get_git_commit_version(), nr_elements, res.stdout.split('\n')[0]]
+    columns = ["repo_version", "nr_elements", "size_of_vector"]
+    
+    for line in new_line_separated_attr:
+        split_line = line.split('#')
+        if len(split_line) < 2:
+            continue 
+
+        right_value = split_line[1].lstrip().split(' ')[0]
+        left_line = split_line[0].strip()
+
+        if "msec" in left_line:
+            count_and_attribute = left_line.split('msec')
+        else: 
+            count_and_attribute = re.split(r"\s{2,}", left_line)
+
+        attribute  = count_and_attribute[1].replace(':u', '').strip().replace('-', '_')
+        count = count_and_attribute[0]
+        
+        # Remove % if it exists and replace commas with dot
+        right_value = right_value.strip('%').replace(',', '.')
+        
+        # For counts to be made into ints, skip space separator
+        count = count.replace('\u202f', '').replace(',', '.').rstrip()
+
+        data.extend([float(right_value), int(float(count))])
+        columns.extend([attribute, attribute + "_count"])
+
+    new_line_separated_timings = res.stderr.split('\n')
+    for line in new_line_separated_timings:
+        if len(line) < 1:
+            continue
+        split_line = line.lstrip().split(' ')
+        # print(split_line)        
+        if split_line[5] == "elapsed":
+            data.append(float(split_line[0].replace(",", ".")))
+            columns.append("elapsed_time")
+            break
+
+    if not os.path.exists(csv_path):
+        df = pd.DataFrame(columns=columns)
+    else:
+        df = pd.read_csv(csv_path, dtype=str)
+
+    df.loc[len(df)] = data
+    df.to_csv(csv_path, index=False)
+
 def get_git_commit_version():
     args = (
         "git",
@@ -231,6 +293,13 @@ def dvstar_cmp_mem():
     return
 
 @app.command()
+def dev_stat():
+    for i in range(4, 22):
+        print(f"Doing with {2**i}")
+        res = run_dev(2**i)
+        save_to_csv_dev(res, cwd / "csv_results/dev_test_6.csv", i)
+
+@app.command()
 def stat(set_size: int = -1, dist_func: Distance_Function = Distance_Function.dvstar, 
         genome_path: str = "data/human_VLMCs", background_order: int = 0):
     timing_results = calculate_distances(dist_func.value, -1, genome_path, background_order)
@@ -255,10 +324,8 @@ def benchmark():
     genome_path = "data/benchmarking/human/large"
     # stat(-1, Distance_Function.dvstar, genome_path, background_order)
     ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_multi_vector, 8)
-    stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_sorted_vector, 2, background_order)
-    stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_sorted_vector, 4, background_order)
-    stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_sorted_vector, 8, background_order)
-    # stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order)
+    # stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_sorted_vector, 8, background_order)
+    stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order)
     ##stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_veb, 8, background_order)
     ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order)
     # stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order, "kmer-major")
