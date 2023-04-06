@@ -193,26 +193,25 @@ def Pst_normal_benchmaking(dataset: str):
     print(csv_filename)
     nb_files = count_nb_files(cwd / dataset / "small")
 
-    if (nb_files > 10000):
-        nb_files = int(nb_files / 2)       
+    files_run = 2   
 
     th_small, min_small, max_small = get_parameter_from_bintree(os.listdir(cwd / dataset / "small")[0])
     th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(cwd / dataset / "medium")[0])
     th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(cwd / dataset / "large")[0])
 
-    while(nb_files > 2):
-        print("Benchmarking with " + str(nb_files) + " VLMCs...")
+    while((files_run < 10000) & (files_run < nb_files)):
+        print("Benchmarking with " + str(files_run) + " VLMCs...")
         print("Small PstClassifierSeqan.")
-        res_small  = PstClassifierSeqan(nb_files, dataset + "/small", "hdf5_results/pst_distances_small.hdf5", 0)
+        res_small  = PstClassifierSeqan(files_run, dataset + "/small", "hdf5_results/pst_distances_small.hdf5", 0)
         print("Medium PstClassifierSeqan.")
-        res_medium = PstClassifierSeqan(nb_files, dataset + "/medium", "hdf5_results/pst_distances_medium.hdf5", 0)
+        res_medium = PstClassifierSeqan(files_run, dataset + "/medium", "hdf5_results/pst_distances_medium.hdf5", 0)
         print("Large PstClassifierSeqan.")
-        res_large  = PstClassifierSeqan(nb_files, dataset + "/large", "hdf5_results/pst_distances_large.hdf5", 0)
+        res_large  = PstClassifierSeqan(files_run, dataset + "/large", "hdf5_results/pst_distances_large.hdf5", 0)
 
-        catch_and_save(res_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, "PstClassifierSeqan", 8)
-        catch_and_save(res_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, "PstClassifierSeqan", 8)
-        catch_and_save(res_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, "PstClassifierSeqan", 8)
-        nb_files = int(nb_files / 2)
+        catch_and_save(res_small, cwd / csv_filename, "small", files_run, th_small, min_small, max_small, "PstClassifierSeqan", 8)
+        catch_and_save(res_medium, cwd / csv_filename, "medium", files_run, th_medium, min_medium, max_medium, "PstClassifierSeqan", 8)
+        catch_and_save(res_large, cwd / csv_filename, "large", files_run, th_large, min_large, max_large, "PstClassifierSeqan", 8)
+        files_run = files_run * 2
 
 ######################################
 # Function for benchmarking time and # 
