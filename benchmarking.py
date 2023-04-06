@@ -81,6 +81,8 @@ def get_parameter_from_bintree(bintree: str) -> tuple[float, int, int]:
 def calculate_distance(set_size: int, genome_path: str, out_path: str, vlmc_container: str, nr_cores: int, background_order: int) -> subprocess.CompletedProcess:
     args = (
         "perf", "stat",
+        "-r",
+        "5",
         "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
         cwd / "build/dist", 
         "-p", cwd / genome_path,
@@ -101,14 +103,16 @@ def calculate_distance(set_size: int, genome_path: str, out_path: str, vlmc_cont
 def PstClassifierSeqan(set_size: int, genome_path: str, out_path: str, background_order: int) -> subprocess.CompletedProcess:
     args = (
         "perf", "stat",
+        "-r",
+        "5",
         "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
         cwd / "submodules/PstClassifierSeqan/build/src/calculate-distances", 
         "-p", cwd / genome_path,
         "-y", cwd / genome_path,
         "-n", "dvstar",
         "-a", str(set_size),
-        "-b", str(background_order),
-        "-s", cwd / out_path
+        "-b", str(background_order)# ,
+        # "-s", cwd / out_path
     )
     return subprocess.run(args, capture_output=True, text=True)
 
@@ -137,7 +141,12 @@ def save_to_csv(res: subprocess.CompletedProcess, csv_path: Path, vlmc_size: str
     for line in new_line_separated_attr:
         split_line = line.split('#')
 
+        divergence = split_line[1].split('(')[1].lstrip().split(' ')[1]
+        if (split_line[1].split('(')[1].lstrip().split(' ')[1] == ''):
+            divergence = split_line[1].split('(')[1].lstrip().split(' ')[2]
+
         right_value = split_line[1].lstrip().split(' ')[0]
+        
         left_line = split_line[0].strip()
 
         if "msec" in left_line:
@@ -150,22 +159,21 @@ def save_to_csv(res: subprocess.CompletedProcess, csv_path: Path, vlmc_size: str
         
         # Remove % if it exists and replace commas with dot
         right_value = right_value.strip('%').replace(',', '.')
+
+        # Remove % if it exists and replace commas with dot
+        divergence = divergence.strip('%').replace(',', '.')
         
         # For counts to be made into ints, skip space separator
         count = count.replace('\u202f', '').replace(',', '.').rstrip()
 
-        data.extend([float(right_value), int(float(count))])
-        columns.extend([attribute, attribute + "_count"])
+        data.extend([float(right_value), int(float(count)), float(divergence)])
+        columns.extend([attribute, attribute + "_count", attribute + "_divergence"])
 
-    new_line_separated_timings = res.stderr.split('\n')[-8:-3]
-    for line in new_line_separated_timings:
-        if len(line) < 1:
-            continue
-        split_line = line.lstrip().split(' ')
-        if split_line[-1] == "elapsed":
-            split_line[-1] = "elapsed_time"
-        data.append(float(split_line[0].replace(",", ".")))
-        columns.append(split_line[-1])
+    new_line_separated_timings = res.stderr.split('\n')[-3]
+    split_line = new_line_separated_timings.split('+-')
+    divergence = split_line[1].lstrip().split(' ')[0]
+    data.extend([float(split_line[0].replace(",", ".")), float(divergence.replace(",", "."))])
+    columns.extend(["elapsed_time", "elapsed_time_divergence"])
 
     if not os.path.exists(csv_path):
         df = pd.DataFrame(columns=columns)
@@ -214,34 +222,33 @@ def Pst_normal_benchmaking(dataset: str):
 def normal_benchmaking(dataset: str, implementation: str, dataset_outer_dir: str):
     csv_filename = get_csv_name(dataset, implementation + "_")
     print(csv_filename)
-    for i in range(0,5):
-        nb_files = count_nb_files(cwd / dataset / "small")
-        if (nb_files > 10000):
-            nb_files = int(nb_files / 2) 
+    nb_files = count_nb_files(cwd / dataset / "small")
 
-        th_small, min_small, max_small = get_parameter_from_bintree(os.listdir(cwd / dataset / "small")[0])
-        th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(cwd / dataset / "medium")[0])
-        th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(cwd / dataset / "large")[0])
+    th_small, min_small, max_small = get_parameter_from_bintree(os.listdir(cwd / dataset / "small")[0])
+    th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(cwd / dataset / "medium")[0])
+    th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(cwd / dataset / "large")[0])
 
-        while(nb_files > 2):
-            print("Benchmarking with " + str(nb_files) + " VLMCs...")
-            print("Small " + implementation + ".")
-            res_our_small  = calculate_distance(nb_files, dataset + "/small", "hdf5_results/distances_small.hdf5", implementation, 8, 0)
-            print("Medium " + implementation + ".")
-            res_our_medium = calculate_distance(nb_files, dataset + "/medium", "hdf5_results/distances_medium.hdf5", implementation, 8, 0)
-            print("Large " + implementation + ".")
-            res_our_large  = calculate_distance(nb_files, dataset + "/large", "hdf5_results/distances_large.hdf5", implementation, 8, 0)
+    files_run = 2
 
-            compare_hdf5_files("", "_small", implementation, dataset_outer_dir + "_small", 8, nb_files, 0)
-            compare_hdf5_files("", "_medium", implementation, dataset_outer_dir + "_medium", 8, nb_files, 0)
-            compare_hdf5_files("", "_large", implementation, dataset_outer_dir + "_large", 8, nb_files, 0)
-
-            catch_and_save(res_our_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, implementation, 8)
-            catch_and_save(res_our_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, implementation, 8)
-            catch_and_save(res_our_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, implementation, 8)
-
-            nb_files = int(nb_files / 2)
-
+    while((files_run < 10000) & (files_run < nb_files)):
+        print("Benchmarking with " + str(files_run) + " VLMCs...")
+        print("Small " + implementation + ".")
+        res_our_small  = calculate_distance(files_run, dataset + "/small", "hdf5_results/distances_small.hdf5", implementation, 8, 0)
+        print("Medium " + implementation + ".")
+        res_our_medium = calculate_distance(files_run, dataset + "/medium", "hdf5_results/distances_medium.hdf5", implementation, 8, 0)
+        print("Large " + implementation + ".")
+        res_our_large  = calculate_distance(files_run, dataset + "/large", "hdf5_results/distances_large.hdf5", implementation, 8, 0)
+        
+        # compare_hdf5_files("", "_small", implementation, dataset_outer_dir + "_small", 8, files_run, 0)
+        # compare_hdf5_files("", "_medium", implementation, dataset_outer_dir + "_medium", 8, files_run, 0)
+        # compare_hdf5_files("", "_large", implementation, dataset_outer_dir + "_large", 8, files_run, 0)
+        
+        catch_and_save(res_our_small, cwd / csv_filename, "small", files_run, th_small, min_small, max_small, implementation, 8)
+        catch_and_save(res_our_medium, cwd / csv_filename, "medium", files_run, th_medium, min_medium, max_medium, implementation, 8)
+        catch_and_save(res_our_large, cwd / csv_filename, "large", files_run, th_large, min_large, max_large, implementation, 8)
+        
+        files_run = files_run * 2 
+        
         if (os.path.isfile(cwd / "hdf5_results/distances_small.hdf5")):
             os.remove(cwd / "hdf5_results/distances_small.hdf5")
         if (os.path.isfile(cwd / "hdf5_results/distances_medium.hdf5")):
@@ -311,13 +318,17 @@ def compare_hdf5_files(bench: str, vlmc_size: str, vlmc: str, path: str, dop: in
 
 @app.command()
 def benchmark():
+    # ECOLI BENCHMARKING 
+    # Pst_normal_benchmaking("data/benchmarking/ecoli")
     # normal_benchmaking("data/benchmarking/ecoli", "sorted-vector", "ecoli")
     # normal_benchmaking("data/benchmarking/ecoli", "hashmap", "ecoli")
-    #normal_benchmaking("data/benchmarking/human", "sorted-vector", "human")
-    # normal_benchmaking("data/benchmarking/human", "veb", "human")
-    # combo_parameter_sweep("data/benchmarking/ecoli", "combo", "ecoli")
-    # normal_benchmaking("data/benchmarking/human", "sorted-vector", "human")
-    parallelization_benchmark("data/benchmarking/ecoli", "sorted-vector", "ecoli")
+    # normal_benchmaking("data/benchmarking/ecoli", "combo", "ecoli")
+
+    # HUMAN BENCHMARKING
+    Pst_normal_benchmaking("data/benchmarking/human")
+    normal_benchmaking("data/benchmarking/human", "sorted-vector", "human")
+    normal_benchmaking("data/benchmarking/human", "hashmap", "human")
+    normal_benchmaking("data/benchmarking/human", "combo", "human")
 
 if __name__ == "__main__":
     app()
