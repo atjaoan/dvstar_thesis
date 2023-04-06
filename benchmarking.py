@@ -131,7 +131,7 @@ def catch_and_save(res: subprocess.CompletedProcess, csv_path: Path, vlmc_size: 
 def save_to_csv(res: subprocess.CompletedProcess, csv_path: Path, vlmc_size: str, 
                 set_size: int, threshold: float, min_count: int, max_depth: int, 
                 implementation: str, nr_cores_used: int, combo_init_size: int = 128):
-    new_line_separated_attr = res.stderr.split('\n')[3:-8]
+    new_line_separated_attr = res.stderr.split('\n')[3:-4]
 
     print("Save implementation -> " + implementation + " to csv...")
 
