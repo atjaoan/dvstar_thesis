@@ -451,7 +451,7 @@ void benchmark_calculate_distance_major(){
 }
 
 void print_kmers_to_file(){
-  std::filesystem::path path_vlmcs{"../data/one_vlmcs"};
+  std::filesystem::path path_vlmcs{"../data/benchmarking/human/small"};
   std::filesystem::path output_path{"../tmp/" + path_vlmcs.filename().string() + "_kmer-distribution.txt"};
   utils::output_kmer_reps_to_file(path_vlmcs, output_path);
 }
@@ -803,12 +803,12 @@ int main(int argc, char *argv[]){
   //benchmark_container_inv_sqrt();
   //benchmark_kmer_major_load_calc(8);
   //benchmark_calculate_distance_major();
-  //print_kmers_to_file();
-  auto array = iterate_kmers_bench();
-  for (int x = 0; x < array.rows(); x++){
-    for (int y = 0; y < array.cols(); y++){
-      std::cout << array(x,y) << " ";
-    }
-    std::cout << std::endl; 
-  } 
+  print_kmers_to_file();
+  //auto array = iterate_kmers_bench();
+  //for (int x = 0; x < array.rows(); x++){
+  //  for (int y = 0; y < array.cols(); y++){
+  //    std::cout << array(x,y) << " ";
+  //  }
+  //  std::cout << std::endl; 
+  //} 
 }
