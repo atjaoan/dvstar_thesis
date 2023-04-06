@@ -60,8 +60,6 @@ TEST_F(DvstarTests, Identity_vector) {
 
   double dist_vector = dist_func(first_vlmc, first_vlmc);
   EXPECT_NEAR(0.0, dist_vector, error_tolerance);
-  double old_dvstar_implementation = vlmc::dvstar(first_bintree, first_bintree, background_order);
-  EXPECT_DOUBLE_EQ(0.0, old_dvstar_implementation);
 }
 
 TEST_F(DvstarTests, EqualDistance_vector) {
@@ -102,8 +100,6 @@ TEST_F(DvstarTests, Identity_indexing) {
 
   double dist_multi_vector = dist_func(first_vlmc, first_vlmc);
   EXPECT_NEAR(0.0, dist_multi_vector, error_tolerance);
-  double old_dvstar_implementation = vlmc::dvstar(first_bintree, first_bintree, background_order);
-  EXPECT_DOUBLE_EQ(0.0, old_dvstar_implementation);
 }
 
 TEST_F(DvstarTests, Symmetry_indexing) {

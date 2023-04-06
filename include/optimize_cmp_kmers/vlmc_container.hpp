@@ -289,14 +289,12 @@ class VLMC_sorted_vector : public VLMC_Container {
     const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f) override {
       auto right_it = right_kmers.begin();
       auto right_end = right_kmers.end();
-      int f_applied = 0;
       
       auto left_it = left_kmers.begin();
       auto left_end = left_kmers.end();
       while(left_it != left_end && right_it != right_end){
         if(*left_it == *right_it){
           f(*left_it, *right_it);
-          f_applied++;
           ++left_it;
           ++right_it;
         } else if(*left_it < *right_it) {
@@ -304,7 +302,6 @@ class VLMC_sorted_vector : public VLMC_Container {
         }
         else ++right_it;
       }
-      std::cout << f_applied << "\n";
       /*
       for(auto &left_kmer : left_kmers){
         while((*right_it) < left_kmer){
@@ -587,7 +584,6 @@ class VLMC_Veb : public VLMC_Container {
         kmer.next_char_prob *= cached_context.row(offset).rsqrt();
         veb.insert(kmer);
       }
-      //std::cout << veb.container.size() << "\n";
     } 
 
     size_t size() const override { return veb.container.size(); }
@@ -608,24 +604,19 @@ class VLMC_Veb : public VLMC_Container {
     void iterate_kmers(VLMC_Container &left_kmers, VLMC_Container &right_kmers,
     const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f) override {
       int idx = 0;
-      int f_applied = 0;
       RI_Kmer& left_kmer = left_kmers.get(idx);
       RI_Kmer right_kmer = right_kmers.find(left_kmer.integer_rep);
       
       while(idx < left_kmers.size()){
-        //std::cout << left_kmer.integer_rep << " : " << right_kmer.integer_rep << "\n";
         if(left_kmer == right_kmer){
           f(left_kmer, right_kmer);
-          f_applied++;
         }
         while(idx < left_kmers.size()){
           left_kmer = left_kmers.get(++idx);
           if(left_kmer > 0) break;
         }
         right_kmer = right_kmers.find(left_kmer.integer_rep);
-        std::cout << right_kmer.integer_rep << "\n";
       }
-      std::cout << f_applied << "\n";
       
       /*
       RI_Kmer left_kmer = left_kmers.find(this->min_index);

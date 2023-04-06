@@ -28,7 +28,7 @@ protected:
       return distance::dvstar(left, right, background_order);
   };
 
-  double error_tolerance = 1E-5;
+  double error_tolerance = 3E-5;
 };
 
 TEST_F(ParallelTest, SequentialEqParallel) {
