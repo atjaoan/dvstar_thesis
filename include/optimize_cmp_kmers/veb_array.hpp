@@ -22,7 +22,7 @@ struct Veb_array{
 	int height;
 
   Veb_array() = default;
-  Veb_array(int elems) : container(elems), size(elems), height{(int)(ceil(log((float)elems)/log(2.0)))} { };
+  Veb_array(int elems) : container(elems, null_kmer), size(elems), height{(int)(ceil(log((float)elems)/log(2.0)))} { };
   ~Veb_array() = default;
 
 inline int power_of_two(int exponent) { return 1 << exponent; }
@@ -64,7 +64,10 @@ container::RI_Kmer& retrive_on_index(const int i){
 
 void insert(const container::RI_Kmer kmer){
 	int idx = get_index(kmer.integer_rep, height);
-	if(idx > container.size() - 1) return;
+	if(idx > container.size()) {
+		//std::cout << idx << " with size " << container.size() << "\n";
+		return;
+	}
   container[idx] = kmer;
 }
 
@@ -76,36 +79,11 @@ container::RI_Kmer& get_elem(int n){
 
 void print_array(){
 	for(int i = 0; i < container.size(); i++){
-		std::cout << container[i].integer_rep << " at index " << i << "\n";
-	}
-}
-/*
-int veb_search(const int *tree, int size, int element){ 
-  int d, D, subtree_size, subtree_leaf_count;
-	get_group_index_size_count(size, d, D, subtree_size, subtree_leaf_count);
-
-	if (size > 1) {
-		// Recurse on top half of tree
-		int subtree_index = veb_search(tree, D, element);
-		if (subtree_index < 0) return subtree_index;
-
-		int offset = subtree_index * subtree_size + D;
-
-		// If not in top half, use subtree index to find place in bottom half
-		int bottom_subtree_index = veb_search(tree + offset, subtree_size, element);
-		return subtree_leaf_count*subtree_index + bottom_subtree_index;
-	} else {
-		int root = tree[0];
-
-		if (element == root) {
-			//std::cout << "Found " << element << " at index " 
-			//	  << (int)(tree - container.data()) << std::endl;
-			return -1;
+		int rep = container[i].integer_rep;
+		if(rep > 0){
+			std::cout << rep << " at index " << i << "\n";
 		}
-
-		return (element < root) ? 0 : 1;
 	}
 }
-*/
 };
 }

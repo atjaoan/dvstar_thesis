@@ -14,6 +14,7 @@
 #include "unordered_dense.h"
 #include "veb_tree.hpp"
 #include "veb_array.hpp"
+#include "eytzinger_array.hpp"
 #include "Eigen/Core"
 
 /*
@@ -563,6 +564,8 @@ class VLMC_Veb : public VLMC_Container {
       while (ifs.peek() != EOF){
         archive(input_kmer);
         RI_Kmer ri_kmer{input_kmer};
+        if(ri_kmer.integer_rep > max_index) max_index = ri_kmer.integer_rep;
+        if(ri_kmer.integer_rep < min_index) min_index = ri_kmer.integer_rep;
 
         if(input_kmer.length <= background_order){
           if (input_kmer.length + 1 > background_order){
@@ -570,14 +573,13 @@ class VLMC_Veb : public VLMC_Container {
             cached_context.row(offset) = ri_kmer.next_char_prob;
           }
         } else {
-          if(ri_kmer.integer_rep > max_index) max_index = ri_kmer.integer_rep;
-          if(ri_kmer.integer_rep < min_index) min_index = ri_kmer.integer_rep;
           tmp_container.push_back(ri_kmer);
         }
       }
 
       ifs.close();
-      veb = veb::Veb_array(tmp_container.size());
+      veb = veb::Veb_array(max_index + 1);
+
       for(auto kmer : tmp_container){
         int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
         int offset = background_idx - offset_to_remove;
@@ -603,38 +605,26 @@ class VLMC_Veb : public VLMC_Container {
 
     void iterate_kmers(VLMC_Container &left_kmers, VLMC_Container &right_kmers,
     const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f) override {
+<<<<<<< Updated upstream
       int idx = 0;
+=======
+      int idx = left_kmers.get_min_kmer_index();
+      int f_applied = 0;
+      std::cout << "Left kmers size : " << left_kmers.size() << "\n";
+      std::cout << "Right kmers size : " << right_kmers.size() << "\n";
+>>>>>>> Stashed changes
       RI_Kmer& left_kmer = left_kmers.get(idx);
       RI_Kmer right_kmer = right_kmers.find(left_kmer.integer_rep);
-      
       while(idx < left_kmers.size()){
         if(left_kmer == right_kmer){
           f(left_kmer, right_kmer);
         }
         while(idx < left_kmers.size()){
-          left_kmer = left_kmers.get(++idx);
+          left_kmer = left_kmers.get(idx++);
           if(left_kmer > 0) break;
         }
         right_kmer = right_kmers.find(left_kmer.integer_rep);
       }
-      
-      /*
-      RI_Kmer left_kmer = left_kmers.find(this->min_index);
-      RI_Kmer right_kmer = right_kmers.find(this->min_index);
-      while(true){
-        // Check if right_kmers has this succeeding left_kmer
-        // if, apply f
-        if(left_kmer == right_kmer){
-          f(left_kmer, right_kmer);
-        }
-        // Iterating left
-        left_kmer = veb::succ(veb, left_kmer);
-        if(left_kmer.integer_rep == -1){
-          return;
-        }
-        right_kmer = right_kmers.find(left_kmer.integer_rep);
-      }
-    */
     }
 };
 
@@ -727,5 +717,78 @@ class VLMC_Set : public VLMC_Container {
       }
     }
 
+};
+
+class VLMC_Eytzinger : public VLMC_Container {
+
+  private: 
+    array::Ey_array arr;
+    int min_index = INT_MAX;
+    int max_index = -1;
+
+  public: 
+    VLMC_Eytzinger() = default;
+    ~VLMC_Eytzinger() = default; 
+
+    VLMC_Eytzinger(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
+      
+      std::ifstream ifs(path_to_bintree, std::ios::binary);
+      cereal::BinaryInputArchive archive(ifs);
+
+      Kmer input_kmer{};
+
+      Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
+      std::vector<RI_Kmer> tmp_container{};
+
+      auto offset_to_remove = 0;
+      for (int i = 0; i < background_order; i++){
+        offset_to_remove += std::pow(4, i); 
+      }
+
+      while (ifs.peek() != EOF){
+        archive(input_kmer);
+        RI_Kmer ri_kmer{input_kmer};
+        if(ri_kmer.integer_rep > max_index) max_index = ri_kmer.integer_rep;
+        if(ri_kmer.integer_rep < min_index) min_index = ri_kmer.integer_rep;
+
+        if(input_kmer.length <= background_order){
+          if (input_kmer.length + 1 > background_order){
+            int offset = ri_kmer.integer_rep - offset_to_remove; 
+            cached_context.row(offset) = ri_kmer.next_char_prob;
+          }
+        } else {
+          tmp_container.push_back(ri_kmer);
+        }
+      }
+
+      ifs.close();
+
+      for(auto kmer : tmp_container){
+        int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
+        int offset = background_idx - offset_to_remove;
+        kmer.next_char_prob *= cached_context.row(offset).rsqrt();
+      }
+      arr = array::Ey_array(tmp_container);
+    } 
+
+    size_t size() const override { return arr.size; }
+
+    //void push(const RI_Kmer &kmer) override { 
+    //  veb.insert(kmer); 
+    //}
+
+    RI_Kmer &get(const int i) override { ;
+      return arr.get_from_array(i);
+    }
+
+    int get_max_kmer_index() const override { return max_index; }
+    int get_min_kmer_index() const override { return min_index; }
+
+    //RI_Kmer find(const int i_rep) override { return arr.get_elem(i_rep); }
+
+    void iterate_kmers(VLMC_Container &left_kmers, VLMC_Container &right_kmers,
+    const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f) override {
+      
+    }
 };
 }
