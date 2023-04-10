@@ -9,10 +9,9 @@
 #include <algorithm>
 
 #include "cluster_container.hpp"
+#include "global_aliases.hpp"
 
-using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
 using RI_Kmer = container::RI_Kmer;
-using matrix_t = Eigen::MatrixXf;
 
 namespace utils {
   

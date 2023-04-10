@@ -8,9 +8,8 @@
 
 #include "cluster_container.hpp"
 #include "vlmc_container.hpp"
-
-// Distance Functions 
 #include "distances/dvstar.hpp"
+#include "global_aliases.hpp"
 
 namespace parser {
 
@@ -62,7 +61,7 @@ struct cli_arguments {
 };
 
 template <typename VC>
-std::function<double(VC &, VC &)> parse_distance_function(cli_arguments arguments) {
+std::function<out_t(VC &, VC &)> parse_distance_function(cli_arguments arguments) {
   if (arguments.dist_fn == parser::Distance_function::dvstar) {
     auto fun = [&](auto &left, auto &right) {
       return distance::dvstar<VC>(left, right, arguments.background_order);

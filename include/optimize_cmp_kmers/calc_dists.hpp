@@ -1,3 +1,5 @@
+#pragma once 
+
 #include <chrono> 
 #include <Eigen/Core>
 #include <mutex>
@@ -6,17 +8,17 @@
 #include "vlmc_container.hpp"
 #include "parallel.hpp"
 #include "distances/dvstar.hpp"
+#include "global_aliases.hpp"
 #include "utils.hpp"
 
 namespace calculate {
 
-using matrix_t  = Eigen::MatrixXf;
 using kmer_pair = container::Kmer_Pair;
 
 template <typename VC>
 void calculate_reduced_slice(size_t start_index, size_t stop_index, matrix_t &distances,
                      container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
-                     const std::function<double(VC &, VC &)> &fun) {
+                     const std::function<out_t(VC &, VC &)> &fun) {
   
   auto rec_fun = [&](size_t left, size_t right) {
     distances(left, right) = fun(cluster_left.get(left), cluster_right.get(right)); 
@@ -28,7 +30,7 @@ void calculate_reduced_slice(size_t start_index, size_t stop_index, matrix_t &di
 template <typename VC>
 void calculate_triangle_slice(int x1, int y1, int x2, int y2, int x3, int y3, matrix_t &distances, 
           container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
-                     const std::function<double(VC &, VC &)> &fun) {
+                     const std::function<out_t(VC &, VC &)> &fun) {
 
   auto rec_fun = [&](int left, int right) {
     if (distances(left, right) == 0){
@@ -54,7 +56,7 @@ void calculate_triangle_slice(int x1, int y1, int x2, int y2, int x3, int y3, ma
 template <typename VC>
 void calculate_full_slice(size_t start_index, size_t stop_index, matrix_t &distances,
                      container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
-                     const std::function<double(VC &, VC &)> &fun) {
+                     const std::function<out_t(VC &, VC &)> &fun) {
 
   auto rec_fun = [&](size_t left, size_t right) {
     distances(left, right) = fun(cluster_left.get(left), cluster_right.get(right)); 
@@ -66,10 +68,10 @@ void calculate_full_slice(size_t start_index, size_t stop_index, matrix_t &dista
 // Inter-directory distances
 template <typename VC> 
 matrix_t calculate_distances(
-    container::Cluster_Container<VC> &cluster, std::function<double(VC &, VC &)> &distance_function,
+    container::Cluster_Container<VC> &cluster, std::function<out_t(VC &, VC &)> &distance_function,
     size_t requested_cores){
 
-  matrix_t distances = Eigen::MatrixXf::Constant(cluster.size(), cluster.size(), 0);
+  matrix_t distances = matrix_t::Constant(cluster.size(), cluster.size(), 0);
 
   // auto fun = [&](size_t start_index, size_t stop_index) {
   //   calculate_reduced_slice<VC>(start_index, stop_index, distances,
@@ -88,7 +90,7 @@ matrix_t calculate_distances(
 template <typename VC>
 matrix_t calculate_distances(
     container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
-    std::function<double(VC &, VC &)> &distance_function,
+    std::function<out_t(VC &, VC &)> &distance_function,
     size_t requested_cores){
 
       matrix_t distances{cluster_left.size(), cluster_right.size()};

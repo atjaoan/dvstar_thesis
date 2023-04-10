@@ -1,18 +1,20 @@
-#include <gtest/gtest.h>
-#include <Eigen/Dense>
+#pragma once 
 
+#include <gtest/gtest.h>
+
+#include <Eigen/Dense>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 
-//Our files 
 #include "vlmc_container.hpp"
 #include "distances/dvstar.hpp"
 #include "vlmc_from_kmers/dvstar.hpp"
 #include "optimize_cmp_kmers/get_cluster.hpp"
 #include "optimize_cmp_kmers/calc_dists.hpp"
+#include "global_aliases.hpp"
 
-using matrix_t  = Eigen::MatrixXf;
+extern const out_t error_tolerance;
 
 class ParallelTest : public ::testing::Test {
 protected:
@@ -23,18 +25,16 @@ protected:
 
   size_t background_order = 0; 
 
-  std::function<double(container::VLMC_vector &, container::VLMC_vector &)> distance_function = [&](auto &left, auto &right) {
+  std::function<out_t(container::VLMC_vector &, container::VLMC_vector &)> distance_function = [&](auto &left, auto &right) {
       return distance::dvstar(left, right, background_order);
   };
 
-  std::function<double(container::VLMC_sorted_vector &, container::VLMC_sorted_vector &)> distance_function_sv = [&](auto &left, auto &right) {
+  std::function<out_t(container::VLMC_sorted_vector &, container::VLMC_sorted_vector &)> distance_function_sv = [&](auto &left, auto &right) {
       return distance::dvstar(left, right, background_order);
   };
-  double error_tolerance = 3E-5;
 };
 
 TEST_F(ParallelTest, SequentialEqParallel) {
-  // auto distance_function = distance::dvstar;
   auto cluster = cluster::get_cluster<container::VLMC_vector>(first_directory, 1, 0);
 
   matrix_t distances_parallel{cluster.size(), cluster.size()};
@@ -57,8 +57,6 @@ TEST_F(ParallelTest, SequentialEqParallel) {
 }
 
 TEST_F(ParallelTest, ReducedEqFullSlice) {
-  // auto distance_function = distance::dvstar;
-
   auto cluster = cluster::get_cluster<container::VLMC_vector>(first_directory, 1, 0);
 
   matrix_t distances_parallel{cluster.size(), cluster.size()};
@@ -82,7 +80,7 @@ TEST_F(ParallelTest, ReducedEqFullSlice) {
   {
     for (size_t j = y_bound; j < y_bound; j++)
     {
-      EXPECT_DOUBLE_EQ(distances_parallel(i,j), distances_sequantial(i,j));
+      EXPECT_NEAR(distances_parallel(i,j), distances_sequantial(i,j), error_tolerance);
     }
     y_bound++;
   }

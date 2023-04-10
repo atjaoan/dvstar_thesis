@@ -1,10 +1,12 @@
+#pragma once 
+
+#include <highfive/H5File.hpp>
+
 #include "parser.hpp"
 #include "get_cluster.hpp"
 #include "calc_dists.hpp"
+#include "global_aliases.hpp"
 #include "utils.hpp"
-#include <highfive/H5File.hpp>
-
-using matrix_t = Eigen::MatrixXf;
 
 template <typename VC>
 matrix_t calculate_cluster_distance(parser::cli_arguments arguments, const size_t nr_cores){

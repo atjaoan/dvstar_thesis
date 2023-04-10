@@ -1,15 +1,14 @@
-// Searching a key on a B-tree in C++
+#pragma once 
 
 #include <iostream>
 
 #include "read_in_kmer.hpp"
+#include "global_aliases.hpp"
 
 namespace b_tree{
 
-using Kmer = container::RI_Kmer;
-
 class TreeNode {
-  Kmer *keys;
+  container::RI_Kmer *keys;
   int t;
   TreeNode **C;
   int n;
@@ -19,15 +18,15 @@ class TreeNode {
 
     TreeNode(int temp, bool bool_leaf);
 
-    void insertNonFull(Kmer k);
+    void insertNonFull(container::RI_Kmer k);
     void splitChild(int i, TreeNode *y);
     void traverse();
 
-    Kmer search(const int i_rep);
+    container::RI_Kmer search(const int i_rep);
 
-    void for_each(const std::function<void(const Kmer &kmer)> &f);
+    void for_each(const std::function<void(const container::RI_Kmer &kmer)> &f);
 
-    void second_pass(const Eigen::ArrayX4f &cached_context, 
+    void second_pass(const eigenx_t &cached_context, 
               const size_t background_order, const size_t offset_to_remove);
 
     friend class BTree;
@@ -48,34 +47,34 @@ class BTree {
         root->traverse();
     }
 
-    Kmer search(const int i_rep) {
+    container::RI_Kmer search(const int i_rep) {
       if (root != NULL) {
         return root->search(i_rep);
       } 
       return Kmer{};
     }
 
-    void for_each(const std::function<void(const Kmer &kmer)> &f) {
+    void for_each(const std::function<void(const container::RI_Kmer &kmer)> &f) {
       if (root != NULL) {
         root->for_each(f); 
       }
     }
 
-    void second_pass(const Eigen::ArrayX4f &cached_context, 
+    void second_pass(const eigenx_t &cached_context, 
               const size_t background_order, const size_t offset_to_remove) {
       if (root != NULL) {
         root->second_pass(cached_context, background_order, offset_to_remove);
       }
     }
 
-    void insert(Kmer k);
+    void insert(container::RI_Kmer k);
 };
 
 TreeNode::TreeNode(int t1, bool leaf1) {
   t = t1;
   leaf = leaf1;
 
-  keys = new Kmer[2 * t - 1];
+  keys = new container::RI_Kmer[2 * t - 1];
   C = new TreeNode *[2 * t];
 
   n = 0;
@@ -93,7 +92,7 @@ void TreeNode::traverse() {
     C[i]->traverse();
 }
 
-void TreeNode::for_each(const std::function<void(const Kmer &kmer)> &f) {
+void TreeNode::for_each(const std::function<void(const container::RI_Kmer &kmer)> &f) {
   int i;
   for (i = 0; i < n; i++) {
     if (leaf == false)
@@ -105,7 +104,7 @@ void TreeNode::for_each(const std::function<void(const Kmer &kmer)> &f) {
     C[i]->for_each(f);
 }
 
-void TreeNode::second_pass(const Eigen::ArrayX4f &cached_context, 
+void TreeNode::second_pass(const eigenx_t &cached_context, 
               const size_t background_order, const size_t offset_to_remove) {
   int i;
   for (i = 0; i < n; i++) {
@@ -124,7 +123,7 @@ void TreeNode::second_pass(const Eigen::ArrayX4f &cached_context,
     C[i]->second_pass(cached_context, background_order, offset_to_remove);
 }
 
-Kmer TreeNode::search(const int i_rep) {
+container::RI_Kmer TreeNode::search(const int i_rep) {
   int i = 0;
   while (i < n && keys[i].integer_rep < i_rep)
     i++;
@@ -133,12 +132,12 @@ Kmer TreeNode::search(const int i_rep) {
     return keys[i];
 
   if (leaf == true)
-    return Kmer{};
+    return container::RI_Kmer{};
 
   return C[i]->search(i_rep);
 }
 
-void BTree::insert(Kmer k) {
+void BTree::insert(container::RI_Kmer k) {
   if (root == NULL) {
     root = new TreeNode(t, true);
     root->keys[0] = k;
@@ -162,7 +161,7 @@ void BTree::insert(Kmer k) {
   }
 }
 
-void TreeNode::insertNonFull(Kmer k) {
+void TreeNode::insertNonFull(container::RI_Kmer k) {
   int i = n - 1;
 
   if (leaf == true) {

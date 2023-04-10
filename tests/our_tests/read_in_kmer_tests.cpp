@@ -1,4 +1,5 @@
 #pragma once 
+
 #include <gtest/gtest.h>
 
 #include <functional>
@@ -10,11 +11,13 @@
 #include "vlmc_from_kmers/kmer.hpp"
 #include "read_in_kmer.hpp"
 #include "../read_helper.hpp"
+#include "global_aliases.hpp"
+
+extern const out_t error_tolerance;
 
 class RIKmerTest : public ::testing::Test {
 protected:
   void SetUp() override {}
-  double error_tolerance = 1E-5;
 };
 
 TEST_F(RIKmerTest, EmptyConstructor) {
@@ -27,7 +30,7 @@ TEST_F(RIKmerTest, EmptyConstructor) {
   EXPECT_TRUE(kmer.is_null);
 }
 TEST_F(RIKmerTest, KmerConstructorProb) {
-  vlmc::VLMCKmer old_kmer{5, 10, {5, 10, 7, 8}};
+  Kmer old_kmer{5, 10, {5, 10, 7, 8}};
   double sum_children = 30.0+4.0;
   
   container::RI_Kmer kmer{old_kmer};

@@ -8,20 +8,20 @@
 #include <set>
 #include <execution>
 #include <math.h>
+#include <Eigen/Core> 
+
 #include "vlmc_from_kmers/kmer.hpp"
 #include "optimize_cmp_kmers/read_in_kmer.hpp"
+#include "global_aliases.hpp"
 #include "b_tree.hpp"
 #include "robin_hood.h"
 #include "unordered_dense.h"
 #include "veb_tree.hpp"
 #include "veb_array.hpp"
-#include "Eigen/Core"
-
-using Kmer = vlmc::VLMCKmer; 
 
 namespace container{
 
-int load_VLMCs_from_file(const std::filesystem::path &path_to_bintree, Eigen::ArrayX4f &cached_context, 
+int load_VLMCs_from_file(const std::filesystem::path &path_to_bintree, eigenx_t &cached_context, 
         const std::function<void(const RI_Kmer &kmer)> f, const size_t background_order = 0) {
   std::ifstream ifs(path_to_bintree, std::ios::binary);
   cereal::BinaryInputArchive archive(ifs);
@@ -84,7 +84,7 @@ class VLMC_vector {
     ~VLMC_vector() = default; 
 
     VLMC_vector(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
-      Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
+      eigenx_t cached_context((int)std::pow(4, background_order), 4);
 
       auto fun = [&](const RI_Kmer &kmer) { push(kmer); }; 
 
@@ -125,10 +125,10 @@ class VLMC_vector {
     }
 };
 
-float iterate_kmers(VLMC_vector &left_kmers, VLMC_vector &right_kmers) {
-  float dot_product = 0.0;
-  float left_norm = 0.0;
-  float right_norm = 0.0;
+out_t iterate_kmers(VLMC_vector &left_kmers, VLMC_vector &right_kmers) {
+  out_t dot_product = 0.0;
+  out_t left_norm = 0.0;
+  out_t right_norm = 0.0;
 
   for (size_t i = left_kmers.get_min_kmer_index() ; i <= left_kmers.get_max_kmer_index(); i++) {
     const RI_Kmer &left_kmer = left_kmers.get(i);
@@ -165,7 +165,7 @@ class VLMC_Indexing {
 
     VLMC_Indexing(const std::filesystem::path &path_to_bintree, const size_t background_order = 0, const int initial_size = 50) 
       : container(initial_size, null_kmer), container_size{initial_size} {
-      Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
+      eigenx_t cached_context((int)std::pow(4, background_order), 4);
 
       auto fun = [&](const RI_Kmer &kmer) { push(kmer); }; 
 
@@ -210,10 +210,10 @@ class VLMC_Indexing {
     }
 };
 
-float iterate_kmers(VLMC_Indexing &left_kmers, VLMC_Indexing &right_kmers) {
-  float dot_product = 0.0;
-  float left_norm = 0.0;
-  float right_norm = 0.0;
+out_t iterate_kmers(VLMC_Indexing &left_kmers, VLMC_Indexing &right_kmers) {
+  out_t dot_product = 0.0;
+  out_t left_norm = 0.0;
+  out_t right_norm = 0.0;
 
   for (size_t i = left_kmers.get_min_kmer_index() ; i <= left_kmers.get_max_kmer_index(); i++) {
     const RI_Kmer &left_kmer = left_kmers.get(i);
@@ -245,7 +245,7 @@ class VLMC_sorted_vector {
     ~VLMC_sorted_vector() = default; 
 
     VLMC_sorted_vector(const std::filesystem::path &path_to_bintree, const size_t background_order = 0, bool use_new = false) {
-      Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
+      eigenx_t cached_context((int)std::pow(4, background_order), 4);
 
       auto fun = [&](const RI_Kmer &kmer) { push(kmer); }; 
 
@@ -292,10 +292,10 @@ class VLMC_sorted_vector {
     }
 };
 
-float iterate_kmers(VLMC_sorted_vector &left_kmers, VLMC_sorted_vector &right_kmers) {
-  float dot_product = 0.0;
-  float left_norm = 0.0;
-  float right_norm = 0.0;
+out_t iterate_kmers(VLMC_sorted_vector &left_kmers, VLMC_sorted_vector &right_kmers) {
+  out_t dot_product = 0.0;
+  out_t left_norm = 0.0;
+  out_t right_norm = 0.0;
 
   auto right_it = right_kmers.begin();
   auto right_end = right_kmers.end();
@@ -335,7 +335,7 @@ class VLMC_B_tree {
     ~VLMC_B_tree() = default; 
 
     VLMC_B_tree(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
-      Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
+      eigenx_t cached_context((int)std::pow(4, background_order), 4);
 
       auto fun = [&](const RI_Kmer &kmer) { push(kmer); }; 
 
@@ -358,10 +358,10 @@ class VLMC_B_tree {
     }
 };
 
-float iterate_kmers(VLMC_B_tree &left_kmers, VLMC_B_tree &right_kmers) {
-  float dot_product = 0.0;
-  float left_norm = 0.0;
-  float right_norm = 0.0;
+out_t iterate_kmers(VLMC_B_tree &left_kmers, VLMC_B_tree &right_kmers) {
+  out_t dot_product = 0.0;
+  out_t left_norm = 0.0;
+  out_t right_norm = 0.0;
 
   left_kmers.container.for_each([&](const RI_Kmer &left_kmer) {
     RI_Kmer right_kmer = right_kmers.find(left_kmer.integer_rep);
@@ -390,7 +390,7 @@ class VLMC_hashmap {
 
     VLMC_hashmap(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
       // cached_context : pointer to array which for each A, C, T, G has the next char probs
-      Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
+      eigenx_t cached_context((int)std::pow(4, background_order), 4);
 
       auto fun = [&](const RI_Kmer &kmer) { push(kmer); }; 
 
@@ -421,10 +421,10 @@ class VLMC_hashmap {
     }
 };
 
-float iterate_kmers(VLMC_hashmap &left_kmers, VLMC_hashmap &right_kmers) {
-  float dot_product = 0.0;
-  float left_norm = 0.0;
-  float right_norm = 0.0;
+out_t iterate_kmers(VLMC_hashmap &left_kmers, VLMC_hashmap &right_kmers) {
+  out_t dot_product = 0.0;
+  out_t left_norm = 0.0;
+  out_t right_norm = 0.0;
 
   for (auto &[i_rep, left_kmer] : left_kmers.container) {
     auto right_kmer = right_kmers.find(i_rep); 
@@ -458,7 +458,7 @@ class VLMC_Combo {
 
     VLMC_Combo(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
       // cached_context : pointer to array which for each A, C, T, G has the next char probs
-      Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
+      eigenx_t cached_context((int)std::pow(4, background_order), 4);
 
       auto fun = [&](const RI_Kmer &kmer) { push(kmer); }; 
 
@@ -520,10 +520,10 @@ class VLMC_Combo {
     }
 };
 
-float iterate_kmers(VLMC_Combo &left_kmers, VLMC_Combo &right_kmers) {
-  float dot_product = 0.0;
-  float left_norm = 0.0;
-  float right_norm = 0.0;
+out_t iterate_kmers(VLMC_Combo &left_kmers, VLMC_Combo &right_kmers) {
+  out_t dot_product = 0.0;
+  out_t left_norm = 0.0;
+  out_t right_norm = 0.0;
 
   for (size_t i = 0 ; i < left_kmers.max_idx; i++) {
     const RI_Kmer &left_kmer = left_kmers.container_ibv[i];
@@ -579,7 +579,7 @@ class VLMC_Veb {
 
       Kmer input_kmer{};
 
-      Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
+      eigenx_t cached_context((int)std::pow(4, background_order), 4);
       std::vector<RI_Kmer> tmp_container{};
 
       auto offset_to_remove = 0;
@@ -629,10 +629,10 @@ class VLMC_Veb {
     RI_Kmer find(const int i_rep) { return veb.get_elem(i_rep); }
 };
 
-float iterate_kmers(VLMC_Veb &left_kmers, VLMC_Veb &right_kmers) {
-  float dot_product = 0.0;
-  float left_norm = 0.0;
-  float right_norm = 0.0;
+out_t iterate_kmers(VLMC_Veb &left_kmers, VLMC_Veb &right_kmers) {
+  out_t dot_product = 0.0;
+  out_t left_norm = 0.0;
+  out_t right_norm = 0.0;
 
   int idx = 0;
   RI_Kmer& left_kmer = left_kmers.get(idx);
@@ -673,7 +673,7 @@ class VLMC_Set {
 
       Kmer input_kmer{};
 
-      Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
+      eigenx_t cached_context((int)std::pow(4, background_order), 4);
       std::vector<RI_Kmer> tmp_container{};
 
       auto offset_to_remove = 0;
@@ -726,10 +726,10 @@ class VLMC_Set {
     RI_Kmer find(const int i_rep) { return null_kmer; }
 
 };
-float iterate_kmers(VLMC_Set &left_kmers, VLMC_Set &right_kmers) {
-  float dot_product = 0.0;
-  float left_norm = 0.0;
-  float right_norm = 0.0;
+out_t iterate_kmers(VLMC_Set &left_kmers, VLMC_Set &right_kmers) {
+  out_t dot_product = 0.0;
+  out_t left_norm = 0.0;
+  out_t right_norm = 0.0;
 
   std::set<RI_Kmer>::iterator l_it = left_kmers.begin_set();
   std::set<RI_Kmer>::iterator r_it = right_kmers.begin_set();

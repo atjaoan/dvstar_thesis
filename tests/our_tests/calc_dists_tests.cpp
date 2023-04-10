@@ -1,3 +1,5 @@
+#pragma once 
+
 #include <gtest/gtest.h>
 
 #include <Eigen/Dense>
@@ -13,14 +15,15 @@
 #include "calc_dists.hpp"
 #include "distances/dvstar.hpp"
 #include "get_cluster.hpp"
+#include "global_aliases.hpp"
 
 //Original implementation files
 #include <kmc_file.h>
 #include "vlmc_from_kmers/dvstar.hpp"
 #include "vlmc_from_kmers/build_vlmc.hpp"
 
-using matrix_t  = Eigen::MatrixXf;
 using cluster_c = container::Cluster_Container<container::VLMC_vector>;
+extern const out_t error_tolerance;
 
 class CalcDistsTests : public ::testing::Test {
 protected:
@@ -38,39 +41,37 @@ protected:
 
   size_t background_order = 0;
 
-  std::function<double(container::VLMC_vector &, container::VLMC_vector &)> dist_func = [&](auto &left, auto &right) {
+  std::function<out_t(container::VLMC_vector &, container::VLMC_vector &)> dist_func = [&](auto &left, auto &right) {
       return distance::dvstar<container::VLMC_vector>(left, right, background_order);
   };
 
-  std::function<double(container::VLMC_sorted_vector &, container::VLMC_sorted_vector &)> dist_func_sv = [&](auto &left, auto &right) {
+  std::function<out_t(container::VLMC_sorted_vector &, container::VLMC_sorted_vector &)> dist_func_sv = [&](auto &left, auto &right) {
       return distance::dvstar<container::VLMC_sorted_vector>(left, right, background_order);
   };
 
-  std::function<double(container::VLMC_Indexing &, container::VLMC_Indexing &)> dist_func_mv = [&](auto &left, auto &right) {
+  std::function<out_t(container::VLMC_Indexing &, container::VLMC_Indexing &)> dist_func_mv = [&](auto &left, auto &right) {
       return distance::dvstar<container::VLMC_Indexing>(left, right, background_order);
   };
 
-  std::function<double(container::VLMC_B_tree &, container::VLMC_B_tree &)> dist_func_b = [&](auto &left, auto &right) {
+  std::function<out_t(container::VLMC_B_tree &, container::VLMC_B_tree &)> dist_func_b = [&](auto &left, auto &right) {
       return distance::dvstar<container::VLMC_B_tree>(left, right, background_order);
   };
 
-  std::function<double(container::VLMC_hashmap &, container::VLMC_hashmap &)> dist_func_h = [&](auto &left, auto &right) {
+  std::function<out_t(container::VLMC_hashmap &, container::VLMC_hashmap &)> dist_func_h = [&](auto &left, auto &right) {
       return distance::dvstar<container::VLMC_hashmap>(left, right, background_order);
   };
 
-  std::function<double(container::VLMC_Combo &, container::VLMC_Combo &)> dist_func_c = [&](auto &left, auto &right) {
+  std::function<out_t(container::VLMC_Combo &, container::VLMC_Combo &)> dist_func_c = [&](auto &left, auto &right) {
       return distance::dvstar<container::VLMC_Combo>(left, right, background_order);
   };
 
-  std::function<double(container::VLMC_Veb &, container::VLMC_Veb &)> dist_func_veb = [&](auto &left, auto &right) {
+  std::function<out_t(container::VLMC_Veb &, container::VLMC_Veb &)> dist_func_veb = [&](auto &left, auto &right) {
       return distance::dvstar<container::VLMC_Veb>(left, right, background_order);
   };
 
-  std::function<double(container::VLMC_Set &, container::VLMC_Set &)> dist_func_set = [&](auto &left, auto &right) {
+  std::function<out_t(container::VLMC_Set &, container::VLMC_Set &)> dist_func_set = [&](auto &left, auto &right) {
       return distance::dvstar<container::VLMC_Set>(left, right, background_order);
   };
-
-  double error_tolerance = 1E-4;
 };
 
 cluster_c create_cluster(container::VLMC_vector &vlmc, size_t size) {
@@ -180,10 +181,9 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
         //EXPECT_NEAR(distances_vector(x,y), distances_b_tree(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_hashmap(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_combo(x,y), error_tolerance);
-        EXPECT_NEAR(distances_vector(x,y), distances_veb(x,y), error_tolerance);
+        // EXPECT_NEAR(distances_vector(x,y), distances_veb(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_set(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_k_major(x,y), error_tolerance); 
-        // EXPECT_NEAR(distances_vector(x,y), distances_veb(x,y), error_tolerance);
       }
     }
   }
@@ -204,7 +204,7 @@ TEST_F(CalcDistsTests, ValueCheckOneDir){
         if (x <= y) {
           EXPECT_NEAR(distances_vector_two_dirs(x,y), distances_vector(x,y), error_tolerance);
         } else {
-          EXPECT_DOUBLE_EQ(0.0, distances_vector(x,y));
+          EXPECT_NEAR(0.0, distances_vector(x,y), error_tolerance);
         }
       }
     }

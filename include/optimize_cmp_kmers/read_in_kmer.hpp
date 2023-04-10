@@ -1,4 +1,5 @@
 #pragma once 
+
 #include <Eigen/Core>
 #include <functional>
 #include <memory>
@@ -6,28 +7,25 @@
 #include <numeric>
 
 #include "vlmc_from_kmers/kmer.hpp"
+#include "global_aliases.hpp"
 
 /*
   Stores VLMC (multiple k-mers) in a container. 
 */
 
-constexpr double pseudo_count_amount = 1.0; 
+constexpr out_t pseudo_count_amount = 1.0; 
 
 namespace container{
  
 struct RI_Kmer{
-    Eigen::Array4f next_char_prob;
-    //Could be 3 and infer the fourth probability,
-    //Using 4 since it may be useful in SIMD instructions
-    // size_t length = 0; 
+    eigen_t next_char_prob;
     int integer_rep;
     bool is_null = true;
 
     RI_Kmer() = default;
 
-    RI_Kmer(const vlmc::VLMCKmer &old_kmer){
-        // this->length = old_kmer.length;
-        Eigen::Array4f tmp = {old_kmer.next_symbol_counts[0], 
+    RI_Kmer(const Kmer &old_kmer){
+        eigen_t tmp = {old_kmer.next_symbol_counts[0], 
                               old_kmer.next_symbol_counts[1],
                               old_kmer.next_symbol_counts[2],
                               old_kmer.next_symbol_counts[3]};
@@ -38,14 +36,13 @@ struct RI_Kmer{
     }
 
     // Used in testing
-    RI_Kmer(const std::array<double, 4>& next_counts){ // , const int len){
-        // this->length = len;
+    RI_Kmer(const std::array<out_t, 4>& next_counts){
         int pseudo_count_amount = 1;
         float child_count = std::accumulate(next_counts.begin(), next_counts.end(), pseudo_count_amount * 4);
-        this->next_char_prob = {(double(next_counts[0]) + pseudo_count_amount) / child_count,
-               (double(next_counts[1]) + pseudo_count_amount) / child_count,
-               (double(next_counts[2]) + pseudo_count_amount) / child_count,
-               (double(next_counts[3]) + pseudo_count_amount) / child_count};
+        this->next_char_prob = {(out_t(next_counts[0]) + pseudo_count_amount) / child_count,
+               (out_t(next_counts[1]) + pseudo_count_amount) / child_count,
+               (out_t(next_counts[2]) + pseudo_count_amount) / child_count,
+               (out_t(next_counts[3]) + pseudo_count_amount) / child_count};
         this->integer_rep = -1;
         this->is_null = false;
     }
@@ -54,7 +51,7 @@ struct RI_Kmer{
     RI_Kmer(const int temp) : integer_rep{temp}, is_null{false} {}
     ~RI_Kmer() = default;
 
-    int get_index_rep(const vlmc::VLMCKmer &kmer) {
+    int get_index_rep(const Kmer &kmer) {
       int integer_value = 0;
       int offset = 1;
       for (int i = kmer.length - 1; i >= 0; i--) {
@@ -65,7 +62,7 @@ struct RI_Kmer{
       return integer_value;
     }
 
-    inline uchar extract2bits(const vlmc::VLMCKmer &kmer, uint32 pos) const {
+    inline uchar extract2bits(const Kmer &kmer, uint32 pos) const {
       uchar row = pos >> 5;
       uchar pos_in_row = pos & 31;
       uchar n_shift_pos_to_end = (62 - pos_in_row * 2);

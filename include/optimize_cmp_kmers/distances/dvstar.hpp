@@ -11,52 +11,52 @@
 #include "vlmc_from_kmers/kmer.hpp"
 #include "vlmc_from_kmers/estimators.hpp"
 #include "utils.hpp"
+#include "global_aliases.hpp"
 
 namespace distance {
 
-using Kmer = container::RI_Kmer;
+using RI_Kmer = container::RI_Kmer;
 using bucket_t = std::vector<container::Kmer_Pair>;
-using matrix_t = Eigen::MatrixXf;
 
 struct Intermediate_matrix_val{
   int left_id;
   int right_id;
-  double dot_prod;
-  double left_norm;
-  double right_norm;
+  out_t dot_prod;
+  out_t left_norm;
+  out_t right_norm;
 };
 
-std::array<std::array<double, 4>, 2>
-get_components(const Kmer &left, const Kmer &left_background,
-               const Kmer &right, const Kmer &right_background) {
+std::array<std::array<out_t, 4>, 2>
+get_components(const RI_Kmer &left, const RI_Kmer &left_background,
+               const RI_Kmer &right, const RI_Kmer &right_background) {
   auto left_probs = left.next_char_prob;
   auto left_probs_background = left_background.next_char_prob;
   auto right_probs = right.next_char_prob;
   auto right_probs_background = right_background.next_char_prob;
 
-  return {std::array<double, 4>{
+  return {std::array<out_t, 4>{
               left_probs[0] / std::sqrt(left_probs_background[0]),
               left_probs[1] / std::sqrt(left_probs_background[1]),
               left_probs[2] / std::sqrt(left_probs_background[2]),
               left_probs[3] / std::sqrt(left_probs_background[3])},
-          std::array<double, 4>{
+          std::array<out_t, 4>{
               right_probs[0] / std::sqrt(right_probs_background[0]),
               right_probs[1] / std::sqrt(right_probs_background[1]),
               right_probs[2] / std::sqrt(right_probs_background[2]),
               right_probs[3] / std::sqrt(right_probs_background[3])}};
 }
 
-std::array<std::array<double, 4>, 2>
-get_components(const Kmer &left, const Kmer &right) {
+std::array<std::array<out_t, 4>, 2>
+get_components(const RI_Kmer &left, const RI_Kmer &right) {
   auto left_probs = left.next_char_prob;
   auto right_probs = right.next_char_prob;
 
-  return {std::array<double, 4>{
+  return {std::array<out_t, 4>{
               left_probs[0],
               left_probs[1],
               left_probs[2],
               left_probs[3]},
-          std::array<double, 4>{
+          std::array<out_t, 4>{
               right_probs[0],
               right_probs[1],
               right_probs[2],
@@ -73,19 +73,19 @@ std::string get_background_context(const std::string &state,
   }
 }
 
-double normalise_dvstar(double dot_product, double left_norm,
-                        double right_norm) {
+out_t normalise_dvstar(out_t dot_product, out_t left_norm,
+                        out_t right_norm) {
 
   left_norm = std::sqrt(left_norm);
   right_norm = std::sqrt(right_norm);
   if (left_norm == 0 || right_norm == 0) {
     return 1.0;
   } else {
-    double Dvstar = dot_product / (left_norm * right_norm);
+    out_t Dvstar = dot_product / (left_norm * right_norm);
 
-    double dvstar = 0.5 * (1 - Dvstar);
+    out_t dvstar = 0.5 * (1 - Dvstar);
 
-    double angular_distance = 2 * std::acos(Dvstar) / M_PI;
+    out_t angular_distance = 2 * std::acos(Dvstar) / M_PI;
     if (isnan(angular_distance)) {
       return 0.0;
     } else {
@@ -95,7 +95,7 @@ double normalise_dvstar(double dot_product, double left_norm,
 }
 
 template <typename VC>
-float dvstar(VC &left, VC &right, size_t background_order){
+out_t dvstar(VC &left, VC &right, size_t background_order){
   if (left.size() < right.size()){
     return container::iterate_kmers(left, right);
   } else {

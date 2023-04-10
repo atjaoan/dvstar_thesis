@@ -15,10 +15,7 @@
 #include "distances/dvstar.hpp"
 #include "calc_dists.hpp"
 #include "get_cluster.hpp"
-
-using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
-using RI_Kmer = container::RI_Kmer; 
-using matrix_t = Eigen::MatrixXf;
+#include "global_aliases.hpp"
 
 void prettyPrint(size_t insert_time_fst, size_t insert_time_snd, size_t find_time_fst, size_t find_time_snd, 
       size_t iterate_time, size_t dvstar_time, int items_fst, int items_snd, std::string container){
@@ -616,8 +613,6 @@ void time_sorting_algorithms(std::filesystem::path directory){
   }
 }
 
-using out_t = float;
-
 struct new_RI_Kmer {
   Eigen::Array4f next_char_prob;
   // std::array<out_t, 4> next_char_prob;
@@ -808,12 +803,12 @@ int main(int argc, char *argv[]){
   //benchmark_kmer_major_load_calc(8);
   //benchmark_calculate_distance_major();
   //print_kmers_to_file();
-  int max_size = std::stoi(argv[1]);
-  auto array = iterate_kmers_bench(max_size);
-  for (int x = 0; x < array.rows(); x++){
-    for (int y = 0; y < array.cols(); y++){
-      std::cout << array(x,y) << " ";
-    }
-    std::cout << std::endl; 
-  } 
+  // int max_size = std::stoi(argv[1]);
+  // auto array = iterate_kmers_bench(max_size);
+  // for (int x = 0; x < array.rows(); x++){
+  //   for (int y = 0; y < array.cols(); y++){
+  //     std::cout << array(x,y) << " ";
+  //   }
+  //   std::cout << std::endl; 
+  // } 
 }

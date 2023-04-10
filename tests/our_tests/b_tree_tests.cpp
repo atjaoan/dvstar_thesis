@@ -1,4 +1,5 @@
 #pragma once 
+
 #include <gtest/gtest.h>
 
 #include <functional>
@@ -9,6 +10,7 @@
 
 #include "vlmc_from_kmers/kmer.hpp"
 #include "read_in_kmer.hpp"
+#include "global_aliases.hpp"
 #include "b_tree.hpp"
 
 class BTreeTests : public ::testing::Test {
@@ -23,7 +25,7 @@ void fill_tree(b_tree::BTree &t, std::filesystem::path path){
   std::ifstream ifs(path, std::ios::binary);
   cereal::BinaryInputArchive archive(ifs);
 
-  vlmc::VLMCKmer kmer{};
+  Kmer kmer{};
 
   while (ifs.peek() != EOF){
     archive(kmer);

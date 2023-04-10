@@ -15,13 +15,13 @@
 
 #include "cluster_container.hpp"
 #include "vlmc_container.hpp"
+#include "global_aliases.hpp"
 #include "parallel.hpp"
 #include "utils.hpp"
 
-using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
-using RI_Kmer = container::RI_Kmer;
-
 namespace cluster{
+
+using RI_Kmer = container::RI_Kmer;
   
 template <typename VC>  
 container::Cluster_Container<VC> get_cluster(const std::filesystem::path &directory, size_t nr_cores_to_use, 
@@ -63,7 +63,6 @@ container::Cluster_Container<VC> old_get_cluster(const std::filesystem::path &di
   return cluster; 
 }
 
-// Return as reference?
 container::Kmer_Cluster get_kmer_cluster(const std::filesystem::path &directory, const size_t background_order = 0){
   std::vector<std::filesystem::path> paths{};
 
@@ -88,7 +87,7 @@ container::Kmer_Cluster get_kmer_cluster(const std::filesystem::path &directory,
     container::Kmer_Cluster cluster{}; 
     for (int index = start_index; index < stop_index; index++){
       std::vector<container::RI_Kmer> input_vector{};  
-      Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
+      eigenx_t cached_context((int)std::pow(4, background_order), 4);
 
       auto fun = [&](const RI_Kmer &kmer) { input_vector.push_back(kmer); }; 
 
