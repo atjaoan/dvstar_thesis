@@ -49,7 +49,7 @@ void prettyPrint(size_t insert_time_fst, size_t insert_time_snd, size_t find_tim
   std::cout << "Sec / item : " << dvstar_time / (items_fst + items_snd) << " [nano sec] " << std::endl;
   std::cout << std::endl; 
 }
-
+/*
 template <typename VC>
 void iterate_kmers_f(VC left, VC right){
   double dot_product = 0; 
@@ -151,6 +151,7 @@ void run_timer(std::string container){
   
   prettyPrint(insert_time_fst, insert_time_snd, find_time_fst, find_time_snd, iterate_time, dvstar_time, items_fst, items_snd, container);
 }
+*/
 
 struct benchmark_kmer {
   size_t length = 0; 

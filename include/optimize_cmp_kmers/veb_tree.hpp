@@ -3,7 +3,6 @@
 #include <functional>
 #include <memory>
 #include <limits.h>
-
 #include <iostream>
 
 #include "read_in_kmer.hpp"

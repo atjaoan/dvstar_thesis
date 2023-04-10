@@ -1,15 +1,10 @@
 #pragma once 
 
 #include <math.h>
-#include <map>
-#include <unordered_map>
-#include <stack>
 
 #include "vlmc_container.hpp"
 #include "cluster_container.hpp"
 #include "read_in_kmer.hpp"
-#include "vlmc_from_kmers/kmer.hpp"
-#include "vlmc_from_kmers/estimators.hpp"
 #include "utils.hpp"
 #include "global_aliases.hpp"
 
@@ -17,61 +12,6 @@ namespace distance {
 
 using RI_Kmer = container::RI_Kmer;
 using bucket_t = std::vector<container::Kmer_Pair>;
-
-struct Intermediate_matrix_val{
-  int left_id;
-  int right_id;
-  out_t dot_prod;
-  out_t left_norm;
-  out_t right_norm;
-};
-
-std::array<std::array<out_t, 4>, 2>
-get_components(const RI_Kmer &left, const RI_Kmer &left_background,
-               const RI_Kmer &right, const RI_Kmer &right_background) {
-  auto left_probs = left.next_char_prob;
-  auto left_probs_background = left_background.next_char_prob;
-  auto right_probs = right.next_char_prob;
-  auto right_probs_background = right_background.next_char_prob;
-
-  return {std::array<out_t, 4>{
-              left_probs[0] / std::sqrt(left_probs_background[0]),
-              left_probs[1] / std::sqrt(left_probs_background[1]),
-              left_probs[2] / std::sqrt(left_probs_background[2]),
-              left_probs[3] / std::sqrt(left_probs_background[3])},
-          std::array<out_t, 4>{
-              right_probs[0] / std::sqrt(right_probs_background[0]),
-              right_probs[1] / std::sqrt(right_probs_background[1]),
-              right_probs[2] / std::sqrt(right_probs_background[2]),
-              right_probs[3] / std::sqrt(right_probs_background[3])}};
-}
-
-std::array<std::array<out_t, 4>, 2>
-get_components(const RI_Kmer &left, const RI_Kmer &right) {
-  auto left_probs = left.next_char_prob;
-  auto right_probs = right.next_char_prob;
-
-  return {std::array<out_t, 4>{
-              left_probs[0],
-              left_probs[1],
-              left_probs[2],
-              left_probs[3]},
-          std::array<out_t, 4>{
-              right_probs[0],
-              right_probs[1],
-              right_probs[2],
-              right_probs[3]}};
-}
-
-std::string get_background_context(const std::string &state,
-                                   const size_t background_order) {
-  if (state.size() <= background_order) {
-    return state; // <- This will never happen 
-  } else {
-    size_t background = state.size() - background_order;
-    return state.substr(background);
-  }
-}
 
 out_t normalise_dvstar(out_t dot_product, out_t left_norm,
                         out_t right_norm) {

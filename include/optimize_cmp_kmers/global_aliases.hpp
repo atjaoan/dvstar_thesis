@@ -18,4 +18,5 @@ using Kmer = vlmc::VLMCKmer;
 using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
 
 // ERROR TOLERANCE
+// const out_t error_tolerance = 3E-5; // Works for float except when computing distance between the same vlmc != 0
 const out_t error_tolerance = 1E-8;

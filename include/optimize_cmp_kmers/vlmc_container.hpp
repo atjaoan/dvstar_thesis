@@ -49,19 +49,19 @@ int load_VLMCs_from_file(const std::filesystem::path &path_to_bintree, eigenx_t 
   return offset_to_remove; 
 }
 
-double normalise_dvstar(double dot_product, double left_norm,
-                        double right_norm) {
+out_t normalise_dvstar(out_t dot_product, out_t left_norm,
+                        out_t right_norm) {
 
   left_norm = std::sqrt(left_norm);
   right_norm = std::sqrt(right_norm);
   if (left_norm == 0 || right_norm == 0) {
     return 1.0;
   } else {
-    double Dvstar = dot_product / (left_norm * right_norm);
+    out_t Dvstar = dot_product / (left_norm * right_norm);
 
-    double dvstar = 0.5 * (1 - Dvstar);
+    out_t dvstar = 0.5 * (1 - Dvstar);
 
-    double angular_distance = 2 * std::acos(Dvstar) / M_PI;
+    out_t angular_distance = 2 * std::acos(Dvstar) / M_PI;
     if (isnan(angular_distance)) {
       return 0.0;
     } else {

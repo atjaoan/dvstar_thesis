@@ -1,14 +1,13 @@
 #pragma once
 
-#include <filesystem>
 #include <thread>
-
 #include <fstream>
 #include <iostream>
 #include <filesystem>
 #include <algorithm>
 
 #include "cluster_container.hpp"
+#include "read_in_kmer.hpp"
 #include "global_aliases.hpp"
 
 using RI_Kmer = container::RI_Kmer;

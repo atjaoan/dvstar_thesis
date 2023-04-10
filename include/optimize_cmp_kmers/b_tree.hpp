@@ -108,15 +108,13 @@ void TreeNode::second_pass(const eigenx_t &cached_context,
               const size_t background_order, const size_t offset_to_remove) {
   int i;
   for (i = 0; i < n; i++) {
-    if (leaf == false)
+    if (leaf == false) {
       C[i]->second_pass(cached_context, background_order, offset_to_remove);
-    if(keys[i].is_null) {
-      std::cout << "I am here" << std::endl;  
-    } else {
-      int background_idx = keys[i].background_order_index(keys[i].integer_rep, background_order);
-      int offset = background_idx - offset_to_remove;
-      keys[i].next_char_prob *= cached_context.row(offset).rsqrt();
     }
+    int background_idx = keys[i].background_order_index(keys[i].integer_rep, background_order);
+    int offset = background_idx - offset_to_remove;
+    keys[i].next_char_prob *= cached_context.row(offset).rsqrt();
+    
   }
 
   if (leaf == false)

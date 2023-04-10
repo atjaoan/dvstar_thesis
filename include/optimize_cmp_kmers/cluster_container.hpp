@@ -2,7 +2,6 @@
 
 #include <functional>
 #include <filesystem>
-#include <map>
 #include <unordered_map>
  
 #include "vlmc_from_kmers/kmer.hpp"
@@ -61,9 +60,8 @@ struct Kmer_Pair {
 class Kmer_Cluster {
 
   private: 
-    // std::map<int, std::vector<Kmer_Pair>> container{}; 
     std::unordered_map<int, std::vector<Kmer_Pair>> container{}; 
-    // std::unordered_multimap<int, Kmer_Pair> container{};
+
     size_t vlmc_count = 0; 
 
   public: 
@@ -118,11 +116,7 @@ class Kmer_Cluster {
     }
 
     bool is_bucket_empty(int bucket_num){
-      if (container.find(bucket_num) != container.end()){
-        return true;
-      }
-      return false; 
-      // return container.contains(bucket_num); 
+      return container.find(bucket_num) != container.end();
     }
 
     void prettyPrint(){

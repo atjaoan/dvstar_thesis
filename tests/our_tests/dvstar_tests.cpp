@@ -1,3 +1,5 @@
+#pragma once 
+
 #include <gtest/gtest.h>
 
 #include <cstdlib>
@@ -21,6 +23,8 @@
 using VLMC_vector = container::VLMC_vector;
 using VLMC_Indexing = container::VLMC_Indexing;
 
+extern const out_t error_tolerance;
+
 class DvstarTests : public ::testing::Test {
 protected:
   void SetUp() override {}
@@ -42,22 +46,7 @@ protected:
   std::function<out_t(VLMC_Indexing &, VLMC_Indexing &)> dist_func_idx = [&](auto &left, auto &right) {
       return distance::dvstar<VLMC_Indexing>(left, right, background_order);
   };
-
-  out_t error_tolerance = 1E-5;
 };
-
-TEST_F(DvstarTests, BackgroundOrderTest) {
-  std::string test{"AAT"};
-  vlmc::VLMCTranslator kmer{static_cast<int>(test.size())};
-  if (!test.empty()) {
-    kmer.from_string(test);
-  }
-  Kmer context = kmer.construct_vlmc_kmer();
-
-  EXPECT_EQ("", distance::get_background_context(context.to_string(), 0));
-  EXPECT_EQ("T", distance::get_background_context(context.to_string(), 1));
-  EXPECT_EQ("AT", distance::get_background_context(context.to_string(), 2));
-}
 
 // Vector Tests
 TEST_F(DvstarTests, Identity_vector) {
