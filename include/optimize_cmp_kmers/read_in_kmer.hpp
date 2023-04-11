@@ -101,5 +101,8 @@ struct RI_Kmer{
   inline bool operator==(const RI_Kmer &kmer) const {
     return this->integer_rep == kmer.integer_rep;
   };
+  inline bool operator!=(const RI_Kmer &kmer) const {
+    return this->integer_rep != kmer.integer_rep;
+  };
 };
 }
