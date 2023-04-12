@@ -313,11 +313,11 @@ def compare_hdf5_files(bench: str, vlmc_size: str, vlmc: str, path: str, dop: in
 def benchmark():
     # normal_benchmaking("data/benchmarking/ecoli", "sorted-vector", "ecoli")
     # normal_benchmaking("data/benchmarking/ecoli", "hashmap", "ecoli")
-    #normal_benchmaking("data/benchmarking/human", "sorted-vector", "human")
+    normal_benchmaking("data/benchmarking/human", "sorted-vector", "human")
     # normal_benchmaking("data/benchmarking/human", "veb", "human")
     # combo_parameter_sweep("data/benchmarking/ecoli", "combo", "ecoli")
     # normal_benchmaking("data/benchmarking/human", "sorted-vector", "human")
-    parallelization_benchmark("data/benchmarking/ecoli", "sorted-vector", "ecoli")
+    # parallelization_benchmark("data/benchmarking/ecoli", "sorted-vector", "ecoli")
 
 if __name__ == "__main__":
     app()

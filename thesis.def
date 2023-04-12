@@ -12,10 +12,13 @@ From: debian:bullseye
 
     submodules /thesis/submodules
 
+    data/benchmarking/human thesis/data/benchmarking/human
+
     CMakeLists.txt /thesis/CMakeLists.txt
 
-    requirements.txt /thesis/requirements.txt
+    requirements_apptainer.txt /thesis/requirements.txt
     bench.py /thesis/bench.py
+    benchmarking.py /thesis/benchmarking.py
     ./data/small_test /thesis/data/small_test
     ./tmp /thesis/tmp
     .git/refs/heads/main /thesis/current_commit.txt
@@ -23,15 +26,20 @@ From: debian:bullseye
 %post
     apt-get update -y && apt-get install -y cmake build-essential g++ git gcc libtbb-dev libgomp1 libboost-all-dev libhdf5-serial-dev libeigen3-dev
     echo 'deb http://deb.debian.org/debian testing main' >> /etc/apt/sources.list
-    apt update -y
-    apt install -y linux-perf python3.10 python3-pip
+    apt-get update -y
+    apt-get upgrade -y
+    apt-get install -y linux-perf python3-pip
+
+    cd thesis/submodules/unordered_dense/build
+    cmake ..
+    cmake --build . --target install
 
     mkdir -p /thesis/build
     cd /thesis/build/
 
     mkdir -p /thesis/build/fasta /thesis/build/tmp /thesis/build/results
 
-    cmake -DCMAKE_BUILD_TYPE=Release -DCountVLMC_COMPILE_TESTS=ON ..
+    cmake -DCMAKE_BUILD_TYPE=Release -DCountVLMC_COMPILE_TESTS=OFF ..
     make -j 8
 
     cp ../visualiser.py .
@@ -41,8 +49,8 @@ From: debian:bullseye
 
     cd ..
     cd ..
-    pip install --user -r /thesis/requirements.txt
-
+    pip install --target=/bin -r /thesis/requirements.txt
+    #export PATH=/root/.local/bin:$PATH
 
 %environment
     export PATH="/thesis/build/:$PATH"
@@ -54,4 +62,4 @@ From: debian:bullseye
 
 %runscript
     cd /thesis
-    python3 bench.py stat
+    python3 benchmarking.py
