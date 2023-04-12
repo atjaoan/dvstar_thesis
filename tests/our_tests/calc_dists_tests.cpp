@@ -178,7 +178,7 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
         EXPECT_NEAR(distances_org_dvstar(x,y), distances_vector(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_sorted_vector(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_indexing(x,y), error_tolerance);
-        //EXPECT_NEAR(distances_vector(x,y), distances_b_tree(x,y), error_tolerance);
+        EXPECT_NEAR(distances_vector(x,y), distances_b_tree(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_hashmap(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_combo(x,y), error_tolerance);
         // EXPECT_NEAR(distances_vector(x,y), distances_veb(x,y), error_tolerance);
