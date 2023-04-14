@@ -7,7 +7,7 @@ From: debian:bullseye
 
     visualiser.py /thesis/visualiser.py
     src /thesis/src
-    tests /thesis/tests
+    #tests /thesis/tests
     include /thesis/include
 
     submodules /thesis/submodules
@@ -17,9 +17,9 @@ From: debian:bullseye
     CMakeLists.txt /thesis/CMakeLists.txt
 
     requirements_apptainer.txt /thesis/requirements.txt
-    bench.py /thesis/bench.py
+    #bench.py /thesis/bench.py
     benchmarking.py /thesis/benchmarking.py
-    ./data/small_test /thesis/data/small_test
+    #./data/small_test /thesis/data/small_test
     ./tmp /thesis/tmp
     .git/refs/heads/main /thesis/current_commit.txt
 
@@ -49,15 +49,15 @@ From: debian:bullseye
 
     cd ..
     cd ..
-    pip install --target=/bin -r /thesis/requirements.txt
+    pip3 install --user -r /thesis/requirements.txt
     #export PATH=/root/.local/bin:$PATH
 
 %environment
     export PATH="/thesis/build/:$PATH"
 
 %test
-    cd /thesis/build/tests
-    echo "Running tests"
+    #cd /thesis/build/tests
+    #echo "Running tests"
 	#./kmer_tests
 
 %runscript
