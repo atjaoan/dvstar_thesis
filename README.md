@@ -39,9 +39,13 @@ Using the created image, programs can be run by either using the ```apptainer ex
 apptainer shell thesis.sif
 ```
 
-To output benchmarking results, the ```--bind``` option must be specified such that the container has the output directory mounted (the containers own file system is read-only). First, create an empty directory named ```csv_results``` in the same directory as the .sif file is located. Benchmarking is done with
+To output benchmarking results, the ```--bind``` option must be specified such that the container has the output directory mounted (the containers own file system is read-only). First, create two empty directory named ```csv_results``` and ```hdf5_results``` in the same directory as the .sif file is located. 
 ```shell script
-apptainer run --bind ./csv_results:/thesis/csv_results/ thesis.sif
+mkdir csv_results hdf5_results
+```
+Benchmarking then is done with
+```shell script
+apptainer run --bind ./csv_results:/thesis/csv_results/,./hdf5_results:/thesis/hdf5_results thesis.sif
 ```
 
 ### Manually

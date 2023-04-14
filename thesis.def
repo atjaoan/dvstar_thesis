@@ -7,7 +7,7 @@ From: debian:bullseye
 
     visualiser.py /thesis/visualiser.py
     src /thesis/src
-    #tests /thesis/tests
+    tests /thesis/tests
     include /thesis/include
 
     submodules /thesis/submodules
@@ -19,15 +19,14 @@ From: debian:bullseye
     requirements_apptainer.txt /thesis/requirements.txt
     #bench.py /thesis/bench.py
     benchmarking.py /thesis/benchmarking.py
-    #./data/small_test /thesis/data/small_test
+    ./data/small_test /thesis/data/small_test
     ./tmp /thesis/tmp
     .git/refs/heads/main /thesis/current_commit.txt
 
-%post
+%post -c /bin/bash
     apt-get update -y && apt-get install -y cmake build-essential g++ git gcc libtbb-dev libgomp1 libboost-all-dev libhdf5-serial-dev libeigen3-dev
     echo 'deb http://deb.debian.org/debian testing main' >> /etc/apt/sources.list
-    apt-get update -y
-    apt-get upgrade -y
+    apt-get update -y && apt-get upgrade -y
     apt-get install -y linux-perf python3-pip
 
     cd thesis/submodules/unordered_dense/build
@@ -49,7 +48,11 @@ From: debian:bullseye
 
     cd ..
     cd ..
-    pip3 install --user -r /thesis/requirements.txt
+    pip install virtualenv
+    mkdir /venv
+    virtualenv /venv/kmers_env
+    source /venv/kmers_env/bin/activate
+    pip install -r /thesis/requirements.txt
     #export PATH=/root/.local/bin:$PATH
 
 %environment
@@ -61,5 +64,6 @@ From: debian:bullseye
 	#./kmer_tests
 
 %runscript
+    . /venv/kmers_env/bin/activate
     cd /thesis
     python3 benchmarking.py

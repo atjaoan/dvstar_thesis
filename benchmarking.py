@@ -8,7 +8,7 @@ import os
 from enum import Enum
 import numpy as np
 from datetime import datetime
-# import h5py
+import h5py
 
 app = typer.Typer()
 
@@ -223,7 +223,7 @@ def normal_benchmaking(dataset: str, implementation: str, dataset_outer_dir: str
         th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(cwd / dataset / "medium")[0])
         th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(cwd / dataset / "large")[0])
 
-        while(nb_files > 2):
+        while(nb_files > 3):
             print("Benchmarking with " + str(nb_files) + " VLMCs...")
             print("Small " + implementation + ".")
             res_our_small  = calculate_distance(nb_files, dataset + "/small", "hdf5_results/distances_small.hdf5", implementation, 8, 0)
