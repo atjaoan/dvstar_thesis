@@ -448,8 +448,8 @@ void benchmark_calculate_distance_major(){
   std::cout << "Total time : " << time_tot << " [micro sec]" << std::endl; 
 }
 
-void print_kmers_to_file(){
-  std::filesystem::path path_vlmcs{"../data/one_vlmcs"};
+void print_kmers_to_file(std::string path_vlmc){
+  std::filesystem::path path_vlmcs{path_vlmc};
   std::filesystem::path output_path{"../tmp/" + path_vlmcs.filename().string() + "_kmer-distribution.txt"};
   utils::output_kmer_reps_to_file(path_vlmcs, output_path);
 }
@@ -788,7 +788,40 @@ matrix_t iterate_kmers_bench(int max_size){
   return distances;
 }
 
+void count_kmer_length_percentage(std::string path_vlmcs, std::string output_name){
+  std::filesystem::path dir_path{path_vlmcs};
+  int i = 0;
+  std::filesystem::path output_path{"../tmp/length_distributions/" + output_name + "_kmer-distribution.txt"};
+  std::ofstream ofs(output_path.string());
+  for (auto dir_entry : std::filesystem::directory_iterator{dir_path}){
+    std::array<int, 11> lengths{};
+    std::ifstream ifs(dir_entry.path(), std::ios::binary);
+    cereal::BinaryInputArchive archive(ifs);
+    Kmer input_kmer{};
+    while (ifs.peek() != EOF){
+      archive(input_kmer);
+      lengths[input_kmer.length] += 1;
+    }
+    ifs.close();
+
+    for (int x = 0; x < 11; x++){
+      ofs << i << "_" << x << "_" << 100 * (double(lengths[x]) / pow(4, x)) << "\n";
+    }
+    i++;
+  }
+  ofs.close();
+}
+
 int main(int argc, char *argv[]){
+  count_kmer_length_percentage("../data/benchmarking/human/small", "human_small");
+  count_kmer_length_percentage("../data/benchmarking/human/medium", "human_medium");
+  count_kmer_length_percentage("../data/benchmarking/human/large", "human_large");
+  count_kmer_length_percentage("../data/benchmarking/human/diverse", "human_diverse");
+
+  count_kmer_length_percentage("../data/benchmarking/turkey/small", "turkey_small");
+  count_kmer_length_percentage("../data/benchmarking/turkey/medium", "turkey_medium");
+  count_kmer_length_percentage("../data/benchmarking/turkey/large", "turkey_large");
+  count_kmer_length_percentage("../data/benchmarking/turkey/diverse", "turkey_diverse");
   // int num_items = 1500;
 
   // run_timer<container::VLMC_vector>("Vector");

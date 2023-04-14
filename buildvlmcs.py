@@ -54,6 +54,8 @@ def build_human():
         dvstar_build(genome_path, out_path / "medium", 3, 6, 8)
         print("Building large vlmcs...")
         dvstar_build(genome_path, out_path / "large", 2, 3, 10)
+        print("Building large & diverse...")
+        dvstar_build(genome_path, out_path / "diverse", 3.9075, 9, 10)
     else: 
         print("Could not find the directory for creating 'Human' benchmarking files.")
         print("The given directory was : '" + str(genome_path) + "'")
@@ -71,6 +73,8 @@ def build_ecoli():
         dvstar_build(genome_path, out_path / "medium", 3, 6, 8)
         print("Building large vlmcs...")
         dvstar_build(genome_path, out_path / "large", 2, 3, 10)
+        print("Building large & diverse...")
+        dvstar_build(genome_path, out_path / "diverse", 3.9075, 9, 10)
     else: 
         print("Could not find the directory for creating 'E-coli' benchmarking files.")
         print("The given directory was : '" + str(genome_path) + "'") 
@@ -88,18 +92,20 @@ def build_turkey():
         dvstar_build(genome_path, out_path / "medium", 3, 6, 8)
         print("Building large vlmcs...")
         dvstar_build(genome_path, out_path / "large", 2, 3, 10)
+        print("Building large & diverse...")
+        dvstar_build(genome_path, out_path / "diverse", 3.9075, 9, 10)
     else: 
         print("Could not find the directory for creating 'Turkey' benchmarking files.")
         print("The given directory was : '" + str(genome_path) + "'")
 
 @app.command()
 def build():
-    # print("Building Human Sequences...")
-    # build_human()
+    print("Building Human Sequences...")
+    build_human()
     print("Building E-coli Sequences...")
     build_ecoli()
-    # print("Building Turkey Sequences...")
-    # build_turkey()
+    print("Building Turkey Sequences...")
+    build_turkey()
 
 
 if __name__ == "__main__":
