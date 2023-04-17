@@ -48,7 +48,6 @@ enum VLMC_Rep {
   vlmc_hashmap,
   vlmc_combo,
   vlmc_veb,
-  vlmc_set,
   vlmc_ey
 };
 
@@ -106,7 +105,6 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
       {"hashmap", VLMC_Rep::vlmc_hashmap},
       {"combo", VLMC_Rep::vlmc_combo},
       {"veb", VLMC_Rep::vlmc_veb},
-      {"set", VLMC_Rep::vlmc_set},
       {"ey", VLMC_Rep::vlmc_ey}
   };
 

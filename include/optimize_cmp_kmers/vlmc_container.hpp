@@ -428,7 +428,6 @@ class VLMC_hashmap : public VLMC_Container {
     }
 };
 
-
 /*
   Storing Kmers in a vector where the Kmer string is used as index.
 */
@@ -594,97 +593,6 @@ class VLMC_Veb : public VLMC_Container {
         i++;
       }
     }
-};
-
-class VLMC_Set : public VLMC_Container {
-
-  private:
-    std::set<RI_Kmer> container{};
-    int min_kmer = INT_MAX;
-    int max_kmer = -1;
-
-  public: 
-    VLMC_Set() = default;
-    ~VLMC_Set() = default; 
-
-    VLMC_Set(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
-      
-      std::ifstream ifs(path_to_bintree, std::ios::binary);
-      cereal::BinaryInputArchive archive(ifs);
-
-      Kmer input_kmer{};
-
-      Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
-      std::vector<RI_Kmer> tmp_container{};
-
-      auto offset_to_remove = 0;
-      for (int i = 0; i < background_order; i++){
-        offset_to_remove += std::pow(4, i); 
-      }
-
-      while (ifs.peek() != EOF){
-        archive(input_kmer);
-        RI_Kmer ri_kmer{input_kmer};
-
-        if(input_kmer.length <= background_order){
-          if (input_kmer.length + 1 > background_order){
-            int offset = ri_kmer.integer_rep - offset_to_remove; 
-            cached_context.row(offset) = ri_kmer.next_char_prob;
-          }
-        } else {
-          if(ri_kmer.integer_rep > max_kmer) max_kmer = ri_kmer.integer_rep;
-          if(ri_kmer.integer_rep < min_kmer) min_kmer = ri_kmer.integer_rep;
-          tmp_container.push_back(ri_kmer);
-        }
-      }
-
-      ifs.close();
-      for(auto kmer : tmp_container){
-        int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
-        int offset = background_idx - offset_to_remove;
-        kmer.next_char_prob *= cached_context.row(offset).rsqrt();
-        container.insert(kmer);
-      }
-    }
-
-    size_t size() const override { return container.size(); }
-
-    void push(const RI_Kmer &kmer) override { container.insert(kmer); }
-
-    RI_Kmer &get(const int i) override { return null_kmer; }
-
-    int get_max_kmer_index() const override { return max_kmer; }
-    int get_min_kmer_index() const override { return min_kmer; }
-
-    std::set<RI_Kmer>::iterator begin_set(){
-      return container.begin();
-    }
-
-    std::set<RI_Kmer>::iterator end_set(){
-      return container.end();
-    }
-
-    RI_Kmer find(const int i_rep) override { return null_kmer; }
-
-    void iterate_kmers(VLMC_Container &left_kmers, VLMC_Container &right_kmers,
-    const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f) override {
-      auto left_kmers_c = static_cast<VLMC_Set&>(left_kmers);
-      auto right_kmers_c = static_cast<VLMC_Set&>(right_kmers);
-      std::set<RI_Kmer>::iterator l_it = left_kmers_c.begin_set();
-      std::set<RI_Kmer>::iterator r_it = right_kmers_c.begin_set();
-      while(l_it != left_kmers_c.end_set() && r_it != right_kmers_c.end_set()){
-        if(*l_it == *r_it){
-          f(*l_it, *r_it);
-          l_it++;
-          r_it++;
-        } else if (*l_it < *r_it) {
-          l_it++;
-        } else {
-          r_it++;
-        }
-      }
-    }
-
 };
 
 class VLMC_Eytzinger : public VLMC_Container {
