@@ -11,16 +11,14 @@ struct Ey_array {
 	container::RI_Kmer null_kmer = container::RI_Kmer(-1);
   int size;
 	const int block_size = 2; // 64 / sizeof(RI_Kmer)
-  alignas(64) std::vector<container::RI_Kmer> a;
+  container::RI_Kmer *a;
   alignas(64) std::vector<container::RI_Kmer> b;
-  //alignas(64) container::RI_Kmer a[1 << 20], b[(1 << 20) + 1];
 
   Ey_array() = default;
   Ey_array(std::vector<container::RI_Kmer>& from_container){
     size = from_container.size();
-    a.resize(size);
+    a = from_container.data();
     b.resize(size + 1);
-    std::copy(from_container.begin(), from_container.end(), a.data());
     construct();
   }
   ~Ey_array() = default;
