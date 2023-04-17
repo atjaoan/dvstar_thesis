@@ -70,6 +70,8 @@ def build_dataset(path_to_fasta : str, name : str):
             dvstar_build(genome_path, out_path / "large", 2, 3, 10)
         if promt_dir_build(out_path, "diverse", name):
             dvstar_build(genome_path, out_path / "diverse", 3.9075, 9, 10)
+        if promt_dir_build(out_path, "mega", name):
+            dvstar_build(genome_path, out_path / "mega", 3.9075, 9, 12)
     else: 
         print("Could not find the directory for creating '" + name + "' benchmarking files.")
         print("The given directory was : '" + str(genome_path) + "'")
