@@ -121,7 +121,7 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
   auto right_cluster_k = cluster::get_kmer_cluster(path_to_bintrees, background_order);
   matrix_t distances_k_major = calculate::calculate_distance_major(left_cluster_k, right_cluster_k, 1); 
 
-  // Veb Implementation - Currently too slow
+  // Veb Implementation
   auto left_cluster_veb = cluster::get_cluster<container::VLMC_Veb>(path_to_bintrees, 1, background_order);
   auto right_cluster_veb = cluster::get_cluster<container::VLMC_Veb>(path_to_bintrees, 1, background_order);
   matrix_t distances_veb = calculate::calculate_distances<container::VLMC_Veb>(left_cluster_veb, right_cluster_veb, dist_func, 1);
@@ -159,7 +159,7 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
         //EXPECT_NEAR(distances_vector(x,y), distances_b_tree(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_hashmap(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_combo(x,y), error_tolerance);
-        //EXPECT_NEAR(distances_vector(x,y), distances_veb(x,y), error_tolerance);
+        EXPECT_NEAR(distances_vector(x,y), distances_veb(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_set(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_k_major(x,y), error_tolerance); 
         EXPECT_NEAR(distances_vector(x,y), distances_ey(x,y), error_tolerance);

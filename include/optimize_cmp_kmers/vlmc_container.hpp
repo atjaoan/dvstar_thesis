@@ -12,7 +12,7 @@
 #include "b_tree.hpp"
 #include "robin_hood.h"
 #include "unordered_dense.h"
-#include "veb_tree.hpp"
+//#include "veb_tree.hpp"
 #include "veb_array.hpp"
 #include "eytzinger_array.hpp"
 #include "Eigen/Core"
@@ -547,7 +547,7 @@ class VLMC_Combo : public VLMC_Container {
 class VLMC_Veb : public VLMC_Container {
 
   private: 
-    veb::Veb_array veb;
+    veb::Veb_array *veb;
     int min_index = INT_MAX;
     int max_index = -1;
 
@@ -556,77 +556,55 @@ class VLMC_Veb : public VLMC_Container {
     ~VLMC_Veb() = default; 
 
     VLMC_Veb(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
-      
-      std::ifstream ifs(path_to_bintree, std::ios::binary);
-      cereal::BinaryInputArchive archive(ifs);
-
-      Kmer input_kmer{};
-
+      // cached_context : pointer to array which for each A, C, T, G has the next char probs
       Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
-      std::vector<RI_Kmer> tmp_container{};
 
-      auto offset_to_remove = 0;
-      for (int i = 0; i < background_order; i++){
-        offset_to_remove += std::pow(4, i); 
-      }
+      auto tmp_container = std::vector<RI_Kmer>{};
+      auto fun = [&](const RI_Kmer &kmer) { tmp_container.push_back(kmer); }; 
 
-      while (ifs.peek() != EOF){
-        archive(input_kmer);
-        RI_Kmer ri_kmer{input_kmer};
-        if(ri_kmer.integer_rep > max_index) max_index = ri_kmer.integer_rep;
-        if(ri_kmer.integer_rep < min_index) min_index = ri_kmer.integer_rep;
-
-        if(input_kmer.length <= background_order){
-          if (input_kmer.length + 1 > background_order){
-            int offset = ri_kmer.integer_rep - offset_to_remove; 
-            cached_context.row(offset) = ri_kmer.next_char_prob;
-          }
-        } else {
-          tmp_container.push_back(ri_kmer);
-        }
-      }
-
-      ifs.close();
-      veb = veb::Veb_array(max_index + 1);
-
-      for(auto kmer : tmp_container){
+      int offset_to_remove = load_VLMCs_from_file(path_to_bintree, cached_context, fun, background_order);
+      
+      std::sort(std::execution::seq, tmp_container.begin(), tmp_container.end());
+      for (auto &kmer : tmp_container){
         int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
         int offset = background_idx - offset_to_remove;
         kmer.next_char_prob *= cached_context.row(offset).rsqrt();
-        veb.insert(kmer);
       }
-    } 
-
-    size_t size() const override { return veb.container.size(); }
-
-    void push(const RI_Kmer &kmer) override { 
-      veb.insert(kmer); 
+      veb = new veb::Veb_array(tmp_container);
     }
 
-    RI_Kmer &get(const int i) override { ;
-      return veb.retrive_on_index(i);
+    size_t size() const override { return veb->n + 1; }
+
+    //void push(const RI_Kmer &kmer) override { 
+    //}
+
+    RI_Kmer &get(const int i) override {
+      return veb->get_from_array(i);
     }
 
     int get_max_kmer_index() const override { return max_index; }
     int get_min_kmer_index() const override { return min_index; }
 
-    RI_Kmer find(const int i_rep) override { return veb.get_elem(i_rep); }
+    RI_Kmer find(const int i_rep) override { return null_kmer; }
 
     void iterate_kmers(VLMC_Container &left_kmers, VLMC_Container &right_kmers,
     const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f) override {
-      int idx = 0;
-      RI_Kmer& left_kmer = left_kmers.get(idx);
-      RI_Kmer right_kmer = right_kmers.find(left_kmer.integer_rep);
-      while(idx < left_kmers.size()){
+      int i = 0;
+      int f_applied = 0;
+      while(i < veb->n){
+        RI_Kmer& left_kmer = veb->a[i];
+        if(left_kmer == null_kmer){
+          i++;
+          continue;
+        }
+        RI_Kmer& right_kmer = right_kmers.get(left_kmer.integer_rep);
         if(left_kmer == right_kmer){
           f(left_kmer, right_kmer);
+          f_applied++;
         }
-        while(idx < left_kmers.size()){
-          left_kmer = left_kmers.get(idx++);
-          if(left_kmer > 0) break;
-        }
-        right_kmer = right_kmers.find(left_kmer.integer_rep);
+        i++;
       }
+      //std::cout << "f applied " << f_applied << "\n";
     }
 };
 
@@ -768,7 +746,7 @@ class VLMC_Eytzinger : public VLMC_Container {
     void iterate_kmers(VLMC_Container &left_kmers, VLMC_Container &right_kmers,
     const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f) override {
       int i = 0;
-      while(i <= arr->size + 1){
+      while(i <= arr->size){
         RI_Kmer& left_kmer = arr->b[i];
         if(left_kmer == null_kmer){
           i++;
