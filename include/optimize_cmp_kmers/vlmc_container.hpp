@@ -296,14 +296,12 @@ class VLMC_sorted_vector : public VLMC_Container {
     const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f) override {
       auto right_it = right_kmers.begin();
       auto right_end = right_kmers.end();
-      int f_applied = 0;
       auto left_it = left_kmers.begin();
       auto left_end = left_kmers.end();
       while(left_it != left_end && right_it != right_end){
         if(*left_it == *right_it){
           f(*left_it, *right_it);
           //std::cout << (*left_it).integer_rep << " : " << (*right_it).integer_rep << "\n";
-          f_applied++;
           ++left_it;
           ++right_it;
         } else if(*left_it < *right_it) {
@@ -311,7 +309,6 @@ class VLMC_sorted_vector : public VLMC_Container {
         }
         else ++right_it;
       }
-      //std::cout << "f applied " << f_applied << "\n";
       /*
       for(auto &left_kmer : left_kmers){
         while((*right_it) < left_kmer){
@@ -575,9 +572,6 @@ class VLMC_Veb : public VLMC_Container {
 
     size_t size() const override { return veb->n + 1; }
 
-    //void push(const RI_Kmer &kmer) override { 
-    //}
-
     RI_Kmer &get(const int i) override {
       return veb->get_from_array(i);
     }
@@ -593,18 +587,12 @@ class VLMC_Veb : public VLMC_Container {
       int f_applied = 0;
       while(i < veb->n){
         RI_Kmer& left_kmer = veb->a[i];
-        if(left_kmer == null_kmer){
-          i++;
-          continue;
-        }
         RI_Kmer& right_kmer = right_kmers.get(left_kmer.integer_rep);
         if(left_kmer == right_kmer){
           f(left_kmer, right_kmer);
-          f_applied++;
         }
         i++;
       }
-      //std::cout << "f applied " << f_applied << "\n";
     }
 };
 
@@ -730,10 +718,6 @@ class VLMC_Eytzinger : public VLMC_Container {
 
     size_t size() const override { return arr->size + 1; }
 
-    //void push(const RI_Kmer &kmer) override { 
-    //  veb.insert(kmer); 
-    //}
-
     RI_Kmer &get(const int i) override { ;
       return arr->get_from_array(i);
     }
@@ -748,10 +732,6 @@ class VLMC_Eytzinger : public VLMC_Container {
       int i = 0;
       while(i <= arr->size){
         RI_Kmer& left_kmer = arr->b[i];
-        if(left_kmer == null_kmer){
-          i++;
-          continue;
-        }
         RI_Kmer& right_kmer = right_kmers.get(left_kmer.integer_rep);
         if(left_kmer == right_kmer){
           f(left_kmer, right_kmer);
