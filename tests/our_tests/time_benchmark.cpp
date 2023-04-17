@@ -788,40 +788,64 @@ matrix_t iterate_kmers_bench(int max_size){
   return distances;
 }
 
-void count_kmer_length_percentage(std::string path_vlmcs, std::string output_name){
-  std::filesystem::path dir_path{path_vlmcs};
-  int i = 0;
-  std::filesystem::path output_path{"../tmp/length_distributions/" + output_name + "_kmer-distribution.txt"};
-  std::ofstream ofs(output_path.string());
-  for (auto dir_entry : std::filesystem::directory_iterator{dir_path}){
-    std::array<int, 11> lengths{};
-    std::ifstream ifs(dir_entry.path(), std::ios::binary);
-    cereal::BinaryInputArchive archive(ifs);
-    Kmer input_kmer{};
-    while (ifs.peek() != EOF){
-      archive(input_kmer);
-      lengths[input_kmer.length] += 1;
+std::vector<std::string> split_string_on_character(std::string input, char split_on){
+  std::vector<int> substring_ints{};
+  substring_ints.push_back(0);
+  for (int i = 0; i < input.length(); i++){
+    if (input[i] == split_on){
+      substring_ints.push_back(i);
+      substring_ints.push_back(i+1);
     }
-    ifs.close();
+  }
+  std::vector<std::string> output{};
+  int x = 0;
+  while (x < substring_ints.size()){
+    output.push_back(input.substr(substring_ints[x], substring_ints[x+1] - substring_ints[x]));
+    x += 2;
+  }
 
-    for (int x = 0; x < 11; x++){
-      ofs << i << "_" << x << "_" << 100 * (double(lengths[x]) / pow(4, x)) << "\n";
+  return output;
+}
+
+void count_kmer_length_percentage(std::vector<std::filesystem::path> list_of_dirs){
+  std::filesystem::path output_path{"../tmp/length_distributions/kmer_length_distribution.txt"};
+  std::ofstream ofs(output_path.string());
+  for (auto dir : list_of_dirs){
+    for (auto dir_entry : std::filesystem::directory_iterator{dir}){
+      int i = 0;
+      auto res = split_string_on_character(dir_entry.path().filename().string(), '_');
+      std::array<int, 11> lengths{};
+      std::ifstream ifs(dir_entry.path(), std::ios::binary);
+      cereal::BinaryInputArchive archive(ifs);
+      Kmer input_kmer{};
+      while (ifs.peek() != EOF){
+        archive(input_kmer);
+        lengths[input_kmer.length] += 1;
+      }
+      ifs.close();
+
+      auto res_size = res.size();
+      for (int x = 0; x < 11; x++){
+        ofs << i << "_" << x << "_" << res[0] << "_" << res[res_size-1] << "_" << res[res_size-2] << "_" << res[res_size-3] << "_" << lengths[x] << "\n";
+      }
+      i++;
     }
-    i++;
   }
   ofs.close();
 }
 
 int main(int argc, char *argv[]){
-  count_kmer_length_percentage("../data/benchmarking/human/small", "human_small");
-  count_kmer_length_percentage("../data/benchmarking/human/medium", "human_medium");
-  count_kmer_length_percentage("../data/benchmarking/human/large", "human_large");
-  count_kmer_length_percentage("../data/benchmarking/human/diverse", "human_diverse");
-
-  count_kmer_length_percentage("../data/benchmarking/turkey/small", "turkey_small");
-  count_kmer_length_percentage("../data/benchmarking/turkey/medium", "turkey_medium");
-  count_kmer_length_percentage("../data/benchmarking/turkey/large", "turkey_large");
-  count_kmer_length_percentage("../data/benchmarking/turkey/diverse", "turkey_diverse");
+  std::vector<std::filesystem::path> list_of_dirs{};
+  list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/human/small"});
+  list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/human/medium"});
+  list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/human/large"});
+  list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/human/diverse"});
+  list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/turkey/small"});
+  list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/turkey/medium"});
+  list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/turkey/large"});
+  list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/turkey/diverse"});
+  count_kmer_length_percentage(list_of_dirs);
+  
   // int num_items = 1500;
 
   // run_timer<container::VLMC_vector>("Vector");
