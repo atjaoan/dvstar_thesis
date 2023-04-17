@@ -41,71 +41,49 @@ def build_parameter_test():
             for max_depth in np.arange(0, 15, 1):
                 dvstar_build(genome_path, out_path, threshold, min_count, max_depth) 
 
-#########################
-# Build Human data set. #
-#########################
-def build_human():
-    genome_path = cwd / "data/human_genome_split_files"
-    out_path = cwd / "data/benchmarking/human"
-    if (os.path.isdir(genome_path)):
-        print("Building small vlmcs...")
-        dvstar_build(genome_path, out_path / "small", 3.9075, 9, 6)
-        print("Building medium vlmcs...")
-        dvstar_build(genome_path, out_path / "medium", 3, 6, 8)
-        print("Building large vlmcs...")
-        dvstar_build(genome_path, out_path / "large", 2, 3, 10)
-        print("Building large & diverse...")
-        dvstar_build(genome_path, out_path / "diverse", 3.9075, 9, 10)
-    else: 
-        print("Could not find the directory for creating 'Human' benchmarking files.")
-        print("The given directory was : '" + str(genome_path) + "'")
+###########################
+# Check if dir exists and # 
+# pass promt if true.     #
+###########################
+def promt_dir_build(path : Path, size : str, name : str):
+    if (os.path.isdir(path / size)):
+        x = input("The " + size + " dataset for " + name + " already exists. Do you want to build it anyways? (Y/n) \n")
+        while (x != "n") & (x != "Y"):
+            x = input("Could not interpret input. Please write 'Y' or 'n' \n")
+        if x == "n":
+            return False
+    print("Building " + size + " vlmcs...")
+    return True 
 
-##########################
-# Build E-coli data set. #
-##########################
-def build_ecoli():
-    genome_path = cwd / "data/sequences_split_files"
-    out_path = cwd / "data/benchmarking/ecoli"
+#########################
+# Build data set. #
+#########################
+def build_dataset(path_to_fasta : str, name : str):
+    genome_path = cwd / path_to_fasta
+    out_path = cwd / "data/benchmarking" / name 
     if (os.path.isdir(genome_path)):
-        print("Building small vlmcs...")
-        dvstar_build(genome_path, out_path / "small", 3.9075, 9, 6)
-        print("Building medium vlmcs...")
-        dvstar_build(genome_path, out_path / "medium", 3, 6, 8)
-        print("Building large vlmcs...")
-        dvstar_build(genome_path, out_path / "large", 2, 3, 10)
-        print("Building large & diverse...")
-        dvstar_build(genome_path, out_path / "diverse", 3.9075, 9, 10)
+        if promt_dir_build(out_path, "small", name):
+            dvstar_build(genome_path, out_path / "small", 3.9075, 9, 6)
+        if promt_dir_build(out_path, "medium", name):
+            dvstar_build(genome_path, out_path / "medium", 3, 6, 8)
+        if promt_dir_build(out_path, "large", name):
+            dvstar_build(genome_path, out_path / "large", 2, 3, 10)
+        if promt_dir_build(out_path, "diverse", name):
+            dvstar_build(genome_path, out_path / "diverse", 3.9075, 9, 10)
     else: 
-        print("Could not find the directory for creating 'E-coli' benchmarking files.")
-        print("The given directory was : '" + str(genome_path) + "'") 
-
-##########################
-# Build Turkey data set. #
-##########################
-def build_turkey():
-    genome_path = cwd / "data/turkey_fasta_files"
-    out_path = cwd / "data/benchmarking/turkey"
-    if (os.path.isdir(genome_path)):
-        print("Building small vlmcs...")
-        dvstar_build(genome_path, out_path / "small", 3.9075, 9, 6)
-        print("Building medium vlmcs...")
-        dvstar_build(genome_path, out_path / "medium", 3, 6, 8)
-        print("Building large vlmcs...")
-        dvstar_build(genome_path, out_path / "large", 2, 3, 10)
-        print("Building large & diverse...")
-        dvstar_build(genome_path, out_path / "diverse", 3.9075, 9, 10)
-    else: 
-        print("Could not find the directory for creating 'Turkey' benchmarking files.")
+        print("Could not find the directory for creating '" + name + "' benchmarking files.")
         print("The given directory was : '" + str(genome_path) + "'")
 
 @app.command()
 def build():
     print("Building Human Sequences...")
-    build_human()
+    build_dataset("data/benchmarking/human", "human")
     print("Building E-coli Sequences...")
-    build_ecoli()
+    build_dataset("data/sequences_split_files", "ecoli")
     print("Building Turkey Sequences...")
-    build_turkey()
+    build_dataset("data/turkey_fasta_files", "turkey")
+    print("Building Corn Sequences...")
+    build_dataset("data/corn_fasta_files", "corn")
 
 
 if __name__ == "__main__":
