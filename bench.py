@@ -72,14 +72,16 @@ def dvstar_build(genome_path: Path, out_path: Path, threshold: float, min_count:
         )
         subprocess.run(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-def calculate_distances(dist_func: str, set_size: int, genome_path: str, background_order: int) -> subprocess.CompletedProcess:
+def calculate_distances(dist_func: str, set_size: int, genome_path_fst: str, genome_path_snd: str, background_order: int) -> subprocess.CompletedProcess:
     args = (
         "perf",
         "stat",
         "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
         cwd / "submodules/PstClassifierSeqan/build/src/calculate-distances", 
         "-p",
-        cwd / genome_path,
+        cwd / genome_path_fst,
+        "-s",
+        cwd / genome_path_snd,
         "-n",
         dist_func,
         "-a",
@@ -232,10 +234,10 @@ def dvstar_cmp_mem():
 
 @app.command()
 def stat(set_size: int = -1, dist_func: Distance_Function = Distance_Function.dvstar, 
-        genome_path: str = "data/human_VLMCs", background_order: int = 0):
-    timing_results = calculate_distances(dist_func.value, -1, genome_path, background_order)
+        genome_path_fst: str = "data/human_VLMCs", genome_path_snd: str = "data/human_VLMCs", background_order: int = 0):
+    timing_results = calculate_distances(dist_func.value, -1, genome_path_fst, genome_path_snd, background_order)
 
-    th, min, max = get_parameter_from_bintree(os.listdir(genome_path)[0])
+    th, min, max = get_parameter_from_bintree(os.listdir(genome_path_fst)[0])
 
     save_to_csv(timing_results, cwd / "tmp/benchmarks/test.csv", dist_func, set_size, th, min, max, "Old")
 
@@ -252,13 +254,13 @@ def stat_new(set_size: int = -1, dist_func: Distance_Function = Distance_Functio
 @app.command()
 def benchmark():
     background_order = 0
-    genome_path_fst = "data/benchmarking/turkey/mega"
+    genome_path_fst = "data/benchmarking/corn/mega"
     genome_path_snd = "data/benchmarking/turkey/mega"
-    # stat(-1, Distance_Function.dvstar, genome_path, background_order)
+    stat(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, background_order)
     ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_multi_vector, 8)
     stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_sorted_vector, 8, background_order)
     stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_ey, 8, background_order)
-    # stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_veb, 8, background_order)
+    stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_veb, 8, background_order)
     ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order)
     # stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order, "kmer-major")
     stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_hashmap, 8)
