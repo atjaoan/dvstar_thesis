@@ -15,6 +15,7 @@
 //#include "veb_tree.hpp"
 #include "veb_array.hpp"
 #include "eytzinger_array.hpp"
+#include "b_tree_layout.hpp"
 #include "Eigen/Core"
 
 /*
@@ -648,4 +649,59 @@ class VLMC_Eytzinger : public VLMC_Container {
       }
     }
 };
+
+class VLMC_Alt_Btree : public VLMC_Container {
+
+  private: 
+    array::B_Tree *arr;
+    int min_index = INT_MAX;
+    int max_index = -1;
+
+  public: 
+    VLMC_Alt_Btree() = default;
+    ~VLMC_Alt_Btree() = default; 
+
+    VLMC_Alt_Btree(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
+      // cached_context : pointer to array which for each A, C, T, G has the next char probs
+      Eigen::ArrayX4f cached_context((int)std::pow(4, background_order), 4);
+
+      auto tmp_container = std::vector<RI_Kmer>{};
+      auto fun = [&](const RI_Kmer &kmer) { tmp_container.push_back(kmer); }; 
+
+      int offset_to_remove = load_VLMCs_from_file(path_to_bintree, cached_context, fun, background_order);
+      
+      std::sort(std::execution::seq, tmp_container.begin(), tmp_container.end());
+      for (auto &kmer : tmp_container){
+        int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
+        int offset = background_idx - offset_to_remove;
+        kmer.next_char_prob *= cached_context.row(offset).rsqrt();
+      }
+      arr = new array::B_Tree(tmp_container);
+    } 
+
+    size_t size() const override { return arr->size + 1; }
+
+    RI_Kmer &get(const int i) override { ;
+      return arr->get_from_array(i);
+    }
+
+    int get_max_kmer_index() const override { return max_index; }
+    int get_min_kmer_index() const override { return min_index; }
+
+    //RI_Kmer find(const int i_rep) override { return arr.get_elem(i_rep); }
+
+    void iterate_kmers(VLMC_Container &left_kmers, VLMC_Container &right_kmers,
+    const std::function<void(const RI_Kmer &left, const RI_Kmer &right)> &f) override {
+      int i = 0;
+      while(i < arr->size){
+        RI_Kmer& left_kmer = arr->a[i];
+        RI_Kmer& right_kmer = right_kmers.get(left_kmer.integer_rep);
+        if(left_kmer == right_kmer){
+          f(left_kmer, right_kmer);
+        }
+        i++;
+      }
+    }
+}; 
+
 }
