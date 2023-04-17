@@ -71,7 +71,7 @@ struct Veb_array {
 	  std::fill_n(s, MAX_H+1, q);
 	  sequencer(height, s, 0);
 
-    a = std::vector<container::RI_Kmer>(n);
+    a.resize(n);
     int rtl[MAX_H + 1];
     rtl[0] = 0;
     construct(from_container.data(), rtl, 0, 0);
