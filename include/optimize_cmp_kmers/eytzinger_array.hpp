@@ -18,7 +18,8 @@ struct Ey_array {
   Ey_array(std::vector<container::RI_Kmer>& from_container){
     size = from_container.size();
     a = from_container.data();
-    b.resize(size + 1);
+    b.reserve(size + 1);
+    b[0] = null_kmer;
     construct();
   }
   ~Ey_array() = default;
