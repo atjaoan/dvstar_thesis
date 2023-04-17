@@ -11,81 +11,20 @@ class VebArrayTest : public ::testing::Test {
 protected:
   void SetUp() override {}
 };
-
-/*
-TEST_F(VebArrayTest, Indicies) {
-  veb::Veb_array tree(16);
-  int k = 4; // height
-	int pow_k = tree.power_of_two(k); // = 4^2 = 16
-
-  EXPECT_EQ(5, tree.get_index(1, k));
-  EXPECT_EQ(4, tree.get_index(2, k));
-  EXPECT_EQ(6, tree.get_index(3, k));
-  EXPECT_EQ(2, tree.get_index(4, k));
-  EXPECT_EQ(8, tree.get_index(5, k));
-  EXPECT_EQ(7, tree.get_index(6, k));
-  EXPECT_EQ(9, tree.get_index(7, k));
-  EXPECT_EQ(1, tree.get_index(8, k));
-  EXPECT_EQ(11, tree.get_index(9, k));
-  EXPECT_EQ(10, tree.get_index(10, k));
-  EXPECT_EQ(12, tree.get_index(11, k));
-  EXPECT_EQ(3, tree.get_index(12, k));
-  EXPECT_EQ(14, tree.get_index(13, k));
-  EXPECT_EQ(13, tree.get_index(14, k));
-  EXPECT_EQ(15, tree.get_index(15, k));
-}
-TEST_F(VebArrayTest, Size10TreeInsert){
-  veb::Veb_array<int> tree(10);
-  int power = tree.power_of_two((int)(ceil(log((float)10)/log(2.0))));
-
-  int height = tree.height;
-
-  int idx = tree.get_index(5, tree.height);
-  tree.container[idx] = 5;
-  for(int i = 0; i < tree.size; i++){
-    if(i != 8)
-      EXPECT_EQ(0, tree.container[i]);
-  }
-  EXPECT_EQ(5, tree.container[8]);
-  EXPECT_EQ(16, power);
-  EXPECT_EQ(4, tree.height);
-}
-
-TEST_F(VebArrayTest, InsertFn){
-  veb::Veb_array<int> tree(10);
-  int power = tree.power_of_two((int)(ceil(log((float)10)/log(2.0))));
-
-  int height = tree.height;
-
-  tree.insert(5);
-  for(int i = 0; i < tree.size; i++){
-    if(i != 8)
-      EXPECT_EQ(0, tree.container[i]);
-  }
-  EXPECT_EQ(5, tree.container[8]);
-  EXPECT_EQ(16, power);
-  EXPECT_EQ(4, tree.height);
-}
-
-TEST_F(VebArrayTest, VebSearch){
-  veb::Veb_array tree(16);
-  tree.insert(5);
-  tree.insert(1);
-  tree.insert(2);
-  EXPECT_EQ(5, tree.get_elem(5));
-  EXPECT_EQ(1, tree.get_elem(1));
-  EXPECT_EQ(2, tree.get_elem(2));
-}
-*/
 TEST_F(VebArrayTest, VebSearchKmer){
-  veb::Veb_array tree(16);
-  auto kmer5 = container::RI_Kmer(5);
+  std::vector<container::RI_Kmer> tmp {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+  auto arr = new veb::Veb_array(tmp);
+  for(int i = 1; i < 16; i++){
+    //std::cout << arr->a[i].integer_rep << "\n";
+  }
+}
+TEST_F(VebArrayTest, SearchKmer){
+  std::vector<container::RI_Kmer> tmp {1,2,3};
+  auto arr = new veb::Veb_array(tmp);
   auto kmer1 = container::RI_Kmer(1);
   auto kmer2 = container::RI_Kmer(2);
-  tree.insert(kmer5);
-  tree.insert(kmer1);
-  tree.insert(kmer2);
-  EXPECT_EQ(kmer5, tree.get_elem(5));
-  EXPECT_EQ(kmer1, tree.get_elem(1));
-  EXPECT_EQ(kmer2, tree.get_elem(2));
+  auto kmer3 = container::RI_Kmer(3);
+  EXPECT_EQ(kmer1, arr->get_from_array(1));
+  EXPECT_EQ(kmer2, arr->get_from_array(2));
+  EXPECT_EQ(kmer3, arr->get_from_array(3));
 }
