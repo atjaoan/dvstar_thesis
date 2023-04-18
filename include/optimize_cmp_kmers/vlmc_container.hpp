@@ -16,8 +16,17 @@
 #include "b_tree.hpp"
 #include "robin_hood.h"
 #include "unordered_dense.h"
-#include "veb_tree.hpp"
+//#include "veb_tree.hpp"
 #include "veb_array.hpp"
+#include "eytzinger_array.hpp"
+#include "b_tree_alt.hpp"
+
+/*
+  Stores VLMC (multiple k-mers) in a container. 
+*/
+constexpr int misses_before_skip = 6;
+
+using Kmer = vlmc::VLMCKmer; 
 
 namespace container{
 
@@ -258,6 +267,12 @@ class VLMC_sorted_vector {
         int offset = background_idx - offset_to_remove;
         get(i).next_char_prob *= cached_context.row(offset).rsqrt();
       }
+      //int k = 0;
+      //for(auto kmer : tmp_container){
+      //  std::cout << kmer.next_char_prob
+      //  k++;
+      //  if(k > 50) break;
+      //}
     } 
 
     size_t size() const { return container.size(); }
@@ -563,190 +578,175 @@ out_t iterate_kmers(VLMC_Combo &left_kmers, VLMC_Combo &right_kmers) {
 class VLMC_Veb {
 
   private: 
-    veb::Veb_array veb;
     int min_index = INT_MAX;
     int max_index = -1;
     RI_Kmer null_kmer{};
 
   public:
+    veb::Veb_array *veb;
     VLMC_Veb() = default;
     ~VLMC_Veb() = default; 
 
     VLMC_Veb(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
-      
-      std::ifstream ifs(path_to_bintree, std::ios::binary);
-      cereal::BinaryInputArchive archive(ifs);
-
-      Kmer input_kmer{};
-
+      // cached_context : pointer to array which for each A, C, T, G has the next char probs
       eigenx_t cached_context((int)std::pow(4, background_order), 4);
-      std::vector<RI_Kmer> tmp_container{};
 
-      auto offset_to_remove = 0;
-      for (int i = 0; i < background_order; i++){
-        offset_to_remove += std::pow(4, i); 
-      }
+      auto tmp_container = std::vector<RI_Kmer>{};
+      auto fun = [&](const RI_Kmer &kmer) { tmp_container.push_back(kmer); }; 
 
-      while (ifs.peek() != EOF){
-        archive(input_kmer);
-        RI_Kmer ri_kmer{input_kmer};
-
-        if(input_kmer.length <= background_order){
-          if (input_kmer.length + 1 > background_order){
-            int offset = ri_kmer.integer_rep - offset_to_remove; 
-            cached_context.row(offset) = ri_kmer.next_char_prob;
-          }
-        } else {
-          if(ri_kmer.integer_rep > max_index) max_index = ri_kmer.integer_rep;
-          if(ri_kmer.integer_rep < min_index) min_index = ri_kmer.integer_rep;
-          tmp_container.push_back(ri_kmer);
-        }
-      }
-
-      ifs.close();
-      veb = veb::Veb_array(tmp_container.size());
-      for(auto kmer : tmp_container){
+      int offset_to_remove = load_VLMCs_from_file(path_to_bintree, cached_context, fun, background_order);
+      
+      std::sort(std::execution::seq, tmp_container.begin(), tmp_container.end());
+      for (auto &kmer : tmp_container){
         int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
         int offset = background_idx - offset_to_remove;
         kmer.next_char_prob *= cached_context.row(offset).rsqrt();
-        veb.insert(kmer);
       }
-    } 
-
-    size_t size() const { return veb.container.size(); }
-
-    void push(const RI_Kmer &kmer) { 
-      veb.insert(kmer); 
+      veb = new veb::Veb_array(tmp_container);
     }
 
-    RI_Kmer &get(const int i) { ;
-      return veb.retrive_on_index(i);
+    size_t size() const { return veb->n + 1; }
+
+    RI_Kmer &get(const int i) {
+      return veb->get_from_array(i);
     }
 
     int get_max_kmer_index() const { return max_index; }
     int get_min_kmer_index() const { return min_index; }
 
-    RI_Kmer find(const int i_rep) { return veb.get_elem(i_rep); }
+    RI_Kmer find(const int i_rep) { return null_kmer; }
 };
 
 out_t iterate_kmers(VLMC_Veb &left_kmers, VLMC_Veb &right_kmers) {
   out_t dot_product = 0.0;
   out_t left_norm = 0.0;
   out_t right_norm = 0.0;
-
-  int idx = 0;
-  RI_Kmer& left_kmer = left_kmers.get(idx);
-  RI_Kmer right_kmer = right_kmers.find(left_kmer.integer_rep);
-      
-  while(idx < left_kmers.size()){
+  int i = 0;
+  while(i < left_kmers.veb->n){
+    RI_Kmer& left_kmer = left_kmers.veb->a[i];
+    RI_Kmer& right_kmer = right_kmers.get(left_kmer.integer_rep);
     if(left_kmer == right_kmer){
       dot_product += (left_kmer.next_char_prob * right_kmer.next_char_prob).sum();
       left_norm += left_kmer.next_char_prob.square().sum();
       right_norm += right_kmer.next_char_prob.square().sum();
     }
-    while(idx < left_kmers.size()){
-      left_kmer = left_kmers.get(++idx);
-      if(left_kmer > 0) break;
-    }
-    right_kmer = right_kmers.find(left_kmer.integer_rep);
+    i++;
   }
-
   return normalise_dvstar(dot_product, left_norm, right_norm);
 }
 
-class VLMC_Set {
+class VLMC_Eytzinger {
 
-  private:
-    std::set<RI_Kmer> container{};
-    int min_kmer = INT_MAX;
-    int max_kmer = -1;
-    RI_Kmer null_kmer{};
+  private: 
+    int min_index = INT_MAX;
+    int max_index = -1;
 
   public: 
-    VLMC_Set() = default;
-    ~VLMC_Set() = default; 
+    array::Ey_array *arr;
+    VLMC_Eytzinger() = default;
+    ~VLMC_Eytzinger() = default; 
 
-    VLMC_Set(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
-      
-      std::ifstream ifs(path_to_bintree, std::ios::binary);
-      cereal::BinaryInputArchive archive(ifs);
-
-      Kmer input_kmer{};
-
+    VLMC_Eytzinger(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
+      // cached_context : pointer to array which for each A, C, T, G has the next char probs
       eigenx_t cached_context((int)std::pow(4, background_order), 4);
-      std::vector<RI_Kmer> tmp_container{};
 
-      auto offset_to_remove = 0;
-      for (int i = 0; i < background_order; i++){
-        offset_to_remove += std::pow(4, i); 
-      }
+      auto tmp_container = std::vector<RI_Kmer>{};
+      auto fun = [&](const RI_Kmer &kmer) { tmp_container.push_back(kmer); }; 
 
-      while (ifs.peek() != EOF){
-        archive(input_kmer);
-        RI_Kmer ri_kmer{input_kmer};
-
-        if(input_kmer.length <= background_order){
-          if (input_kmer.length + 1 > background_order){
-            int offset = ri_kmer.integer_rep - offset_to_remove; 
-            cached_context.row(offset) = ri_kmer.next_char_prob;
-          }
-        } else {
-          if(ri_kmer.integer_rep > max_kmer) max_kmer = ri_kmer.integer_rep;
-          if(ri_kmer.integer_rep < min_kmer) min_kmer = ri_kmer.integer_rep;
-          tmp_container.push_back(ri_kmer);
-        }
-      }
-
-      ifs.close();
-      for(auto kmer : tmp_container){
+      int offset_to_remove = load_VLMCs_from_file(path_to_bintree, cached_context, fun, background_order);
+      
+      std::sort(std::execution::seq, tmp_container.begin(), tmp_container.end());
+      for (auto &kmer : tmp_container){
         int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
         int offset = background_idx - offset_to_remove;
         kmer.next_char_prob *= cached_context.row(offset).rsqrt();
-        container.insert(kmer);
       }
+      arr = new array::Ey_array(tmp_container);
+    } 
+
+    size_t size() const { return arr->size + 1; }
+
+    RI_Kmer &get(const int i) { ;
+      return arr->get_from_array(i);
     }
 
-    size_t size() const { return container.size(); }
-
-    void push(const RI_Kmer &kmer) { container.insert(kmer); }
-
-    RI_Kmer &get(const int i) { return null_kmer; }
-
-    int get_max_kmer_index() const { return max_kmer; }
-    int get_min_kmer_index() const { return min_kmer; }
-
-    std::set<RI_Kmer>::iterator begin_set(){
-      return container.begin();
-    }
-
-    std::set<RI_Kmer>::iterator end_set(){
-      return container.end();
-    }
-
-    RI_Kmer find(const int i_rep) { return null_kmer; }
-
+    int get_max_kmer_index() const { return max_index; }
+    int get_min_kmer_index() const { return min_index; }
 };
-out_t iterate_kmers(VLMC_Set &left_kmers, VLMC_Set &right_kmers) {
+
+out_t iterate_kmers(VLMC_Eytzinger &left_kmers, VLMC_Eytzinger &right_kmers) {
   out_t dot_product = 0.0;
   out_t left_norm = 0.0;
   out_t right_norm = 0.0;
-
-  std::set<RI_Kmer>::iterator l_it = left_kmers.begin_set();
-  std::set<RI_Kmer>::iterator r_it = right_kmers.begin_set();
-  while(l_it != left_kmers.end_set() && r_it != right_kmers.end_set()){
-    if(*l_it == *r_it){
-      dot_product += ((*l_it).next_char_prob * (*r_it).next_char_prob).sum();
-      left_norm += (*l_it).next_char_prob.square().sum();
-      right_norm += (*r_it).next_char_prob.square().sum();
-      l_it++;
-      r_it++;
-    } else if (*l_it < *r_it) {
-      l_it++;
-    } else {
-      r_it++;
+  int i = 0;
+  while(i <= left_kmers.arr->size){
+    RI_Kmer& left_kmer = left_kmers.arr->b[i];
+    RI_Kmer& right_kmer = right_kmers.get(left_kmer.integer_rep);
+    if(left_kmer == right_kmer){
+      dot_product += (left_kmer.next_char_prob * right_kmer.next_char_prob).sum();
+      left_norm += left_kmer.next_char_prob.square().sum();
+      right_norm += right_kmer.next_char_prob.square().sum();
     }
+    i++;
   }
-
   return normalise_dvstar(dot_product, left_norm, right_norm);
 }
+
+class VLMC_Alt_Btree {
+
+  private: 
+    int min_index = INT_MAX;
+    int max_index = -1;
+
+  public: 
+    array::B_Tree *arr;
+    VLMC_Alt_Btree() = default;
+    ~VLMC_Alt_Btree() = default; 
+
+    VLMC_Alt_Btree(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
+      // cached_context : pointer to array which for each A, C, T, G has the next char probs
+      eigenx_t cached_context((int)std::pow(4, background_order), 4);
+
+      auto tmp_container = std::vector<RI_Kmer>{};
+      auto fun = [&](const RI_Kmer &kmer) { tmp_container.push_back(kmer); }; 
+
+      int offset_to_remove = load_VLMCs_from_file(path_to_bintree, cached_context, fun, background_order);
+      
+      std::sort(std::execution::seq, tmp_container.begin(), tmp_container.end());
+      for (auto &kmer : tmp_container){
+        int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
+        int offset = background_idx - offset_to_remove;
+        kmer.next_char_prob *= cached_context.row(offset).rsqrt();
+      }
+      arr = new array::B_Tree(tmp_container);
+    } 
+
+    size_t size() const { return arr->size + 1; }
+
+    RI_Kmer &get(const int i) { ;
+      return arr->get_from_array(i);
+    }
+
+    int get_max_kmer_index() const { return max_index; }
+    int get_min_kmer_index() const { return min_index; }
+}; 
+
+out_t iterate_kmers(VLMC_Alt_Btree &left_kmers, VLMC_Alt_Btree &right_kmers) {
+  out_t dot_product = 0.0;
+  out_t left_norm = 0.0;
+  out_t right_norm = 0.0;
+  int i = 0;
+  while(i < left_kmers.arr->size){
+    RI_Kmer& left_kmer = left_kmers.arr->a[i];
+    RI_Kmer& right_kmer = right_kmers.get(left_kmer.integer_rep);
+    if(left_kmer == right_kmer){
+      dot_product += (left_kmer.next_char_prob * right_kmer.next_char_prob).sum();
+      left_norm += left_kmer.next_char_prob.square().sum();
+      right_norm += right_kmer.next_char_prob.square().sum();
+    }
+    i++;
+  }
+  return normalise_dvstar(dot_product, left_norm, right_norm);
+}
+
 }

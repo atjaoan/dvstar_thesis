@@ -31,12 +31,21 @@ The submodule CLI11 needs to be adjusted as well, specifically the folder `tests
 The container is built by running:
 
 ```shell script
-apptainer build --fakeroot vlmc-from-kmers.sif vlmc-from-kmers.def
+apptainer build --fakeroot thesis.sif thesis.def
 ```
 
 Using the created image, programs can be run by either using the ```apptainer exec ./program``` or ```apptainer run``` to run the programs in ```%runscripts``` of the .def file. It is also possible to spawn a shell in the container with 
 ```shell script
-apptainer shell vlmc-from-kmers.sif
+apptainer shell thesis.sif
+```
+
+To output benchmarking results, the ```--bind``` option must be specified such that the container has the output directory mounted (the containers own file system is read-only). First, create two empty directory named ```csv_results``` and ```hdf5_results``` in the same directory as the .sif file is located. 
+```shell script
+mkdir csv_results hdf5_results
+```
+Benchmarking then is done with
+```shell script
+apptainer run --bind ./csv_results:/thesis/csv_results/,./hdf5_results:/thesis/hdf5_results thesis.sif
 ```
 
 ### Manually

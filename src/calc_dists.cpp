@@ -35,8 +35,10 @@ matrix_t apply_container(parser::cli_arguments arguments, parser::VLMC_Rep vlmc_
     return calculate_cluster_distance<container::VLMC_Combo>(arguments, nr_cores);
   } else if (vlmc_container==parser::VLMC_Rep::vlmc_veb){
     return calculate_cluster_distance<container::VLMC_Veb>(arguments, nr_cores);
-  } else if (vlmc_container==parser::VLMC_Rep::vlmc_set){
-    return calculate_cluster_distance<container::VLMC_Set>(arguments, nr_cores);
+  } else if (vlmc_container==parser::VLMC_Rep::vlmc_ey){
+    return calculate_cluster_distance<container::VLMC_Eytzinger>(arguments, nr_cores);
+  } else if (vlmc_container==parser::VLMC_Rep::vlmc_alt_btree){
+    return calculate_cluster_distance<container::VLMC_Alt_Btree>(arguments, nr_cores);
   }
 }
 
@@ -58,7 +60,9 @@ std::map<parser::VLMC_Rep, std::string> VLMC_Rep_map{
       {parser::VLMC_Rep::vlmc_b_tree, "b-tree"},
       {parser::VLMC_Rep::vlmc_hashmap, "hashmap"},
       {parser::VLMC_Rep::vlmc_combo, "combo"},
-      {parser::VLMC_Rep::vlmc_veb, "veb"}
+      {parser::VLMC_Rep::vlmc_veb, "veb"}, 
+      {parser::VLMC_Rep::vlmc_ey, "ey"},
+      {parser::VLMC_Rep::vlmc_alt_btree, "altbtree"}
   };
 
 std::string get_group_name(parser::cli_arguments arguments){

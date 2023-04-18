@@ -44,7 +44,8 @@ enum VLMC_Rep {
   vlmc_hashmap,
   vlmc_combo,
   vlmc_veb,
-  vlmc_set
+  vlmc_ey,
+  vlmc_alt_btree
 };
 
 struct cli_arguments {
@@ -98,7 +99,8 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
       {"hashmap", VLMC_Rep::vlmc_hashmap},
       {"combo", VLMC_Rep::vlmc_combo},
       {"veb", VLMC_Rep::vlmc_veb},
-      {"set", VLMC_Rep::vlmc_set}
+      {"ey", VLMC_Rep::vlmc_ey},
+      {"alt-btree", VLMC_Rep::vlmc_alt_btree}
   };
 
   std::map<std::string, Cluster_Rep> cluster_rep_map{

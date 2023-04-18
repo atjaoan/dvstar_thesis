@@ -133,7 +133,7 @@ def save_to_csv(res: subprocess.CompletedProcess, csv_path: Path, vlmc_size: str
                 implementation: str, nr_cores_used: int, combo_init_size: int = 128):
     new_line_separated_attr = res.stderr.split('\n')[3:-4]
 
-    print("Save implementation -> " + implementation + " to csv...")
+    print(f"Save implementation -> {implementation} to csv...")
 
     data = [get_git_commit_version(), implementation, vlmc_size, set_size, threshold, min_count, max_depth, nr_cores_used, combo_init_size]
     columns = ["repo_version", "implementation", "vlmc_size", "set_size", "threshold", "min_count", "max_depth", "nr_cores_used", "combo_init_size"]
@@ -227,7 +227,7 @@ def normal_benchmaking(dataset: str, implementation: str, dataset_outer_dir: str
     th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(cwd / dataset / "medium")[0])
     th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(cwd / dataset / "large")[0])
 
-    files_run = 2
+    files_run = 4
 
     while((files_run < 10000) & (files_run < nb_files)):
         print("Benchmarking with " + str(files_run) + " VLMCs...")
@@ -291,29 +291,29 @@ def parallelization_benchmark(dataset: str, implementation: str, dataset_outer_d
     #os.remove(cwd / "hdf5_results/distances_medium.hdf5")
     #os.remove(cwd / "hdf5_results/distances_large.hdf5")
 
-def compare_hdf5_files(bench: str, vlmc_size: str, vlmc: str, path: str, dop: int, set_size: int, background_order: int):
-    vlmc_file = h5py.File(cwd / ("hdf5_results/distances" + bench + vlmc_size + ".hdf5"), 'r')
-    vlmc_str  = vlmc +  "-" + path + "-dop-" + str(dop) + "-set-size-" + str(set_size) + "-bo-" + str(background_order)
-    vlmc_group = vlmc_file.get(vlmc_str)
-    vlmc_group = vlmc_group.get("distances")
-
-    pst_file = h5py.File(cwd / ("hdf5_results/pst_distances" + vlmc_size + ".hdf5"), 'r')
-    pst_str = "dvstar-" + str(background_order) + "-" + path + "-set-size-" + str(set_size)
-    pst_group = pst_file.get(pst_str)
-    pst_group = pst_group.get("distances")
-
-    error_tolerance = 1e-7
-    misses = 0
-
-    for x in range(0, vlmc_group[0].size):
-        for y in range(0, vlmc_group[0].size):
-            if abs(vlmc_group[x][y] - pst_group[x][y]) > error_tolerance:
-                misses = misses + 1
-                print("Our = " + str(vlmc_group[x][y]) + " pst = " + str(pst_group[x][y]))
-                print("Difference = " + str(vlmc_group[x][y] - pst_group[x][y]))
-
-    if misses == 0:
-        print("Correctness Check " + path + " : PASSED")
+#def compare_hdf5_files(bench: str, vlmc_size: str, vlmc: str, path: str, dop: int, set_size: int, background_order: int):
+#    vlmc_file = h5py.File(cwd / ("hdf5_results/distances" + bench + vlmc_size + ".hdf5"), 'r')
+#    vlmc_str  = vlmc +  "-" + path + "-dop-" + str(dop) + "-set-size-" + str(set_size) + "-bo-" + str(background_order)
+#    vlmc_group = vlmc_file.get(vlmc_str)
+#    vlmc_group = vlmc_group.get("distances")
+#
+#    pst_file = h5py.File(cwd / ("hdf5_results/pst_distances" + vlmc_size + ".hdf5"), 'r')
+#    pst_str = "dvstar-" + str(background_order) + "-" + path + "-set-size-" + str(set_size)
+#    pst_group = pst_file.get(pst_str)
+#    pst_group = pst_group.get("distances")
+#
+#    error_tolerance = 1e-7
+#    misses = 0
+#
+#    for x in range(0, vlmc_group[0].size):
+#        for y in range(0, vlmc_group[0].size):
+#            if abs(vlmc_group[x][y] - pst_group[x][y]) > error_tolerance:
+#                misses = misses + 1
+#                print("Our = " + str(vlmc_group[x][y]) + " pst = " + str(pst_group[x][y]))
+#                print("Difference = " + str(vlmc_group[x][y] - pst_group[x][y]))
+#
+#    if misses == 0:
+#        print("Correctness Check " + path + " : PASSED")
 
 @app.command()
 def benchmark():

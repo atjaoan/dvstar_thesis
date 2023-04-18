@@ -69,8 +69,12 @@ protected:
       return distance::dvstar<container::VLMC_Veb>(left, right, background_order);
   };
 
-  std::function<out_t(container::VLMC_Set &, container::VLMC_Set &)> dist_func_set = [&](auto &left, auto &right) {
-      return distance::dvstar<container::VLMC_Set>(left, right, background_order);
+  std::function<out_t(container::VLMC_Eytzinger &, container::VLMC_Eytzinger &)> dist_func_ey = [&](auto &left, auto &right) {
+      return distance::dvstar<container::VLMC_Eytzinger>(left, right, background_order);
+  };
+
+  std::function<out_t(container::VLMC_Alt_Btree &, container::VLMC_Alt_Btree &)> dist_func_alt = [&](auto &left, auto &right) {
+      return distance::dvstar<container::VLMC_Alt_Btree>(left, right, background_order);
   };
 };
 
@@ -146,17 +150,22 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
   // Kmer major implementation
   auto left_cluster_k = cluster::get_kmer_cluster(path_to_bintrees, background_order);
   auto right_cluster_k = cluster::get_kmer_cluster(path_to_bintrees, background_order);
-  matrix_t distances_k_major = calculate::calculate_distance_major(left_cluster_k, right_cluster_k, 1);  
+  matrix_t distances_k_major = calculate::calculate_distance_major(left_cluster_k, right_cluster_k, 1); 
 
-  // Veb Implementation - Currently too slow
+  // Veb Implementation
   auto left_cluster_veb = cluster::get_cluster<container::VLMC_Veb>(path_to_bintrees, 1, background_order);
   auto right_cluster_veb = cluster::get_cluster<container::VLMC_Veb>(path_to_bintrees, 1, background_order);
-  matrix_t distances_veb = calculate::calculate_distances<container::VLMC_Veb>(left_cluster_veb, right_cluster_veb, dist_func_veb, 1); 
+  matrix_t distances_veb = calculate::calculate_distances<container::VLMC_Veb>(left_cluster_veb, right_cluster_veb, dist_func_veb, 1);
+  
+  // Eytzinger Array
+  auto left_cluster_ey = cluster::get_cluster<container::VLMC_Eytzinger>(path_to_bintrees, 1, background_order);
+  auto right_cluster_ey = cluster::get_cluster<container::VLMC_Eytzinger>(path_to_bintrees, 1, background_order);
+  matrix_t distances_ey = calculate::calculate_distances<container::VLMC_Eytzinger>(left_cluster_ey, right_cluster_ey, dist_func_ey, 1);
 
-  // std::Set
-  auto left_cluster_set = cluster::get_cluster<container::VLMC_Set>(path_to_bintrees, 1, background_order);
-  auto right_cluster_set = cluster::get_cluster<container::VLMC_Set>(path_to_bintrees, 1, background_order);
-  matrix_t distances_set = calculate::calculate_distances<container::VLMC_Set>(left_cluster_set, right_cluster_set, dist_func_set, 1); 
+  // Alt Btree Array
+  auto left_cluster_altbtree = cluster::get_cluster<container::VLMC_Alt_Btree>(path_to_bintrees, 1, background_order);
+  auto right_cluster_altbtree = cluster::get_cluster<container::VLMC_Alt_Btree>(path_to_bintrees, 1, background_order);
+  matrix_t distances_altbtree = calculate::calculate_distances<container::VLMC_Alt_Btree>(left_cluster_altbtree, right_cluster_altbtree, dist_func_alt, 1);
 
   // Dvstar Original implementation 
   matrix_t distances_org_dvstar{distances_vector.cols(), distances_vector.rows()};
@@ -181,9 +190,10 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
         EXPECT_NEAR(distances_vector(x,y), distances_b_tree(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_hashmap(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_combo(x,y), error_tolerance);
-        // EXPECT_NEAR(distances_vector(x,y), distances_veb(x,y), error_tolerance);
-        EXPECT_NEAR(distances_vector(x,y), distances_set(x,y), error_tolerance);
+        EXPECT_NEAR(distances_vector(x,y), distances_veb(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_k_major(x,y), error_tolerance); 
+        EXPECT_NEAR(distances_vector(x,y), distances_ey(x,y), error_tolerance);
+        EXPECT_NEAR(distances_vector(x,y), distances_altbtree(x,y), error_tolerance);
       }
     }
   }
