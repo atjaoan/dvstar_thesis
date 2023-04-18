@@ -15,7 +15,7 @@
 //#include "veb_tree.hpp"
 #include "veb_array.hpp"
 #include "eytzinger_array.hpp"
-#include "b_tree_layout.hpp"
+#include "b_tree_alt.hpp"
 #include "Eigen/Core"
 
 /*
