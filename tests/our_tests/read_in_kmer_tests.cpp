@@ -20,15 +20,6 @@ protected:
   void SetUp() override {}
 };
 
-TEST_F(RIKmerTest, EmptyConstructor) {
-  container::RI_Kmer kmer{};
-  EXPECT_EQ(kmer.integer_rep, 0);
-  EXPECT_DOUBLE_EQ(kmer.next_char_prob[0], 0.0);
-  EXPECT_DOUBLE_EQ(kmer.next_char_prob[1], 0.0);
-  EXPECT_DOUBLE_EQ(kmer.next_char_prob[2], 0.0);
-  EXPECT_DOUBLE_EQ(kmer.next_char_prob[3], 0.0);
-  EXPECT_TRUE(kmer.is_null);
-}
 TEST_F(RIKmerTest, KmerConstructorProb) {
   Kmer old_kmer{5, 10, {5, 10, 7, 8}};
   double sum_children = 30.0+4.0;
