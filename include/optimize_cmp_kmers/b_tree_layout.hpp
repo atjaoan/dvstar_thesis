@@ -7,15 +7,15 @@ using RI_Kmer = container::RI_Kmer;
 namespace b_tree {
 
 class B_Tree {
-    const int B = 2;
+    const int B = 3;
     int n; 
     int nblocks; 
     int t = 0; 
+    int max_level; 
 
-    std::vector<std::array<RI_Kmer,2>> btree{};
+    std::vector<std::array<RI_Kmer,3>> btree{};
 
     public: 
-
         B_Tree() = default;
         ~B_Tree() = default;
 
@@ -24,6 +24,7 @@ class B_Tree {
             nblocks = (n + B - 1) / B;
             btree.resize(nblocks);
             build(container);
+            max_level = (log(nblocks) + 1) / log(B + 1); 
         } 
 
         int get_nblocks() { return nblocks; }
@@ -42,13 +43,7 @@ class B_Tree {
             if (k < nblocks) {
                 for (int i = 0; i < B; i++) {
                     build(container, go(k, i));
-                    if (t < n){
-                        btree[k][i] = container[t++];
-                    } else {
-                        std::cout << "k " << k << " i " << i << std::endl;
-                        btree[k][i] = RI_Kmer{};
-                    }
-                    // btree[k][i] = (t < n ? container[t++] : RI_Kmer() );
+                    btree[k][i] = (t < n ? container[t++] : RI_Kmer{} );
                 }
                 build(container, go(k, B));
             }
@@ -62,19 +57,24 @@ class B_Tree {
             return btree[std::get<0>(idx)][std::get<1>(idx)]; 
         }
 
-        std::tuple<bool, std::tuple<int,int>> search(const int i_rep) {
+        std::tuple<int, std::tuple<int,int>> search(const int i_rep) {
             int k = 0; 
-            auto res = std::make_tuple(false, std::make_tuple(0, 0));
+            int level = max_level; 
+            auto res = std::make_tuple(-1, std::make_tuple(0, 0));
             start: 
             while (k < nblocks) {
                 for (int i = 0; i < B; i++) {
-                    if (btree[k][i].integer_rep >= i_rep) {
-                        res = std::make_tuple(true, std::make_tuple(k, i));
+                    if (btree[k][i].integer_rep == i_rep) {
+                        return std::make_tuple(level, std::make_tuple(k, i)); 
+                    } else if (btree[k][i].integer_rep > i_rep) {
+                        res = std::make_tuple(level, std::make_tuple(k, i));
                         k = go(k, i);
+                        level--; 
                         goto start;
                     }
                 }
                 k = go(k, B);
+                level--; 
             }
             return res;
         }

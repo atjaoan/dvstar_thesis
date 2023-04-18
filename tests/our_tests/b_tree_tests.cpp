@@ -7,6 +7,8 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <chrono>
+#include <stdlib.h> 
 
 #include "vlmc_from_kmers/kmer.hpp"
 #include "vlmc_container.hpp"
@@ -20,9 +22,6 @@ using RI_Kmer = container::RI_Kmer;
 class BTreeTests : public ::testing::Test {
 protected:
   void SetUp() override {}
-
-  std::filesystem::path path_bintree_1{"../data/test_VLMCs/sequences_1.bintree"};
-  std::filesystem::path path_bintree_2{"../data/test_VLMCs/sequences_2.bintree"};
 
   std::filesystem::path path_to_bintrees{"../data/test_VLMCs"};
 };
@@ -58,7 +57,40 @@ b_tree::B_Tree createDummyTree(int x){
   return b_tree::B_Tree(tmp);
 }
 
-const int B = 2; 
+/*
+std::tuple<std::vector<RI_Kmer>, std::vector<RI_Kmer>> generateRandomVector(int max_size, int match_prc) {
+  std::vector<RI_Kmer> left;
+  std::vector<RI_Kmer> right; 
+  int count = 0; 
+  int matches = 0; 
+  int number = 0; 
+  bool last_left = false;
+  while (count < max_size) {
+    RI_Kmer new_kmer = RI_Kmer(number, {{0.25, 0.25, 0.25, 0.25}});
+    int match_chance = rand() % 100;
+    if (match_chance < match_prc) {
+      left.push_back(new_kmer);
+      right.push_back(new_kmer);
+      count++; 
+      matches++; 
+    } else {
+      if (last_left) {
+        right.push_back(new_kmer);
+        last_left = false;
+        count++;  
+      } else {
+        left.push_back(new_kmer);
+        last_left = true; 
+      }
+    }
+    number++; 
+  }
+  std::cout << "The count is = " << count << " and matches = " << matches << " prc = " << float(matches) / float(count) << std::endl; 
+  return std::make_tuple(left, right); 
+}
+*/
+
+const int B = 3; 
 
 float measure_distance(b_tree::B_Tree t1, b_tree::B_Tree t2) {
   out_t dot_product = 0.0;
@@ -70,7 +102,8 @@ float measure_distance(b_tree::B_Tree t1, b_tree::B_Tree t2) {
   int left_k = 0;
   int left_i = 0; 
 
-  int count = 0; 
+  int count = 0;
+  int count_second_hit = 0;  
 
   while (left_k < left_nblocks){
     RI_Kmer &left_kmer = t1.get(left_k, left_i);
@@ -90,7 +123,8 @@ float measure_distance(b_tree::B_Tree t1, b_tree::B_Tree t2) {
         dot_product += (left_kmer.next_char_prob * std::get<1>(right_res).next_char_prob).sum();
         left_norm += left_kmer.next_char_prob.square().sum();
         right_norm += std::get<1>(right_res).next_char_prob.square().sum();
-        count++; 
+        count_second_hit++; 
+        count++;
       } 
     }
     if (left_i < B - 1) {
@@ -101,7 +135,7 @@ float measure_distance(b_tree::B_Tree t1, b_tree::B_Tree t2) {
     }
   }
 
-  std::cout << "The count is = " << count << std::endl; 
+  std::cout << "Total hits = " << count << " second hit = " << count_second_hit << std::endl; 
 
   return container::normalise_dvstar(dot_product, left_norm, right_norm);
 }
@@ -146,6 +180,89 @@ void increment(int& k, int& i, int& level, const int nblocks) {
   }
 }
 
+float crazy_search_iteration(b_tree::B_Tree left_kmers, b_tree::B_Tree right_kmers) {
+  out_t dot_product = 0.0;
+  out_t left_norm = 0.0;
+  out_t right_norm = 0.0;
+
+  auto left_res = left_kmers.search(1);
+  auto right_res = right_kmers.search(1); 
+
+  int left_nblocks = left_kmers.get_nblocks();
+  int right_nblocks = right_kmers.get_nblocks();
+
+  int left_k = std::get<0>(std::get<1>(left_res));
+  int right_k = std::get<0>(std::get<1>(right_res)); 
+
+  int left_i = std::get<1>(std::get<1>(left_res));
+  int right_i = std::get<1>(std::get<1>(right_res)); 
+
+  int left_level = 0;
+  int right_level = 0; 
+
+  int count = 0; 
+  int count_hit = 0; 
+
+  while(left_i >= 0 && left_k < left_nblocks && right_i >= 0 && right_k < right_nblocks){
+    RI_Kmer &left_kmer = left_kmers.get(left_k, left_i);
+    RI_Kmer &right_kmer = right_kmers.get(right_k, right_i);
+
+    if(left_kmer == right_kmer){
+      dot_product += (left_kmer.next_char_prob * right_kmer.next_char_prob).sum();
+      left_norm += left_kmer.next_char_prob.square().sum();
+      right_norm += right_kmer.next_char_prob.square().sum();
+      increment(left_k, left_i, left_level, left_nblocks);
+      increment(right_k, right_i, right_level, right_nblocks);
+      count++; 
+    } else if (left_kmer > right_kmer) {
+      auto right_res = right_kmers.search(left_kmer.integer_rep);
+      if (std::get<0>(right_res) > -1){
+        right_level = std::get<0>(right_res);
+        right_k = std::get<0>(std::get<1>(right_res));
+        right_i = std::get<1>(std::get<1>(right_res));
+        RI_Kmer &right_kmer = right_kmers.get(right_k, right_i);
+        if (left_kmer == right_kmer){
+          dot_product += (left_kmer.next_char_prob * right_kmer.next_char_prob).sum();
+          left_norm += left_kmer.next_char_prob.square().sum();
+          right_norm += right_kmer.next_char_prob.square().sum();
+          increment(left_k, left_i, left_level, left_nblocks);
+          increment(right_k, right_i, right_level, right_nblocks);
+          count++; 
+          count_hit++;
+        }
+      } else {
+        increment(left_k, left_i, left_level, left_nblocks);
+        increment(right_k, right_i, right_level, right_nblocks);
+      }
+    } else {
+      auto left_res = left_kmers.search(right_kmer.integer_rep);
+      if (std::get<0>(left_res) > -1){
+        left_level = std::get<0>(left_res);
+        left_k = std::get<0>(std::get<1>(left_res));
+        left_i = std::get<1>(std::get<1>(left_res));
+        RI_Kmer &left_kmer = left_kmers.get(left_k, left_i);
+        if (left_kmer == right_kmer){
+          dot_product += (left_kmer.next_char_prob * right_kmer.next_char_prob).sum();
+          left_norm += left_kmer.next_char_prob.square().sum();
+          right_norm += right_kmer.next_char_prob.square().sum();
+          increment(left_k, left_i, left_level, left_nblocks);
+          increment(right_k, right_i, right_level, right_nblocks);
+          count++; 
+          count_hit++;
+        }
+      } else {
+        increment(left_k, left_i, left_level, left_nblocks);
+        increment(right_k, right_i, right_level, right_nblocks);
+      }
+    }
+  }
+
+  std::cout << "The count is " << count << std::endl; 
+  std::cout << "The count for search hits is = " << count_hit << std::endl; 
+
+  return container::normalise_dvstar(dot_product, left_norm, right_norm);
+}
+
 float crazy_measure_distance(b_tree::B_Tree left_kmers, b_tree::B_Tree right_kmers) {
   out_t dot_product = 0.0;
   out_t left_norm = 0.0;
@@ -167,8 +284,19 @@ float crazy_measure_distance(b_tree::B_Tree left_kmers, b_tree::B_Tree right_kme
   int right_level = 0; 
 
   int count = 0; 
+  int count_hit = 0; 
+
+  int max_level_left = 0; 
+  int max_level_right = 0; 
 
   while(left_i >= 0 && left_k < left_nblocks && right_i >= 0 && right_k < right_nblocks){
+    if (max_level_left < left_level){
+      max_level_left = left_level;
+    }
+    if (max_level_right < right_level){
+      max_level_right = right_level; 
+    }
+
     RI_Kmer &left_kmer = left_kmers.get(left_k, left_i);
     RI_Kmer &right_kmer = right_kmers.get(right_k, right_i);
 
@@ -179,40 +307,80 @@ float crazy_measure_distance(b_tree::B_Tree left_kmers, b_tree::B_Tree right_kme
       increment(left_k, left_i, left_level, left_nblocks);
       increment(right_k, right_i, right_level, right_nblocks);
       count++; 
-    } else if (left_kmer > right_kmer){
-      auto right_kmer_idx = right_kmers.search(left_kmer.integer_rep);
-      if (std::get<0>(right_kmer_idx)){
-        RI_Kmer &right_kmer_found = right_kmers.get(std::get<0>(std::get<1>(right_kmer_idx)), std::get<1>(std::get<1>(right_kmer_idx)));
-        if (left_kmer == right_kmer_found){
-          dot_product += (left_kmer.next_char_prob * right_kmer_found.next_char_prob).sum();
-          left_norm += left_kmer.next_char_prob.square().sum();
-          right_norm += right_kmer_found.next_char_prob.square().sum();
-          right_k = std::get<0>(std::get<1>(right_kmer_idx));
-          right_i = std::get<1>(std::get<1>(right_kmer_idx));
-          count++;
-        }
-      } 
-      increment(left_k, left_i, left_level, left_nblocks);
+    } else if (left_kmer > right_kmer) {
       increment(right_k, right_i, right_level, right_nblocks);
-    } else {
-      auto left_kmer_idx = left_kmers.search(right_kmer.integer_rep);
-      if (std::get<0>(left_kmer_idx)){
-        RI_Kmer &left_kmer_found = right_kmers.get(std::get<0>(std::get<1>(left_kmer_idx)), std::get<1>(std::get<1>(left_kmer_idx)));
-        if (left_kmer_found == right_kmer){
-          dot_product += (left_kmer_found.next_char_prob * right_kmer.next_char_prob).sum();
-          left_norm += left_kmer_found.next_char_prob.square().sum();
+      if (right_i >= 0 && right_k < right_nblocks){
+        RI_Kmer &right_kmer = right_kmers.get(right_k, right_i);
+        if (left_kmer == right_kmer){
+          dot_product += (left_kmer.next_char_prob * right_kmer.next_char_prob).sum();
+          left_norm += left_kmer.next_char_prob.square().sum();
           right_norm += right_kmer.next_char_prob.square().sum();
-          left_k = std::get<0>(std::get<1>(left_kmer_idx));
-          left_i = std::get<1>(std::get<1>(left_kmer_idx));
-          count++;
+          increment(left_k, left_i, left_level, left_nblocks);
+          increment(right_k, right_i, right_level, right_nblocks);
+          count++; 
+        } else {
+          auto right_res = right_kmers.search(left_kmer.integer_rep);
+          if (std::get<0>(right_res) > -1){
+            right_level = std::get<0>(right_res);
+            right_k = std::get<0>(std::get<1>(right_res));
+            right_i = std::get<1>(std::get<1>(right_res));
+            RI_Kmer &right_kmer = right_kmers.get(right_k, right_i);
+            if (left_kmer == right_kmer){
+              dot_product += (left_kmer.next_char_prob * right_kmer.next_char_prob).sum();
+              left_norm += left_kmer.next_char_prob.square().sum();
+              right_norm += right_kmer.next_char_prob.square().sum();
+              increment(left_k, left_i, left_level, left_nblocks);
+              increment(right_k, right_i, right_level, right_nblocks);
+              count++; 
+              count_hit++;
+            }
+          } else {
+            increment(left_k, left_i, left_level, left_nblocks);
+            increment(right_k, right_i, right_level, right_nblocks);
+          }
         }
       }
+    } else {
       increment(left_k, left_i, left_level, left_nblocks);
-      increment(right_k, right_i, right_level, right_nblocks);
+      if (left_i >= 0 && left_k < left_nblocks){
+        RI_Kmer &left_kmer = left_kmers.get(left_k, left_i);
+        if (left_kmer == right_kmer){
+          dot_product += (left_kmer.next_char_prob * right_kmer.next_char_prob).sum();
+          left_norm += left_kmer.next_char_prob.square().sum();
+          right_norm += right_kmer.next_char_prob.square().sum();
+          increment(left_k, left_i, left_level, left_nblocks);
+          increment(right_k, right_i, right_level, right_nblocks);
+          count++; 
+        } else {
+          auto left_res = left_kmers.search(right_kmer.integer_rep);
+          if (std::get<0>(left_res) > -1){
+            left_level = std::get<0>(left_res);
+            left_k = std::get<0>(std::get<1>(left_res));
+            left_i = std::get<1>(std::get<1>(left_res));
+            RI_Kmer &left_kmer = left_kmers.get(left_k, left_i);
+            if (left_kmer == right_kmer){
+              dot_product += (left_kmer.next_char_prob * right_kmer.next_char_prob).sum();
+              left_norm += left_kmer.next_char_prob.square().sum();
+              right_norm += right_kmer.next_char_prob.square().sum();
+              increment(left_k, left_i, left_level, left_nblocks);
+              increment(right_k, right_i, right_level, right_nblocks);
+              count++; 
+              count_hit++;
+            }
+          } else {
+            increment(left_k, left_i, left_level, left_nblocks);
+            increment(right_k, right_i, right_level, right_nblocks);
+          }
+        }
+      }
     }
   }
 
+  std::cout << "Max level left = " << max_level_left << " nblocks = " << left_nblocks << std::endl; 
+  std::cout << "Max level right = " << max_level_right << " nblocks = " << right_nblocks << std::endl; 
+
   std::cout << "The count is " << count << std::endl; 
+  std::cout << "The count for search hits is = " << count_hit << std::endl; 
 
   return container::normalise_dvstar(dot_product, left_norm, right_norm);
 }
@@ -236,19 +404,61 @@ TEST_F(BTreeTests, increment_test) {
 }
 
 TEST_F(BTreeTests, new_btree) {
+  std::filesystem::path path_bintree_1{"../data/benchmarking/human/large/human_genome_1_2_3_10.bintree"};
+  std::filesystem::path path_bintree_2{"../data/benchmarking/human/large/human_genome_10_2_3_10.bintree"};
+
+  // std::chrono::steady_clock::time_point start_create_tree = std::chrono::steady_clock::now();
   b_tree::B_Tree tree1 = createTree(path_bintree_1);
   b_tree::B_Tree tree2 = createTree(path_bintree_2);
-
+  // std::chrono::steady_clock::time_point stop_create_tree = std::chrono::steady_clock::now();
+// 
+  // std::chrono::steady_clock::time_point start_create_container = std::chrono::steady_clock::now();
   container::VLMC_sorted_vector vec1 = container::VLMC_sorted_vector(path_bintree_1, 0);
   container::VLMC_sorted_vector vec2 = container::VLMC_sorted_vector(path_bintree_2, 0);
+  // std::chrono::steady_clock::time_point stop_create_container = std::chrono::steady_clock::now();
+
+  // auto create_tree = std::chrono::duration_cast<std::chrono::nanoseconds>(stop_create_tree - start_create_tree).count();
+  // auto create_container = std::chrono::duration_cast<std::chrono::nanoseconds>(stop_create_container - start_create_container).count();
+// 
+  // std::cout << "Time in nanoseconds create tree      = " << create_tree << std::endl; 
+  // std::cout << "Time in nanoseconds create container = " << create_container << std::endl; 
+
+  // auto generated_vecs = generateRandomVector(1000000, 2);
+
+  std::cout << "Generate vectors" << std::endl;  
+  // b_tree::B_Tree tree1 = b_tree::B_Tree(std::get<0>(generated_vecs));
+  // b_tree::B_Tree tree2 = b_tree::B_Tree(std::get<1>(generated_vecs));
+  // container::VLMC_sorted_vector vec1 = container::VLMC_sorted_vector(std::get<0>(generated_vecs));
+  // container::VLMC_sorted_vector vec2 = container::VLMC_sorted_vector(std::get<1>(generated_vecs));
 
   std::cout << "Finished creation" << std::endl; 
 
   // b_tree::B_Tree tree1 = createDummyTree();
 
+  std::chrono::steady_clock::time_point start_measure_distance = std::chrono::steady_clock::now();
   auto dist = measure_distance(tree1, tree2);
-  auto c_dist = crazy_measure_distance(tree1, tree2);
-  auto v_dist = container::iterate_kmers(vec1, vec2);
+  std::chrono::steady_clock::time_point stop_measure_distance = std::chrono::steady_clock::now();
 
-  std::cout << "Distance " << dist << " vs " << c_dist << " vs " << v_dist << std::endl; 
+  std::chrono::steady_clock::time_point start_crazy_measure = std::chrono::steady_clock::now();
+  auto c_dist = crazy_measure_distance(tree1, tree2);
+  std::chrono::steady_clock::time_point stop_crazy_measure = std::chrono::steady_clock::now();
+
+  std::chrono::steady_clock::time_point start_crazy_search = std::chrono::steady_clock::now();
+  auto s_dist = crazy_search_iteration(tree1, tree2);
+  std::chrono::steady_clock::time_point stop_crazy_search = std::chrono::steady_clock::now();
+
+  std::chrono::steady_clock::time_point start_iterate_kmers = std::chrono::steady_clock::now();
+  auto v_dist = container::iterate_kmers(vec1, vec2);
+  std::chrono::steady_clock::time_point stop_iterate_kmers = std::chrono::steady_clock::now();
+
+  auto measure_distance = std::chrono::duration_cast<std::chrono::nanoseconds>(stop_measure_distance - start_measure_distance).count();
+  auto crazy_measure_distance = std::chrono::duration_cast<std::chrono::nanoseconds>(stop_crazy_measure - start_crazy_measure).count();
+  auto iterate_kmers = std::chrono::duration_cast<std::chrono::nanoseconds>(stop_iterate_kmers - start_iterate_kmers).count();
+  auto crazy_search = std::chrono::duration_cast<std::chrono::nanoseconds>(stop_crazy_search - start_crazy_search).count();
+
+  std::cout << "Distance " << dist << " vs " << c_dist << " vs " << v_dist << " vs " << s_dist << std::endl; 
+  std::cout << "Time in milliseconds measure distance = " << measure_distance / 1000 << std::endl; 
+  std::cout << "Time in milliseconds crazy measure    = " << crazy_measure_distance / 1000 << std::endl; 
+  std::cout << "Time in milliseconds iterate kmers    = " << iterate_kmers / 1000 << std::endl; 
+  std::cout << "Time in milliseconds crazy search     = " << crazy_search / 1000 << std::endl; 
 }
