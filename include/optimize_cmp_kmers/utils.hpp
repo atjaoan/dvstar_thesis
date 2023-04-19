@@ -89,6 +89,7 @@ void output_kmer_reps_to_file(const std::filesystem::path &path_to_dir, const st
   //int nr_vlmc = 0;
   //int nr_kmers = 0;
   auto it = std::filesystem::directory_iterator{path_to_dir};
+  int vlmc = 0;
   for (auto const& dir_entry : it) {
     std::ifstream ifs(dir_entry.path(), std::ios::binary);
     cereal::BinaryInputArchive archive(ifs);
@@ -97,8 +98,9 @@ void output_kmer_reps_to_file(const std::filesystem::path &path_to_dir, const st
       archive(input_kmer);
       //nr_kmers++;
       RI_Kmer ri_kmer{input_kmer};
-      ofs << ri_kmer.integer_rep << "\n";
+      ofs << vlmc << "_" << ri_kmer.integer_rep << "\n";
     }
+    vlmc++;
     //nr_vlmc++;
     ifs.close();
   }

@@ -450,7 +450,7 @@ void benchmark_calculate_distance_major(){
 
 void print_kmers_to_file(std::string path_vlmc){
   std::filesystem::path path_vlmcs{path_vlmc};
-  std::filesystem::path output_path{"../tmp/" + path_vlmcs.filename().string() + "_kmer-distribution.txt"};
+  std::filesystem::path output_path{"../tmp/integer_rep_distributions/" + path_vlmcs.filename().string() + "_kmer-distribution.txt"};
   utils::output_kmer_reps_to_file(path_vlmcs, output_path);
 }
 
@@ -835,18 +835,20 @@ void count_kmer_length_percentage(std::vector<std::filesystem::path> list_of_dir
 }
 
 int main(int argc, char *argv[]){
-  std::vector<std::filesystem::path> list_of_dirs{};
-  list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/human/small"});
-  list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/human/medium"});
-  list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/human/large"});
-  list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/human/diverse"});
-  list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/turkey/small"});
-  list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/turkey/medium"});
-  list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/turkey/large"});
-  list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/turkey/diverse"});
-  count_kmer_length_percentage(list_of_dirs);
+  // std::vector<std::filesystem::path> list_of_dirs{};
+  // list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/human/small"});
+  // list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/human/medium"});
+  // list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/human/large"});
+  // list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/human/diverse"});
+  // list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/turkey/small"});
+  // list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/turkey/medium"});
+  // list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/turkey/large"});
+  // list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/turkey/diverse"});
+  // count_kmer_length_percentage(list_of_dirs);
   
   // int num_items = 1500;
+
+  print_kmers_to_file("../data/benchmarking/human/medium/");
 
   // run_timer<container::VLMC_vector>("Vector");
   //run_timer<container::VLMC_Indexing>("Indexing");

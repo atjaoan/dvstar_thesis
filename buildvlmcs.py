@@ -79,7 +79,7 @@ def build_dataset(path_to_fasta : str, name : str):
 @app.command()
 def build():
     print("Building Human Sequences...")
-    build_dataset("data/benchmarking/human", "human")
+    build_dataset("data/human_genome_split_files", "human")
     print("Building E-coli Sequences...")
     build_dataset("data/sequences_split_files", "ecoli")
     print("Building Turkey Sequences...")
