@@ -62,7 +62,7 @@ std::map<parser::VLMC_Rep, std::string> VLMC_Rep_map{
       {parser::VLMC_Rep::vlmc_combo, "combo"},
       {parser::VLMC_Rep::vlmc_veb, "veb"}, 
       {parser::VLMC_Rep::vlmc_ey, "ey"},
-      {parser::VLMC_Rep::vlmc_alt_btree, "altbtree"}
+      {parser::VLMC_Rep::vlmc_alt_btree, "alt-btree"}
   };
 
 std::string get_group_name(parser::cli_arguments arguments){

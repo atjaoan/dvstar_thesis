@@ -5,7 +5,7 @@ From: debian:bullseye
     /usr/bin/kmc /kmc/kmc
     /usr/bin/kmc_tools /kmc/kmc_tools
 
-    visualiser.py /thesis/visualiser.py
+    #visualiser.py /thesis/visualiser.py
     src /thesis/src
     tests /thesis/tests
     include /thesis/include
@@ -13,11 +13,12 @@ From: debian:bullseye
     submodules /thesis/submodules
 
     data/benchmarking/human thesis/data/benchmarking/human
+    data/small_ecoli_sets thesis/data/benchmarking/ecoli
 
     CMakeLists.txt /thesis/CMakeLists.txt
 
     requirements_apptainer.txt /thesis/requirements.txt
-    #bench.py /thesis/bench.py
+    bench.py /thesis/bench.py
     benchmarking.py /thesis/benchmarking.py
     ./data/small_test /thesis/data/small_test
     ./tmp /thesis/tmp
@@ -41,7 +42,7 @@ From: debian:bullseye
     cmake -DCMAKE_BUILD_TYPE=Release -DCountVLMC_COMPILE_TESTS=OFF ..
     make -j 8
 
-    cp ../visualiser.py .
+    #cp ../visualiser.py .
 
     cp /kmc/kmc .
     cp /kmc/kmc_tools .
@@ -66,4 +67,4 @@ From: debian:bullseye
 %runscript
     . /venv/kmers_env/bin/activate
     cd /thesis
-    python3 benchmarking.py
+    python3 bench.py benchmarkmin

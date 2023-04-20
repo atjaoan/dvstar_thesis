@@ -41,6 +41,7 @@ class VLMC_Container(str, Enum):
     vlmc_combo = "combo"
     vlmc_veb = "veb"
     vlmc_ey = "ey"
+    vlmc_b_tree_alt = "alt-btree"
 
 def get_bintree_name(genome_path: str, threshold: float, min_count: int, max_depth: int):
     return os.path.splitext(genome_path)[0] + f"_{threshold}_{min_count}_{max_depth}.bintree"
@@ -97,6 +98,30 @@ def our_calculate_distances(dist_func: str, set_size: int, genome_path_fst: str,
         "perf",
         "stat",
         "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses,L1-dcache-load-misses,L1-dcache-loads,L1-dcache-stores,l2_rqsts.miss,LLC-load-misses,LLC-loads,LLC-prefetch-misses,LLC-store-misses,LLC-stores,cycle_activity.stalls_l3_miss",
+        cwd / "build/dist", 
+        "-p",
+        cwd / genome_path_fst,
+        "-s",
+        cwd / genome_path_snd,
+        "--function",
+        dist_func,
+        "-v",
+        vlmc_container,
+        "-n",
+        str(nr_cores),
+        "-b",
+        str(background_order),
+        "-m",
+        mode
+    )
+
+    return subprocess.run(args, capture_output=True, text=True)
+
+def our_calculate_distances_minimal(dist_func: str, set_size: int, genome_path_fst: str, genome_path_snd, vlmc_container: str, nr_cores: int, background_order: int, mode: str) -> subprocess.CompletedProcess:
+    args = (
+        "perf",
+        "stat",
+        "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
         cwd / "build/dist", 
         "-p",
         cwd / genome_path_fst,
@@ -322,18 +347,61 @@ def stat_new(set_size: int = -1, dist_func: Distance_Function = Distance_Functio
     save_to_csv(timing_results, cwd / "tmp/benchmarks/test.csv", dist_func, set_size, th, min, max, "Opt-" + vlmc_container.value)
 
 @app.command()
+def stat_minimal(set_size: int = -1, dist_func: Distance_Function = Distance_Function.dvstar, 
+        genome_path_fst: str = "data/human_VLMCs", genome_path_snd: str = "data/human_VLMCs", vlmc_container: VLMC_Container = VLMC_Container.vlmc_combo, nr_cores: int = 1,
+        background_order: int = 0, mode: str = "compare"):
+    timing_results = our_calculate_distances_minimal(dist_func.value, set_size, genome_path_fst, genome_path_snd, vlmc_container.value, nr_cores, background_order, mode)
+
+    th, min, max = get_parameter_from_bintree(os.listdir(genome_path_fst)[0])
+
+    save_to_csv(timing_results, cwd / "tmp/benchmarks/test.csv", dist_func, set_size, th, min, max, "Opt-" + vlmc_container.value)
+
+
+@app.command()
 def benchmark():
     background_order = 0
     genome_path_fst = "data/benchmarking/corn/mega"
     genome_path_snd = "data/benchmarking/turkey/mega"
     stat(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, background_order)
-    ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_multi_vector, 8)
     stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_sorted_vector, 8, background_order)
     stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_ey, 8, background_order)
     stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_veb, 8, background_order)
     ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order)
     # stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order, "kmer-major")
     stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_hashmap, 8)
+
+@app.command()
+def benchmarkmin():
+    genome_path_fst = "data/benchmarking/human"
+    print("#######################################")
+    print("##                                   ##")
+    print("##               HUMAN               ##")
+    print("##                                   ##")
+    print("#######################################")
+    for folders in os.listdir(genome_path_fst):
+        main_path = os.path.join(cwd, genome_path_fst)
+        path = os.path.join(main_path, folders)
+        stat_folder(path)
+    genome_path_fst = "data/benchmarking/ecoli"
+    print("#######################################")
+    print("##                                   ##")
+    print("##               ECOLI               ##")
+    print("##                                   ##")
+    print("#######################################")
+    for folders in os.listdir(genome_path_fst):
+        main_path = os.path.join(cwd, genome_path_fst)
+        path = os.path.join(main_path, folders)
+        stat_folder(path)
+
+def stat_folder(path: str):
+    background_order = 0
+    stat(-1, Distance_Function.dvstar, path, path, background_order)
+    stat_minimal(-1, Distance_Function.dvstar, path, path, VLMC_Container.vlmc_sorted_vector, 8, background_order)
+    stat_minimal(-1, Distance_Function.dvstar, path, path, VLMC_Container.vlmc_ey, 8, background_order)
+    stat_minimal(-1, Distance_Function.dvstar, path, path, VLMC_Container.vlmc_veb, 8, background_order)
+    stat_minimal(-1, Distance_Function.dvstar, path, path, VLMC_Container.vlmc_b_tree, 8, background_order)
+    stat_minimal(-1, Distance_Function.dvstar, path, path, VLMC_Container.vlmc_b_tree_alt, 8, background_order)
+    stat_minimal(-1, Distance_Function.dvstar, path, path, VLMC_Container.vlmc_hashmap, 8)
 
 @app.command()
 def vecsize():
