@@ -104,7 +104,7 @@ int main(int argc, char *argv[]){
     std::cout << "Running Normal implementation" << std::endl; 
     distance_matrix = apply_container(arguments, arguments.vlmc, nr_cores);
   } else {
-    std::cout << "Running Kmer-Major implemenation" << std::endl; 
+    std::cout << "Running Kmer-Major implementation" << std::endl; 
     distance_matrix = calculate_kmer_major(arguments, nr_cores);
   }
 
