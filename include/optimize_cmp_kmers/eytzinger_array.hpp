@@ -10,7 +10,7 @@ namespace array {
 struct Ey_array {
 	container::RI_Kmer null_kmer = container::RI_Kmer(-1);
   int size;
-	const int block_size = 2; // 64 / sizeof(RI_Kmer)
+	static const int block_size = 2; // = 64 / sizeof(RI_Kmer)
   container::RI_Kmer *a;
   alignas(64) std::vector<container::RI_Kmer> b;
 
