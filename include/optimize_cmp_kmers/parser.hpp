@@ -38,11 +38,9 @@ enum Cluster_Rep {
 
 enum VLMC_Rep {
   vlmc_vector, 
-  vlmc_indexing,
   vlmc_sorted_vector,
   vlmc_b_tree,
   vlmc_hashmap,
-  vlmc_combo,
   vlmc_veb,
   vlmc_ey,
   vlmc_alt_btree
@@ -93,11 +91,9 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
 
   std::map<std::string, VLMC_Rep> VLMC_Rep_map{
       {"vector", VLMC_Rep::vlmc_vector},
-      {"indexing", VLMC_Rep::vlmc_indexing},
       {"sorted-vector", VLMC_Rep::vlmc_sorted_vector},
       {"b-tree", VLMC_Rep::vlmc_b_tree},
       {"hashmap", VLMC_Rep::vlmc_hashmap},
-      {"combo", VLMC_Rep::vlmc_combo},
       {"veb", VLMC_Rep::vlmc_veb},
       {"ey", VLMC_Rep::vlmc_ey},
       {"alt-btree", VLMC_Rep::vlmc_alt_btree}

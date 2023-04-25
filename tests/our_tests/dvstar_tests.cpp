@@ -21,7 +21,6 @@
 #include "vlmc_from_kmers/kmer.hpp"
 
 using VLMC_vector = container::VLMC_vector;
-using VLMC_Indexing = container::VLMC_Indexing;
 
 extern const out_t error_tolerance;
 
@@ -41,10 +40,6 @@ protected:
 
   std::function<out_t(VLMC_vector &, VLMC_vector &)> dist_func = [&](auto &left, auto &right) {
       return distance::dvstar<VLMC_vector>(left, right, background_order);
-  };
-
-  std::function<out_t(VLMC_Indexing &, VLMC_Indexing &)> dist_func_idx = [&](auto &left, auto &right) {
-      return distance::dvstar<VLMC_Indexing>(left, right, background_order);
   };
 };
 
@@ -88,64 +83,14 @@ TEST_F(DvstarTests, multiple_runs_vector) {
   }
 }
 
-// Multi Vector Tests
-TEST_F(DvstarTests, Identity_indexing) {
-  VLMC_Indexing first_vlmc{first_bintree};
-
-  out_t dist_multi_vector = dist_func_idx(first_vlmc, first_vlmc);
-  EXPECT_NEAR(0.0, dist_multi_vector, error_tolerance);
-}
-
-TEST_F(DvstarTests, Symmetry_indexing) {
-  VLMC_Indexing first_vlmc{first_bintree};
-  VLMC_Indexing second_vlmc{second_bintree};
-
-  out_t dist_one_multi_vector = dist_func_idx(first_vlmc, second_vlmc);
-  out_t dist_two_multi_vector = dist_func_idx(second_vlmc, first_vlmc);
-
-  EXPECT_NEAR(dist_one_multi_vector, dist_two_multi_vector, error_tolerance);
-}
-
-TEST_F(DvstarTests, multiple_runs_indexing) {
-  VLMC_Indexing first_vlmc{first_bintree};
-  VLMC_Indexing second_vlmc{second_bintree};
-  size_t runs = 10; 
-  out_t prev = dist_func_idx(first_vlmc, second_vlmc);
-  for (int i = 0; i < runs; i++){
-    out_t current = dist_func_idx(first_vlmc, second_vlmc);
-    EXPECT_NEAR(prev, current, error_tolerance); 
-    prev = current; 
-  }
-}
-
-TEST_F(DvstarTests, EqualDistance_indexing) {
-  VLMC_Indexing first_vlmc{first_bintree};
-  VLMC_Indexing second_vlmc{second_bintree};
-
-  VLMC_vector first_vlmc_v{first_bintree};
-  VLMC_vector second_vlmc_v{second_bintree};
-
-  out_t dist_vector = dist_func(first_vlmc_v, second_vlmc_v);
-  out_t dist_multi_vector = dist_func_idx(first_vlmc, second_vlmc);
-  out_t old_dvstar_implementation = vlmc::dvstar(first_bintree, second_bintree, background_order);
-
-  EXPECT_NEAR(dist_multi_vector, dist_vector, error_tolerance);
-  EXPECT_NEAR(old_dvstar_implementation, dist_vector, error_tolerance);
-  EXPECT_NEAR(old_dvstar_implementation, dist_multi_vector, error_tolerance);
-}
-
 TEST_F(DvstarTests, TestBackgroundOrder) {
   for (int order = 0; order < 5; order++){
     container::VLMC_vector first_vlmc_vector{first_bintree, order};
     container::VLMC_vector second_vlmc_vector{second_bintree, order};
-    container::VLMC_Indexing first_vlmc_indexing{first_bintree, order};
-    container::VLMC_Indexing second_vlmc_indexing{second_bintree, order};
 
     auto dist_vector = distance::dvstar<VLMC_vector>(first_vlmc_vector, second_vlmc_vector, order);
-    auto dist_indexing = distance::dvstar<VLMC_Indexing>(first_vlmc_indexing, second_vlmc_indexing, order);
     auto old_dvstar_implementation = vlmc::dvstar(first_bintree, second_bintree, order);
 
     EXPECT_NEAR(old_dvstar_implementation, dist_vector, error_tolerance);
-    EXPECT_NEAR(dist_vector, dist_indexing, error_tolerance);
   }
 }

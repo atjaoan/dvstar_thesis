@@ -851,7 +851,6 @@ int main(int argc, char *argv[]){
   print_kmers_to_file("../data/benchmarking/human/medium/");
 
   // run_timer<container::VLMC_vector>("Vector");
-  //run_timer<container::VLMC_Indexing>("Indexing");
   //run_timer<container::VLMC_sorted_vector>("Sorted Vector");
   //run_timer<container::VLMC_B_tree>("B-tree");
   //run_timer<container::VLMC_hashmap>("Hashmap");

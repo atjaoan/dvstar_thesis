@@ -23,16 +23,12 @@ matrix_t calculate_cluster_distance(parser::cli_arguments arguments, const size_
 matrix_t apply_container(parser::cli_arguments arguments, parser::VLMC_Rep vlmc_container, const size_t nr_cores){
   if (vlmc_container==parser::VLMC_Rep::vlmc_vector){
     return calculate_cluster_distance<container::VLMC_vector>(arguments, nr_cores);
-  } else if (vlmc_container==parser::VLMC_Rep::vlmc_indexing){
-    return calculate_cluster_distance<container::VLMC_Indexing>(arguments, nr_cores);
   } else if (vlmc_container==parser::VLMC_Rep::vlmc_sorted_vector){
     return calculate_cluster_distance<container::VLMC_sorted_vector>(arguments, nr_cores);
   } else if (vlmc_container==parser::VLMC_Rep::vlmc_b_tree){
     return calculate_cluster_distance<container::VLMC_B_tree>(arguments, nr_cores);
   } else if (vlmc_container==parser::VLMC_Rep::vlmc_hashmap){
     return calculate_cluster_distance<container::VLMC_hashmap>(arguments, nr_cores);
-  } else if (vlmc_container==parser::VLMC_Rep::vlmc_combo){
-    return calculate_cluster_distance<container::VLMC_Combo>(arguments, nr_cores);
   } else if (vlmc_container==parser::VLMC_Rep::vlmc_veb){
     return calculate_cluster_distance<container::VLMC_Veb>(arguments, nr_cores);
   } else if (vlmc_container==parser::VLMC_Rep::vlmc_ey){
@@ -55,11 +51,9 @@ matrix_t calculate_kmer_major(parser::cli_arguments arguments, const size_t nr_c
 
 std::map<parser::VLMC_Rep, std::string> VLMC_Rep_map{
       {parser::VLMC_Rep::vlmc_vector, "vector"},
-      {parser::VLMC_Rep::vlmc_indexing, "indexing"},
       {parser::VLMC_Rep::vlmc_sorted_vector, "sorted-vector"},
       {parser::VLMC_Rep::vlmc_b_tree, "b-tree"},
       {parser::VLMC_Rep::vlmc_hashmap, "hashmap"},
-      {parser::VLMC_Rep::vlmc_combo, "combo"},
       {parser::VLMC_Rep::vlmc_veb, "veb"}, 
       {parser::VLMC_Rep::vlmc_ey, "ey"},
       {parser::VLMC_Rep::vlmc_alt_btree, "alt-btree"}
