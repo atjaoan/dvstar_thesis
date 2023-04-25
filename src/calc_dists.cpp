@@ -35,6 +35,8 @@ matrix_t apply_container(parser::cli_arguments arguments, parser::VLMC_Rep vlmc_
     return calculate_cluster_distance<container::VLMC_Eytzinger>(arguments, nr_cores);
   } else if (vlmc_container==parser::VLMC_Rep::vlmc_alt_btree){
     return calculate_cluster_distance<container::VLMC_Alt_Btree>(arguments, nr_cores);
+  } else if (vlmc_container==parser::VLMC_Rep::vlmc_sorted_search){
+    return calculate_cluster_distance<container::VLMC_sorted_search>(arguments, nr_cores);
   }
 }
 
@@ -56,7 +58,8 @@ std::map<parser::VLMC_Rep, std::string> VLMC_Rep_map{
       {parser::VLMC_Rep::vlmc_hashmap, "hashmap"},
       {parser::VLMC_Rep::vlmc_veb, "veb"}, 
       {parser::VLMC_Rep::vlmc_ey, "ey"},
-      {parser::VLMC_Rep::vlmc_alt_btree, "alt-btree"}
+      {parser::VLMC_Rep::vlmc_alt_btree, "alt-btree"},
+      {parser::VLMC_Rep::vlmc_sorted_search, "sorted-search"}
   };
 
 std::string get_group_name(parser::cli_arguments arguments){

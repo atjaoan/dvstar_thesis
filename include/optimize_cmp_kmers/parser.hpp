@@ -43,7 +43,8 @@ enum VLMC_Rep {
   vlmc_hashmap,
   vlmc_veb,
   vlmc_ey,
-  vlmc_alt_btree
+  vlmc_alt_btree,
+  vlmc_sorted_search
 };
 
 struct cli_arguments {
@@ -96,7 +97,8 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
       {"hashmap", VLMC_Rep::vlmc_hashmap},
       {"veb", VLMC_Rep::vlmc_veb},
       {"ey", VLMC_Rep::vlmc_ey},
-      {"alt-btree", VLMC_Rep::vlmc_alt_btree}
+      {"alt-btree", VLMC_Rep::vlmc_alt_btree},
+      {"sorted-search", VLMC_Rep::vlmc_sorted_search}
   };
 
   std::map<std::string, Cluster_Rep> cluster_rep_map{

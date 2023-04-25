@@ -68,6 +68,10 @@ protected:
   std::function<out_t(container::VLMC_Alt_Btree &, container::VLMC_Alt_Btree &)> dist_func_alt = [&](auto &left, auto &right) {
       return distance::dvstar<container::VLMC_Alt_Btree>(left, right, background_order);
   };
+
+  std::function<out_t(container::VLMC_sorted_search &, container::VLMC_sorted_search &)> dist_func_sortsearch = [&](auto &left, auto &right) {
+      return distance::dvstar<container::VLMC_sorted_search>(left, right, background_order);
+  };
 };
 
 cluster_c create_cluster(container::VLMC_vector &vlmc, size_t size) {
@@ -148,6 +152,11 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
   auto left_cluster_altbtree = cluster::get_cluster<container::VLMC_Alt_Btree>(path_to_bintrees, 1, background_order);
   auto right_cluster_altbtree = cluster::get_cluster<container::VLMC_Alt_Btree>(path_to_bintrees, 1, background_order);
   matrix_t distances_altbtree = calculate::calculate_distances<container::VLMC_Alt_Btree>(left_cluster_altbtree, right_cluster_altbtree, dist_func_alt, 1);
+
+  // Sorted Search
+  auto left_cluster_sortsearch = cluster::get_cluster<container::VLMC_sorted_search>(path_to_bintrees, 1, background_order);
+  auto right_cluster_sortsearch = cluster::get_cluster<container::VLMC_sorted_search>(path_to_bintrees, 1, background_order);
+  matrix_t distances_sortsearch = calculate::calculate_distances<container::VLMC_sorted_search>(left_cluster_sortsearch, right_cluster_sortsearch, dist_func_sortsearch, 1);
 
   // Dvstar Original implementation 
   matrix_t distances_org_dvstar{distances_vector.cols(), distances_vector.rows()};
