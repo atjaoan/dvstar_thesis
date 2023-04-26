@@ -42,6 +42,7 @@ class VLMC_Container(str, Enum):
     vlmc_veb = "veb"
     vlmc_ey = "ey"
     vlmc_b_tree_alt = "alt-btree"
+    vlmc_sorted_search = "sorted-search"
 
 def get_bintree_name(genome_path: str, threshold: float, min_count: int, max_depth: int):
     return os.path.splitext(genome_path)[0] + f"_{threshold}_{min_count}_{max_depth}.bintree"
@@ -360,15 +361,16 @@ def stat_minimal(set_size: int = -1, dist_func: Distance_Function = Distance_Fun
 @app.command()
 def benchmark():
     background_order = 0
-    genome_path_fst = "data/benchmarking/corn/mega"
-    genome_path_snd = "data/benchmarking/turkey/mega"
-    stat(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, background_order)
+    genome_path_fst = "data/benchmarking/turkey/mega"
+    genome_path_snd = "data/benchmarking/corn/mega"
+    # stat(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, background_order)
     stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_sorted_vector, 8, background_order)
     stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_ey, 8, background_order)
     stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_veb, 8, background_order)
+    stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_sorted_search, 8, background_order)
     ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order)
     # stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order, "kmer-major")
-    stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_hashmap, 8)
+    # stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_hashmap, 8)
 
 @app.command()
 def benchmarkmin():

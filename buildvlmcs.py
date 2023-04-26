@@ -81,7 +81,7 @@ def build():
     print("Building Human Sequences...")
     build_dataset("data/human_genome_split_files", "human")
     print("Building E-coli Sequences...")
-    build_dataset("data/sequences_split_files", "ecoli")
+    build_dataset("data/ecoli_split_files", "ecoli")
     print("Building Turkey Sequences...")
     build_dataset("data/turkey_fasta_files", "turkey")
     print("Building Corn Sequences...")
