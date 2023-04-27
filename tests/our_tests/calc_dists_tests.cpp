@@ -72,6 +72,10 @@ protected:
   std::function<out_t(container::VLMC_sorted_search &, container::VLMC_sorted_search &)> dist_func_sortsearch = [&](auto &left, auto &right) {
       return distance::dvstar<container::VLMC_sorted_search>(left, right, background_order);
   };
+
+  std::function<out_t(container::VLMC_sorted_search_ey &, container::VLMC_sorted_search_ey &)> dist_func_sortsearch_ey = [&](auto &left, auto &right) {
+      return distance::dvstar<container::VLMC_sorted_search_ey>(left, right, background_order);
+  };
 };
 
 cluster_c create_cluster(container::VLMC_vector &vlmc, size_t size) {
@@ -158,6 +162,11 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
   auto right_cluster_sortsearch = cluster::get_cluster<container::VLMC_sorted_search>(path_to_bintrees, 1, background_order);
   matrix_t distances_sortsearch = calculate::calculate_distances<container::VLMC_sorted_search>(left_cluster_sortsearch, right_cluster_sortsearch, dist_func_sortsearch, 1);
 
+  // Sorted Search Ey
+  auto left_cluster_sortsearch_ey = cluster::get_cluster<container::VLMC_sorted_search_ey>(path_to_bintrees, 1, background_order);
+  auto right_cluster_sortsearch_ey = cluster::get_cluster<container::VLMC_sorted_search_ey>(path_to_bintrees, 1, background_order);
+  matrix_t distances_sortsearch_ey = calculate::calculate_distances<container::VLMC_sorted_search_ey>(left_cluster_sortsearch_ey, right_cluster_sortsearch_ey, dist_func_sortsearch_ey, 1);
+
   // Dvstar Original implementation 
   matrix_t distances_org_dvstar{distances_vector.cols(), distances_vector.rows()};
   int x = 0;
@@ -184,6 +193,7 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
         EXPECT_NEAR(distances_vector(x,y), distances_ey(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_altbtree(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_sortsearch(x,y), error_tolerance);
+        EXPECT_NEAR(distances_vector(x,y), distances_sortsearch_ey(x,y), error_tolerance);
       }
     }
   }

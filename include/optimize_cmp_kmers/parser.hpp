@@ -44,7 +44,8 @@ enum VLMC_Rep {
   vlmc_veb,
   vlmc_ey,
   vlmc_alt_btree,
-  vlmc_sorted_search
+  vlmc_sorted_search,
+  vlmc_sorted_search_ey
 };
 
 struct cli_arguments {
@@ -98,7 +99,8 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
       {"veb", VLMC_Rep::vlmc_veb},
       {"ey", VLMC_Rep::vlmc_ey},
       {"alt-btree", VLMC_Rep::vlmc_alt_btree},
-      {"sorted-search", VLMC_Rep::vlmc_sorted_search}
+      {"sorted-search", VLMC_Rep::vlmc_sorted_search},
+      {"sorted-search-ey", VLMC_Rep::vlmc_sorted_search_ey}
   };
 
   std::map<std::string, Cluster_Rep> cluster_rep_map{

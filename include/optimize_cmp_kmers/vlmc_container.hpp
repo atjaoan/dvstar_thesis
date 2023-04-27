@@ -692,4 +692,130 @@ out_t iterate_kmers(VLMC_sorted_search &left_kmers, VLMC_sorted_search &right_km
   return normalise_dvstar(dot_product, left_norm, right_norm); 
 }
 
+class VLMC_sorted_search_ey {
+
+  private: 
+    RI_Kmer null_kmer{};
+    int skip_size;
+
+  public: 
+    std::vector<RI_Kmer> container{};
+
+    integer_array::Ey_integer_array *summary;
+
+    int current_max; 
+    VLMC_sorted_search_ey() = default;
+    ~VLMC_sorted_search_ey() = default; 
+
+    VLMC_sorted_search_ey(const std::filesystem::path &path_to_bintree, const size_t background_order = 0, bool use_new = false) {
+      eigenx_t cached_context((int)std::pow(4, background_order), 4);
+
+      auto fun = [&](const RI_Kmer &kmer) { push(kmer); }; 
+
+      int offset_to_remove = load_VLMCs_from_file(path_to_bintree, cached_context, fun, background_order);
+      
+      std::sort(std::execution::seq, container.begin(), container.end());
+      for (size_t i = 0; i < size(); i++){
+        RI_Kmer kmer = get(i);
+        int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
+        int offset = background_idx - offset_to_remove;
+        get(i).next_char_prob *= cached_context.row(offset).rsqrt();
+      }
+      // Build summary
+      summary = new integer_array::Ey_integer_array(container); 
+    } 
+
+    size_t size() const { return container.size(); }
+
+    void push(const RI_Kmer &kmer) { container.push_back(kmer); }
+
+    std::vector<RI_Kmer>::iterator begin() { return container.begin(); };
+    std::vector<RI_Kmer>::iterator end() { return container.end(); };
+
+    RI_Kmer &get(const int i) { return container[i]; }
+
+    int get_max_kmer_index() const { return container.size() - 1; }
+    int get_min_kmer_index() const { return 0; }
+
+    RI_Kmer find(const int i_rep) {
+      int L = 0;
+      int R = size() - 1;
+      if (i_rep < R){
+        R = i_rep;
+      }
+      while (L <= R) {
+          int m = (L + R) / 2;
+          if (container[m].integer_rep < i_rep) {
+            L = m + 1;
+          } else if (container[m].integer_rep > i_rep) {
+            R = m - 1;
+          } else {
+            return container[m];
+          }
+      }
+      return null_kmer;
+    }
+
+    int find_block_start(int i_rep){
+      auto res = summary->get_from_array(i_rep); 
+      if (res.max == -1) {
+        current_max = i_rep + 1;
+      } else {
+        current_max = res.max; 
+      }
+      return res.block_start; 
+    }
+};
+
+out_t iterate_kmers(VLMC_sorted_search_ey &left_kmers, VLMC_sorted_search_ey &right_kmers) {
+  out_t dot_product = 0.0;
+  out_t left_norm = 0.0;
+  out_t right_norm = 0.0;
+
+  auto left_i = 0;
+  auto right_i = 0;
+  auto left_size = left_kmers.size();
+  auto right_size = right_kmers.size();
+
+  left_kmers.current_max = std::sqrt(left_size);
+  right_kmers.current_max = std::sqrt(right_size);
+
+  while(left_i < left_size && right_i < right_size){
+    RI_Kmer &left_kmer = left_kmers.get(left_i);
+    RI_Kmer &right_kmer = right_kmers.get(right_i); 
+    if(left_kmer == right_kmer){
+      dot_product += (left_kmer.next_char_prob * right_kmer.next_char_prob).sum();
+      left_norm += left_kmer.next_char_prob.square().sum();
+      right_norm += right_kmer.next_char_prob.square().sum();
+      ++left_i;
+      ++right_i;
+    } else if(left_kmer < right_kmer) {
+      if (left_kmers.current_max < right_kmer.integer_rep){
+        left_i = left_kmers.find_block_start(right_kmer.integer_rep);
+      } else {
+        while (true){
+          ++left_i;
+          RI_Kmer &left_kmer = left_kmers.get(left_i);
+          if (left_kmer >= right_kmer || left_i >= left_size) {
+            break; 
+          }
+        }
+      }
+    } else {
+      if (right_kmers.current_max < left_kmer.integer_rep) {
+        right_i = right_kmers.find_block_start(left_kmer.integer_rep);
+      } else {
+        while (true){
+          ++right_i;
+          RI_Kmer &right_kmer = right_kmers.get(right_i);
+          if (right_kmer >= left_kmer || right_i >= right_size) {
+            break; 
+          }
+        }
+      }
+    }
+  }
+  return normalise_dvstar(dot_product, left_norm, right_norm); 
+}
+
 }
