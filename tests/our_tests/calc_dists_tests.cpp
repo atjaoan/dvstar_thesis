@@ -183,6 +183,7 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
         EXPECT_NEAR(distances_vector(x,y), distances_k_major(x,y), error_tolerance); 
         EXPECT_NEAR(distances_vector(x,y), distances_ey(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_altbtree(x,y), error_tolerance);
+        EXPECT_NEAR(distances_vector(x,y), distances_sortsearch(x,y), error_tolerance);
       }
     }
   }

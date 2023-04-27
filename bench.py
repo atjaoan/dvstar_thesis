@@ -361,12 +361,14 @@ def stat_minimal(set_size: int = -1, dist_func: Distance_Function = Distance_Fun
 @app.command()
 def benchmark():
     background_order = 0
-    genome_path_fst = "data/benchmarking/turkey/mega"
-    genome_path_snd = "data/benchmarking/corn/mega"
+    genome_path_fst = "data/benchmarking/human/large"
+    genome_path_snd = "data/benchmarking/human/large"
+    # genome_path_fst = "data/benchmarking/human/large"
+    # genome_path_snd = "data/benchmarking/human/large"
     # stat(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, background_order)
     stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_sorted_vector, 8, background_order)
-    stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_ey, 8, background_order)
-    stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_veb, 8, background_order)
+    # stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_ey, 8, background_order)
+    # stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_veb, 8, background_order)
     stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_sorted_search, 8, background_order)
     ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order)
     # stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order, "kmer-major")
