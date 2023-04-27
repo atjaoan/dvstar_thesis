@@ -109,26 +109,27 @@ int main(int argc, char *argv[]){
   }
 
   if (arguments.out_path.empty()) {
-    //utils::print_matrix(distance_matrix);
+    utils::print_matrix(distance_matrix);
   } 
   else if (arguments.out_path.extension() == ".h5" ||
              arguments.out_path.extension() == ".hdf5") {
-    std::cout << "Writing to file..." << std::endl;
     HighFive::File file{arguments.out_path, HighFive::File::OpenOrCreate};
     auto group_name = get_group_name(arguments); 
 
-    if (!file.exist(group_name)) {
-      file.createGroup(group_name);
-    }
-    auto distance_group = file.getGroup(group_name);
-  
     if (!file.exist("distances")) {
+      file.createGroup("distances");
+    }
+    auto distance_group = file.getGroup("distances");
+
+    if (!distance_group.exist("distances")) {
       std::vector<size_t> dims{distance_matrix.rows(), distance_matrix.cols()};
-      distance_group.createDataSet<double>("distances", HighFive::DataSpace(dims));
+      distance_group.createDataSet<double>("distances",
+                                           HighFive::DataSpace(dims));
     }
 
     auto distance_data_set = distance_group.getDataSet("distances");
     distance_data_set.write(distance_matrix);
+    std::cout << "Wrote distances to: " << arguments.out_path.string() << std::endl;
   }
 
   return EXIT_SUCCESS;
