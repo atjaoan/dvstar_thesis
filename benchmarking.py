@@ -82,7 +82,7 @@ def calculate_distance(set_size: int, genome_path_primary: str, genome_path_seco
     args = (
         "perf", "stat",
         "-r",
-        "5",
+        "10",
         "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
         cwd / "build/dist", 
         "-p", cwd / genome_path_primary,
@@ -104,7 +104,7 @@ def PstClassifierSeqan(set_size: int, genome_path_primary: str, genome_path_seco
     args = (
         "perf", "stat",
         "-r",
-        "5",
+        "10",
         "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
         cwd / "submodules/PstClassifierSeqan/build/src/calculate-distances", 
         "-p", cwd / genome_path_primary,
@@ -353,8 +353,8 @@ def compare_hdf5_files(dataset: str, size: str, files_run: str):
 @app.command()
 def benchmark():
     now = datetime.now()
-    datasets = [("human", "human"), ("human", "turkey"), ("human", "corn"), ("turkey", "turkey"), ("turkey", "corn"), ("corn", "corn")]
-    containers = ["sorted-vector", "sorted-search", "hashmap", "veb", "ey"]
+    datasets = [("human", "human"), ("human", "turkey"), ("human", "corn"), ("turkey", "turkey"), ("turkey", "corn"), ("corn", "corn"), ("ecoli", "ecoli")]
+    containers = ["sorted-vector", "sorted-search", "hashmap", "veb", "ey", "alt-btree"] # ,"sorted-search-ey"]
     for primary, secondary in datasets:
         csv_filename = get_csv_name(primary, secondary, now)
         p = "data/benchmarking/" + primary
