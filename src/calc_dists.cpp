@@ -8,6 +8,8 @@
 #include "global_aliases.hpp"
 #include "utils.hpp"
 
+#include "BS_thread_pool.hpp"
+
 template <typename VC>
 matrix_t calculate_cluster_distance(parser::cli_arguments arguments, const size_t nr_cores){
   auto distance_function = parser::parse_distance_function<VC>(arguments);
@@ -43,14 +45,17 @@ matrix_t apply_container(parser::cli_arguments arguments, parser::VLMC_Rep vlmc_
 }
 
 matrix_t calculate_kmer_major(parser::cli_arguments arguments, const size_t nr_cores){
+  size_t use_cores = nr_cores; 
+  size_t max_cores = std::thread::hardware_concurrency(); 
+  if (max_cores < nr_cores){
+    use_cores = max_cores;
+  } 
+  BS::thread_pool pool(use_cores); 
+
   //TODO use cores
-  auto cluster = cluster::get_kmer_cluster(arguments.first_VLMC_path, arguments.background_order);
-  if (arguments.second_VLMC_path.empty()){
-    return calculate::calculate_distance_major(cluster, nr_cores);
-  } else {
-    auto cluster_to = cluster::get_kmer_cluster(arguments.second_VLMC_path);
-    return calculate::calculate_distance_major(cluster, cluster_to, nr_cores);
-  }
+  auto cluster = cluster::get_kmer_cluster(arguments.first_VLMC_path, pool, arguments.background_order);
+  auto cluster_to = cluster::get_kmer_cluster(arguments.second_VLMC_path, pool, arguments.background_order);
+  return calculate::calculate_distance_major(cluster, cluster_to, pool);
 }
 
 std::map<parser::VLMC_Rep, std::string> VLMC_Rep_map{

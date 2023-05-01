@@ -52,13 +52,11 @@ container::Cluster_Container<VC> old_get_cluster(const std::filesystem::path &di
   return cluster; 
 }
 
-container::Kmer_Cluster get_kmer_cluster(const std::filesystem::path &directory, const size_t background_order = 0){
+std::vector<container::Kmer_Cluster> get_kmer_cluster(const std::filesystem::path &directory, BS::thread_pool& pool, const size_t background_order = 0){
   std::vector<std::filesystem::path> paths{};
 
-  auto nr_cores_to_use = 4; 
   auto set_size = -1; 
 
-  if(nr_cores_to_use > 4) nr_cores_to_use = 4;
   for (const auto& dir_entry : recursive_directory_iterator(directory)) {
     paths.push_back(dir_entry.path());
   }
@@ -68,12 +66,9 @@ container::Kmer_Cluster get_kmer_cluster(const std::filesystem::path &directory,
     paths_size = set_size; 
   }
 
-  container::Kmer_Cluster final_cluster{}; 
+  std::vector<container::Kmer_Cluster> clusters(std::ceil(paths_size / std::floor(std::sqrt(paths_size)))); 
 
-  std::mutex cluster_lock;
-
-  auto fun = [&](size_t start_index, size_t stop_index) {
-    container::Kmer_Cluster cluster{}; 
+  auto fun = [&](size_t start_index, size_t stop_index, size_t idx) {
     for (int index = start_index; index < stop_index; index++){
       std::vector<container::RI_Kmer> input_vector{};  
       eigenx_t cached_context((int)std::pow(4, background_order), 4);
@@ -86,19 +81,14 @@ container::Kmer_Cluster get_kmer_cluster(const std::filesystem::path &directory,
         int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
         int offset = background_idx - offset_to_remove;
         kmer.next_char_prob *= cached_context.row(offset).rsqrt();
-        cluster.push(container::Kmer_Pair{kmer, index}); 
+        clusters[idx].push(container::Kmer_Pair{kmer, index - start_index}); 
       }
     } 
-
-    std::lock_guard<std::mutex> lock(cluster_lock);
-    final_cluster.push_all(cluster); 
+    clusters[idx].set_size(stop_index - start_index);
   };
 
-  parallel::parallelize(paths_size, fun, nr_cores_to_use);
+  parallel::parallelize_kmer_major(paths_size, fun, pool);
 
-  final_cluster.set_size(paths_size); 
-
-
-  return final_cluster; 
+  return clusters; 
 }
 }

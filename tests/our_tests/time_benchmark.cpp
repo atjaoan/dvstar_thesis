@@ -361,7 +361,7 @@ void calculate_kmer_buckets(size_t start_bucket, size_t stop_bucket,
 }
 */
 
-
+/*
 void benchmark_calculate_distance_major(){
   std::filesystem::path path{"../data/test_VLMCs"};
   int requested_cores = 4;
@@ -447,6 +447,7 @@ void benchmark_calculate_distance_major(){
   std::cout << "Time normalize dist : " << time_norm << " [micro sec]"  << " , fraction: " << (time_norm / (double)time_tot) << std::endl; 
   std::cout << "Total time : " << time_tot << " [micro sec]" << std::endl; 
 }
+*/
 
 void print_kmers_to_file(std::string path_vlmc, std::string out_name){
   std::filesystem::path path_vlmcs{path_vlmc};

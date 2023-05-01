@@ -195,4 +195,33 @@ void pool_parallelize(size_t size, const std::function<void(size_t, size_t)> &fu
   pool.wait_for_tasks();
 }
 
+void pool_parallel(size_t size_left, const std::function<void(size_t)> &fun, BS::thread_pool& pool) {
+  for (auto left = 0; left < size_left; left++) {
+    std::future<void> fut = pool.submit(fun, left);
+  }
+
+  pool.wait_for_tasks();
+}
+
+void parallelize_kmer_major(size_t size, const std::function<void(size_t, size_t, size_t)> &fun, BS::thread_pool& pool) {
+  std::vector<std::tuple<size_t, size_t>> bounds{};
+  float values_per_thread = std::floor(std::sqrt(size));
+
+  auto start_index = 0; 
+  while (start_index < size) {
+    if (start_index + values_per_thread > size) {
+      bounds.emplace_back(start_index, size); 
+      break; 
+    }
+    bounds.emplace_back(start_index, start_index + values_per_thread);
+    start_index += values_per_thread; 
+  }
+
+  int idx = 0; 
+  for (auto &[start_index, stop_index] : bounds) {
+    std::future<void> fut = pool.submit(fun, start_index, stop_index, idx);
+    idx++; 
+  }
+  pool.wait_for_tasks();
+}
 }

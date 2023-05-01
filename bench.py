@@ -99,8 +99,6 @@ def our_calculate_distances(dist_func: str, set_size: int, genome_path_fst: str,
         "perf",
         "stat",
         "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses,L1-dcache-load-misses,L1-dcache-loads,L1-dcache-stores,l2_rqsts.miss,LLC-load-misses,LLC-loads,LLC-prefetch-misses,LLC-store-misses,LLC-stores,cycle_activity.stalls_l3_miss",
-        "-r",
-        "5",
         cwd / "build/dist", 
         "-p",
         cwd / genome_path_fst,
@@ -363,15 +361,15 @@ def stat_minimal(set_size: int = -1, dist_func: Distance_Function = Distance_Fun
 @app.command()
 def benchmark():
     background_order = 0
-    genome_path_fst = "data/benchmarking/corn/mega"
-    genome_path_snd = "data/benchmarking/turkey/mega"
+    genome_path_fst = "data/benchmarking/turkey/mega"
+    genome_path_snd = "data/benchmarking/corn/mega"
     # genome_path_fst = "data/benchmarking/human/large"
     # genome_path_snd = "data/benchmarking/human/large"
     # stat(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, background_order)
-    # stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_sorted_vector, 8, background_order)
+    stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_sorted_search, 8, background_order)
     # stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_ey, 8, background_order)
     # stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_veb, 8, background_order)
-    stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_sorted_search, 8, background_order)
+    stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_sorted_search, 8, background_order, "kmer-major")
     ## stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order)
     # stat_new(-1, Distance_Function.dvstar, genome_path, VLMC_Container.vlmc_combo, 8, background_order, "kmer-major")
     # stat_new(-1, Distance_Function.dvstar, genome_path_fst, genome_path_snd, VLMC_Container.vlmc_hashmap, 8)
