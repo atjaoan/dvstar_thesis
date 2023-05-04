@@ -26,6 +26,8 @@ def dvstar_build(genome_path: Path, out_path: Path, threshold: float, min_count:
             "--max-depth", str(max_depth),
             "--fasta-path", genome_path / genome,
             "--out-path", out_path / get_bintree_name(genome, threshold, min_count, max_depth)
+            # "--in-or-out-of-core",
+            # "external"
         )
         subprocess.run(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -60,18 +62,14 @@ def promt_dir_build(path : Path, size : str, name : str):
 #########################
 def build_dataset(path_to_fasta : str, name : str):
     genome_path = cwd / path_to_fasta
-    out_path = cwd / "data/benchmarking" / name 
+    out_path = cwd / "data/benchmarking" / name
     if (os.path.isdir(genome_path)):
         if promt_dir_build(out_path, "small", name):
             dvstar_build(genome_path, out_path / "small", 3.9075, 9, 6)
         if promt_dir_build(out_path, "medium", name):
-            dvstar_build(genome_path, out_path / "medium", 3, 6, 8)
+            dvstar_build(genome_path, out_path / "medium", 3.9075, 12, 10) # 3, 6, 8 old
         if promt_dir_build(out_path, "large", name):
-            dvstar_build(genome_path, out_path / "large", 2, 3, 10)
-        if promt_dir_build(out_path, "diverse", name):
-            dvstar_build(genome_path, out_path / "diverse", 3.9075, 9, 10)
-        if promt_dir_build(out_path, "mega", name):
-            dvstar_build(genome_path, out_path / "mega", 3.9075, 9, 12)
+            dvstar_build(genome_path, out_path / "large", 3.9075, 15, 15) # 2, 3, 10 old 
     else: 
         print("Could not find the directory for creating '" + name + "' benchmarking files.")
         print("The given directory was : '" + str(genome_path) + "'")

@@ -588,11 +588,11 @@ class VLMC_sorted_search {
       }
       // Build summary
       if (container.size() > 0) {
-        skip_size = std::ceil(std::log(container.size())); 
+        skip_size = std::ceil(std::log2(container.size())); 
         if (skip_size == 0){
           skip_size = 1; 
         }
-        summary.reserve(skip_size);
+        summary.reserve(container.size() / skip_size);
         int i = 0;
         for(;i < container.size() - skip_size; i += skip_size){
           summary.push_back(Min_max_node(i, container[i+skip_size - 1].integer_rep));

@@ -9,6 +9,7 @@ from enum import Enum
 import numpy as np
 from datetime import datetime
 import h5py
+import random 
 
 app = typer.Typer()
 
@@ -63,14 +64,16 @@ def count_nb_files(dir: str):
 
 ##############################
 # Get build parameters from  #
-# filename.                  #
+# size.                  #
 ##############################
-def get_parameter_from_bintree(bintree: str) -> tuple[float, int, int]:
-    str_split = bintree.split('_')
-    str_split.reverse()
-    try:  
-        return float(str_split[2]), int(str_split[1]), int(str_split[0].split('.')[0]) 
-    except: 
+def get_parameter_from_bintree(size: str) -> tuple[float, int, int]:
+    if size == "small":
+        return 3.9075, 9, 6
+    elif size == "medium":
+        return 3, 6, 8
+    elif size == "large":
+        return 2, 3, 10 
+    else:
         return 3.9075, 10, 9
 
 ####################################
@@ -82,7 +85,7 @@ def calculate_distance(set_size: int, genome_path_primary: str, genome_path_seco
     args = (
         "perf", "stat",
         "-r",
-        "10",
+        "3",
         "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
         cwd / "build/dist", 
         "-p", cwd / genome_path_primary,
@@ -90,8 +93,8 @@ def calculate_distance(set_size: int, genome_path_primary: str, genome_path_seco
         "-v", vlmc_container,
         "-n", str(nr_cores),
         "-b", str(background_order),
-        "-a", str(set_size),
-        "-o", str(out_path)
+        "-a", str(set_size)# ,
+        # "-o", str(out_path)
     )
     return subprocess.run(args, capture_output=True, text=True)
 
@@ -104,15 +107,15 @@ def PstClassifierSeqan(set_size: int, genome_path_primary: str, genome_path_seco
     args = (
         "perf", "stat",
         "-r",
-        "10",
+        "3",
         "-e branch-misses,branches,task-clock,cycles,instructions,cache-references,cache-misses",
         cwd / "submodules/PstClassifierSeqan/build/src/calculate-distances", 
         "-p", cwd / genome_path_primary,
         "-y", cwd / genome_path_secondary,
         "-n", "dvstar",
         "-a", str(set_size),
-        "-b", str(background_order),
-        "-s", cwd / out_path
+        "-b", str(background_order)# ,
+        # "-s", cwd / out_path
     )
     return subprocess.run(args, capture_output=True, text=True)
 
@@ -193,7 +196,7 @@ def save_to_csv(res: subprocess.CompletedProcess, csv_path: Path, vlmc_size: str
 # cache-misses on dataset with       #
 # Pst... implementation.             #
 ######################################
-def Pst_normal_benchmaking(path_primary: str, path_secondary: str, csv_filename: str):
+def Pst_normal_benchmaking(path_primary: str, path_secondary: str, csv_filename: str, single_run: bool):
     dset_p = path_primary.split("/")
     dataset_primary = dset_p[len(dset_p) - 1]
 
@@ -202,36 +205,48 @@ def Pst_normal_benchmaking(path_primary: str, path_secondary: str, csv_filename:
 
     nb_files = min(count_nb_files(cwd / path_primary / "small"), count_nb_files(cwd / path_secondary / "small"))
 
-    files_run = 2   
+    files_run = 4   
 
-    th_small, min_small, max_small = get_parameter_from_bintree(os.listdir(cwd / path_primary / "small")[0])
-    th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(cwd / path_primary / "medium")[0])
-    th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(cwd / path_primary / "large")[0])
+    th_small, min_small, max_small = get_parameter_from_bintree("small")
+    th_medium, min_medium, max_medium = get_parameter_from_bintree("medium")
+    th_large, min_large, max_large = get_parameter_from_bintree("large")
 
     out_path = "hdf5_results/PstClassifierSeqan/" + dataset_primary + "_to_" + dataset_secondary + "/"
     
     os.makedirs(out_path, exist_ok=True)
 
-    while((files_run < 10000) & (files_run < nb_files)):
-        print("Benchmarking with " + str(files_run) + " VLMCs...")
+    if single_run:
         print("Small PstClassifierSeqan.")
-        res_small  = PstClassifierSeqan(files_run, path_primary + "/small", path_secondary + "/small", out_path + "small_" + str(files_run) + ".hdf5", 0)
+        res_small  = PstClassifierSeqan(-1, path_primary + "/small", path_secondary + "/small", out_path + "small_" + str(files_run) + ".hdf5", 0)
         print("Medium PstClassifierSeqan.")
-        res_medium = PstClassifierSeqan(files_run, path_primary + "/medium", path_secondary + "/medium", out_path + "medium_" + str(files_run) + ".hdf5", 0)
+        res_medium = PstClassifierSeqan(-1, path_primary + "/medium", path_secondary + "/medium", out_path + "medium_" + str(files_run) + ".hdf5", 0)
         print("Large PstClassifierSeqan.")
-        res_large  = PstClassifierSeqan(files_run, path_primary + "/large", path_secondary + "/large", out_path + "large_" + str(files_run) + ".hdf5", 0)
+        res_large  = PstClassifierSeqan(-1, path_primary + "/large", path_secondary + "/large", out_path + "large_" + str(files_run) + ".hdf5", 0)
 
         catch_and_save(res_small, cwd / csv_filename, "small", files_run, th_small, min_small, max_small, "PstClassifierSeqan", 8)
         catch_and_save(res_medium, cwd / csv_filename, "medium", files_run, th_medium, min_medium, max_medium, "PstClassifierSeqan", 8)
         catch_and_save(res_large, cwd / csv_filename, "large", files_run, th_large, min_large, max_large, "PstClassifierSeqan", 8)
-        files_run = files_run * 2
+    else:
+        while((files_run < 10000) & (files_run < nb_files)):
+            print("Benchmarking with " + str(files_run) + " VLMCs...")
+            print("Small PstClassifierSeqan.")
+            res_small  = PstClassifierSeqan(files_run, path_primary + "/small", path_secondary + "/small", out_path + "small_" + str(files_run) + ".hdf5", 0)
+            print("Medium PstClassifierSeqan.")
+            res_medium = PstClassifierSeqan(files_run, path_primary + "/medium", path_secondary + "/medium", out_path + "medium_" + str(files_run) + ".hdf5", 0)
+            print("Large PstClassifierSeqan.")
+            res_large  = PstClassifierSeqan(files_run, path_primary + "/large", path_secondary + "/large", out_path + "large_" + str(files_run) + ".hdf5", 0)
+
+            catch_and_save(res_small, cwd / csv_filename, "small", files_run, th_small, min_small, max_small, "PstClassifierSeqan", 8)
+            catch_and_save(res_medium, cwd / csv_filename, "medium", files_run, th_medium, min_medium, max_medium, "PstClassifierSeqan", 8)
+            catch_and_save(res_large, cwd / csv_filename, "large", files_run, th_large, min_large, max_large, "PstClassifierSeqan", 8)
+            files_run = files_run * 2
 
 ######################################
 # Function for benchmarking time and # 
 # cache-misses on dataset with new   #
 # implementation.                    #
 ######################################
-def normal_benchmarking(path_primary: str, path_secondary: str, implementation: str, csv_filename: str):
+def normal_benchmarking(path_primary: str, path_secondary: str, implementation: str, csv_filename: str, single_run: bool):
     dset_p = path_primary.split("/")
     dataset_primary = dset_p[len(dset_p) - 1]
 
@@ -240,11 +255,11 @@ def normal_benchmarking(path_primary: str, path_secondary: str, implementation: 
 
     nb_files = min(count_nb_files(cwd / path_primary / "small"), count_nb_files(cwd / path_secondary / "small"))
 
-    th_small, min_small, max_small = get_parameter_from_bintree(os.listdir(cwd / path_primary / "small")[0])
-    th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(cwd / path_primary / "medium")[0])
-    th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(cwd / path_primary / "large")[0])
+    th_small, min_small, max_small = get_parameter_from_bintree("small")
+    th_medium, min_medium, max_medium = get_parameter_from_bintree("medium")
+    th_large, min_large, max_large = get_parameter_from_bintree("large")
 
-    files_run = 2
+    files_run = 4
 
     out_path = "hdf5_results/Dvstar/"
 
@@ -257,28 +272,40 @@ def normal_benchmarking(path_primary: str, path_secondary: str, implementation: 
     if (os.path.isfile(cwd / "hdf5_results/Dvstar/distances_large.hdf5")):
         os.remove(cwd / "hdf5_results/Dvstar/distances_large.hdf5")
 
-    while((files_run < 10000) & (files_run <= nb_files)):
-        print("Benchmarking with " + str(files_run) + " VLMCs...")
-
+    if single_run:
         print("Small " + implementation + ".")
-        res_our_small  = calculate_distance(files_run, path_primary + "/small", path_secondary + "/small", "hdf5_results/Dvstar/distances_small.hdf5", implementation, 8, 0)
+        res_our_small  = calculate_distance(-1, path_primary + "/small", path_secondary + "/small", "hdf5_results/Dvstar/distances_small.hdf5", implementation, 8, 0)
         print("Medium " + implementation + ".")
-        res_our_medium = calculate_distance(files_run, path_primary + "/medium", path_secondary + "/medium", "hdf5_results/Dvstar/distances_medium.hdf5", implementation, 8, 0)
+        res_our_medium = calculate_distance(-1, path_primary + "/medium", path_secondary + "/medium", "hdf5_results/Dvstar/distances_medium.hdf5", implementation, 8, 0)
         print("Large " + implementation + ".")
-        res_our_large  = calculate_distance(files_run, path_primary + "/large", path_secondary + "/large", "hdf5_results/Dvstar/distances_large.hdf5", implementation, 8, 0)
-        
-        compare_hdf5_files(dataset_primary + "_to_" + dataset_secondary, "small", str(files_run))
-        compare_hdf5_files(dataset_primary + "_to_" + dataset_secondary, "medium", str(files_run))
-        compare_hdf5_files(dataset_primary + "_to_" + dataset_secondary, "large", str(files_run))
+        res_our_large  = calculate_distance(-1, path_primary + "/large", path_secondary + "/large", "hdf5_results/Dvstar/distances_large.hdf5", implementation, 8, 0)
         
         catch_and_save(res_our_small, cwd / csv_filename, "small", files_run, th_small, min_small, max_small, implementation, 8)
         catch_and_save(res_our_medium, cwd / csv_filename, "medium", files_run, th_medium, min_medium, max_medium, implementation, 8)
         catch_and_save(res_our_large, cwd / csv_filename, "large", files_run, th_large, min_large, max_large, implementation, 8)
-        
-        files_run = files_run * 2 
-        os.remove(cwd / "hdf5_results/Dvstar/distances_small.hdf5")
-        os.remove(cwd / "hdf5_results/Dvstar/distances_medium.hdf5")
-        os.remove(cwd / "hdf5_results/Dvstar/distances_large.hdf5")
+    else:
+        while((files_run < 10000) & (files_run <= nb_files)):
+            print("Benchmarking with " + str(files_run) + " VLMCs...")
+
+            print("Small " + implementation + ".")
+            res_our_small  = calculate_distance(files_run, path_primary + "/small", path_secondary + "/small", "hdf5_results/Dvstar/distances_small.hdf5", implementation, 8, 0)
+            print("Medium " + implementation + ".")
+            res_our_medium = calculate_distance(files_run, path_primary + "/medium", path_secondary + "/medium", "hdf5_results/Dvstar/distances_medium.hdf5", implementation, 8, 0)
+            print("Large " + implementation + ".")
+            res_our_large  = calculate_distance(files_run, path_primary + "/large", path_secondary + "/large", "hdf5_results/Dvstar/distances_large.hdf5", implementation, 8, 0)
+
+            compare_hdf5_files(dataset_primary + "_to_" + dataset_secondary, "small", str(files_run))
+            compare_hdf5_files(dataset_primary + "_to_" + dataset_secondary, "medium", str(files_run))
+            compare_hdf5_files(dataset_primary + "_to_" + dataset_secondary, "large", str(files_run))
+
+            catch_and_save(res_our_small, cwd / csv_filename, "small", files_run, th_small, min_small, max_small, implementation, 8)
+            catch_and_save(res_our_medium, cwd / csv_filename, "medium", files_run, th_medium, min_medium, max_medium, implementation, 8)
+            catch_and_save(res_our_large, cwd / csv_filename, "large", files_run, th_large, min_large, max_large, implementation, 8)
+
+            files_run = files_run * 2 
+            os.remove(cwd / "hdf5_results/Dvstar/distances_small.hdf5")
+            os.remove(cwd / "hdf5_results/Dvstar/distances_medium.hdf5")
+            os.remove(cwd / "hdf5_results/Dvstar/distances_large.hdf5")
 
 #####################################
 # Function for benchmarking degree  #
@@ -288,9 +315,9 @@ def parallelization_benchmark(dataset: str, implementation: str):
     csv_filename = get_csv_name(dataset, "parallelization_")
     print(csv_filename)
 
-    th_small, min_small, max_small = get_parameter_from_bintree(os.listdir(cwd / dataset / "small")[0])
-    th_medium, min_medium, max_medium = get_parameter_from_bintree(os.listdir(cwd / dataset / "medium")[0])
-    th_large, min_large, max_large = get_parameter_from_bintree(os.listdir(cwd / dataset / "large")[0])
+    th_small, min_small, max_small = get_parameter_from_bintree("small")
+    th_medium, min_medium, max_medium = get_parameter_from_bintree("medium")
+    th_large, min_large, max_large = get_parameter_from_bintree("large")
 
     nb_files = count_nb_files(cwd / dataset / "small")
 
@@ -356,12 +383,24 @@ def benchmark():
     datasets = [("human", "human"), ("human", "turkey"), ("human", "corn"), ("turkey", "turkey"), ("turkey", "corn"), ("corn", "corn"), ("ecoli", "ecoli")]
     containers = ["sorted-vector", "sorted-search", "hashmap", "veb", "ey", "alt-btree"] # ,"sorted-search-ey"]
     for primary, secondary in datasets:
+        print("Benchmarking " + primary + " to " + secondary)
         csv_filename = get_csv_name(primary, secondary, now)
         p = "data/benchmarking/" + primary
         s = "data/benchmarking/" + secondary
-        Pst_normal_benchmaking(p, s, csv_filename)
+        Pst_normal_benchmaking(p, s, csv_filename, True)
         for container in containers:
-            normal_benchmarking(p, s, container, csv_filename)
+            normal_benchmarking(p, s, container, csv_filename, True)
+
+# @app.command()
+# def change_names():
+#     dir = cwd / "data/benchmarking/bigdata/large" 
+#     list_paths = []
+#     for path in os.listdir(cwd / "data/benchmarking/bigdata/large"):
+#         list_paths.append(path)
+# 
+#     new_names = random.sample(range(1, 1000), len(list_paths))
+#     for i, path in enumerate(list_paths): 
+#         os.rename(dir / path, dir / (str(new_names[i]) + ".bintree"))
 
 if __name__ == "__main__":
     app()
