@@ -389,7 +389,7 @@ def benchmark(single_run: bool = True, cores: int = 8):
         csv_filename = get_csv_name(primary, secondary, now)
         p = "data/benchmarking/" + primary
         s = "data/benchmarking/" + secondary
-        # Pst_normal_benchmaking(p, s, csv_filename, single_run)
+        Pst_normal_benchmaking(p, s, csv_filename, single_run)
         for container in containers:
             normal_benchmarking(p, s, container, csv_filename, single_run, cores)
 
