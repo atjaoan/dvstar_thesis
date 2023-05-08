@@ -246,7 +246,9 @@ def Pst_normal_benchmaking(path_primary: str, path_secondary: str, csv_filename:
 # cache-misses on dataset with new   #
 # implementation.                    #
 ######################################
-def normal_benchmarking(path_primary: str, path_secondary: str, implementation: str, csv_filename: str, single_run: bool):
+def normal_benchmarking(path_primary: str, path_secondary: str, implementation: str, csv_filename: str, single_run: bool, cores: int):
+    print(cores)
+    
     dset_p = path_primary.split("/")
     dataset_primary = dset_p[len(dset_p) - 1]
 
@@ -274,33 +276,33 @@ def normal_benchmarking(path_primary: str, path_secondary: str, implementation: 
 
     if single_run:
         print("Small " + implementation + ".")
-        res_our_small  = calculate_distance(-1, path_primary + "/small", path_secondary + "/small", "hdf5_results/Dvstar/distances_small.hdf5", implementation, 8, 0)
+        res_our_small  = calculate_distance(-1, path_primary + "/small", path_secondary + "/small", "hdf5_results/Dvstar/distances_small.hdf5", implementation, cores, 0)
         print("Medium " + implementation + ".")
-        res_our_medium = calculate_distance(-1, path_primary + "/medium", path_secondary + "/medium", "hdf5_results/Dvstar/distances_medium.hdf5", implementation, 8, 0)
+        res_our_medium = calculate_distance(-1, path_primary + "/medium", path_secondary + "/medium", "hdf5_results/Dvstar/distances_medium.hdf5", implementation, cores, 0)
         print("Large " + implementation + ".")
-        res_our_large  = calculate_distance(-1, path_primary + "/large", path_secondary + "/large", "hdf5_results/Dvstar/distances_large.hdf5", implementation, 8, 0)
+        res_our_large  = calculate_distance(-1, path_primary + "/large", path_secondary + "/large", "hdf5_results/Dvstar/distances_large.hdf5", implementation, cores, 0)
         
-        catch_and_save(res_our_small, cwd / csv_filename, "small", files_run, th_small, min_small, max_small, implementation, 8)
-        catch_and_save(res_our_medium, cwd / csv_filename, "medium", files_run, th_medium, min_medium, max_medium, implementation, 8)
-        catch_and_save(res_our_large, cwd / csv_filename, "large", files_run, th_large, min_large, max_large, implementation, 8)
+        catch_and_save(res_our_small, cwd / csv_filename, "small", files_run, th_small, min_small, max_small, implementation, cores)
+        catch_and_save(res_our_medium, cwd / csv_filename, "medium", files_run, th_medium, min_medium, max_medium, implementation, cores)
+        catch_and_save(res_our_large, cwd / csv_filename, "large", files_run, th_large, min_large, max_large, implementation, cores)
     else:
         while((files_run < 10000) & (files_run <= nb_files)):
             print("Benchmarking with " + str(files_run) + " VLMCs...")
 
             print("Small " + implementation + ".")
-            res_our_small  = calculate_distance(files_run, path_primary + "/small", path_secondary + "/small", "hdf5_results/Dvstar/distances_small.hdf5", implementation, 8, 0)
+            res_our_small  = calculate_distance(files_run, path_primary + "/small", path_secondary + "/small", "hdf5_results/Dvstar/distances_small.hdf5", implementation, cores, 0)
             print("Medium " + implementation + ".")
-            res_our_medium = calculate_distance(files_run, path_primary + "/medium", path_secondary + "/medium", "hdf5_results/Dvstar/distances_medium.hdf5", implementation, 8, 0)
+            res_our_medium = calculate_distance(files_run, path_primary + "/medium", path_secondary + "/medium", "hdf5_results/Dvstar/distances_medium.hdf5", implementation, cores, 0)
             print("Large " + implementation + ".")
-            res_our_large  = calculate_distance(files_run, path_primary + "/large", path_secondary + "/large", "hdf5_results/Dvstar/distances_large.hdf5", implementation, 8, 0)
+            res_our_large  = calculate_distance(files_run, path_primary + "/large", path_secondary + "/large", "hdf5_results/Dvstar/distances_large.hdf5", implementation, cores, 0)
 
             compare_hdf5_files(dataset_primary + "_to_" + dataset_secondary, "small", str(files_run))
             compare_hdf5_files(dataset_primary + "_to_" + dataset_secondary, "medium", str(files_run))
             compare_hdf5_files(dataset_primary + "_to_" + dataset_secondary, "large", str(files_run))
 
-            catch_and_save(res_our_small, cwd / csv_filename, "small", files_run, th_small, min_small, max_small, implementation, 8)
-            catch_and_save(res_our_medium, cwd / csv_filename, "medium", files_run, th_medium, min_medium, max_medium, implementation, 8)
-            catch_and_save(res_our_large, cwd / csv_filename, "large", files_run, th_large, min_large, max_large, implementation, 8)
+            catch_and_save(res_our_small, cwd / csv_filename, "small", files_run, th_small, min_small, max_small, implementation, cores)
+            catch_and_save(res_our_medium, cwd / csv_filename, "medium", files_run, th_medium, min_medium, max_medium, implementation, cores)
+            catch_and_save(res_our_large, cwd / csv_filename, "large", files_run, th_large, min_large, max_large, implementation, cores)
 
             files_run = files_run * 2 
             os.remove(cwd / "hdf5_results/Dvstar/distances_small.hdf5")
@@ -378,7 +380,7 @@ def compare_hdf5_files(dataset: str, size: str, files_run: str):
         raise Exception("Correctness Check " + dataset + " with " + size + " size and " + files_run + " files : FAILED")
 
 @app.command()
-def benchmark():
+def benchmark(single_run: bool = True, cores: int = 8):
     now = datetime.now()
     datasets = [("human", "human"), ("human", "turkey"), ("human", "corn"), ("turkey", "turkey"), ("turkey", "corn"), ("corn", "corn"), ("ecoli", "ecoli")]
     containers = ["sorted-vector", "sorted-search", "hashmap", "veb", "ey", "alt-btree"] # ,"sorted-search-ey"]
@@ -387,9 +389,9 @@ def benchmark():
         csv_filename = get_csv_name(primary, secondary, now)
         p = "data/benchmarking/" + primary
         s = "data/benchmarking/" + secondary
-        Pst_normal_benchmaking(p, s, csv_filename, True)
+        # Pst_normal_benchmaking(p, s, csv_filename, single_run)
         for container in containers:
-            normal_benchmarking(p, s, container, csv_filename, True)
+            normal_benchmarking(p, s, container, csv_filename, single_run, cores)
 
 # @app.command()
 # def change_names():
