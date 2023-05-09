@@ -66,5 +66,5 @@ From: debian:bullseye
 %runscript
     . /venv/kmers_env/bin/activate
     cd /thesis
+    python3 benchmarking.py parabench --max-cores 16
     python3 benchmarking.py benchmark --cores 16
-    python3 benchmarking.py parabench --cores 16

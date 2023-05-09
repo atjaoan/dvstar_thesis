@@ -319,7 +319,7 @@ def normal_benchmarking(path_primary: str, path_secondary: str, implementation: 
 #####################################
 def parallelization_benchmark(dataset: str, implementation: str, max_cores: int):
     now = datetime.now()
-    csv_filename = get_csv_name(dataset.split("/")[-2], "parallelization_", now)
+    csv_filename = get_csv_name(dataset.split("/")[-2], "parallelization", now)
     print(csv_filename)
 
     th_small, min_small, max_small = get_parameter_from_bintree("small")
