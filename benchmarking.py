@@ -317,11 +317,7 @@ def normal_benchmarking(path_primary: str, path_secondary: str, implementation: 
 # Function for benchmarking degree  #
 # of parallelization on dataset.    #  
 #####################################
-def parallelization_benchmark(dataset: str, implementation: str, max_cores: int):
-    now = datetime.now()
-    csv_filename = get_csv_name(dataset.split("/")[-2], "parallelization", now)
-    print(csv_filename)
-
+def parallelization_benchmark(dataset: str, implementation: str, max_cores: int, csv_filename: str):
     th_small, min_small, max_small = get_parameter_from_bintree("small")
     th_medium, min_medium, max_medium = get_parameter_from_bintree("medium")
     th_large, min_large, max_large = get_parameter_from_bintree("large")
@@ -404,8 +400,11 @@ def benchmark(single_run: bool = True, cores: int = 8):
 @app.command()
 def parabench(max_cores: int = 8):
     containers = ["sorted-vector", "sorted-search", "hashmap", "veb", "ey", "alt-btree"]
+    now = datetime.now()
+    dataset = "data/benchmarking/ecoli/"
+    csv_filename = get_csv_name(dataset.split("/")[-2], "parallelization", now)
     for container in containers:
-        parallelization_benchmark("data/benchmarking/human/", container, max_cores)
+        parallelization_benchmark(dataset, container, max_cores, csv_filename)
 
 # @app.command()
 # def change_names():
