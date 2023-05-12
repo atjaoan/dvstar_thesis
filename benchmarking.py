@@ -82,8 +82,8 @@ def get_parameter_from_bintree(size: str) -> tuple[float, int, int]:
 # one or two directories of VLMCs. #
 ####################################     
 def calculate_distance(set_size: int, genome_path_primary: str, genome_path_secondary: str, out_path: str, vlmc_container: str, nr_cores: int, background_order: int) -> subprocess.CompletedProcess:
-    #if "ecoli" in genome_path_primary.split("/"):
-    #    set_size = 8000
+    if "ecoli" in genome_path_primary.split("/"):
+        set_size = 8000
     args = (
         "perf", "stat",
         "-r",
@@ -106,8 +106,8 @@ def calculate_distance(set_size: int, genome_path_primary: str, genome_path_seco
 # from PstClassifierSeqan submodule. #
 ######################################
 def PstClassifierSeqan(set_size: int, genome_path_primary: str, genome_path_secondary: str, out_path: str, background_order: int) -> subprocess.CompletedProcess:
-    #if "ecoli" in genome_path_primary.split("/"):
-    #    set_size = 8000
+    if "ecoli" in genome_path_primary.split("/"):
+        set_size = 8000
     args = (
         "perf", "stat",
         "-r",
