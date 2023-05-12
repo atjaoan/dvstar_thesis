@@ -82,8 +82,6 @@ def get_parameter_from_bintree(size: str) -> tuple[float, int, int]:
 # one or two directories of VLMCs. #
 ####################################     
 def calculate_distance(set_size: int, genome_path_primary: str, genome_path_secondary: str, out_path: str, vlmc_container: str, nr_cores: int, background_order: int) -> subprocess.CompletedProcess:
-    if "ecoli" in genome_path_primary.split("/"):
-        set_size = 8000
     args = (
         "perf", "stat",
         "-r",
@@ -106,8 +104,6 @@ def calculate_distance(set_size: int, genome_path_primary: str, genome_path_seco
 # from PstClassifierSeqan submodule. #
 ######################################
 def PstClassifierSeqan(set_size: int, genome_path_primary: str, genome_path_secondary: str, out_path: str, background_order: int) -> subprocess.CompletedProcess:
-    if "ecoli" in genome_path_primary.split("/"):
-        set_size = 8000
     args = (
         "perf", "stat",
         "-r",
@@ -200,7 +196,7 @@ def save_to_csv(res: subprocess.CompletedProcess, csv_path: Path, vlmc_size: str
 # cache-misses on dataset with       #
 # Pst... implementation.             #
 ######################################
-def Pst_normal_benchmaking(path_primary: str, path_secondary: str, csv_filename: str, single_run: bool):
+def Pst_normal_benchmaking(path_primary: str, path_secondary: str, csv_filename: str, single_run: bool, set_size: int):
     dset_p = path_primary.split("/")
     dataset_primary = dset_p[len(dset_p) - 1]
 
@@ -221,13 +217,13 @@ def Pst_normal_benchmaking(path_primary: str, path_secondary: str, csv_filename:
 
     if single_run:
         print("Small PstClassifierSeqan.")
-        res_small  = PstClassifierSeqan(-1, path_primary + "/small", path_secondary + "/small", out_path + "small_" + str(files_run) + ".hdf5", 0)
+        res_small  = PstClassifierSeqan(set_size, path_primary + "/small", path_secondary + "/small", out_path + "small_" + str(files_run) + ".hdf5", 0)
         print(res_small.stderr)
         print("Medium PstClassifierSeqan.")
-        res_medium = PstClassifierSeqan(-1, path_primary + "/medium", path_secondary + "/medium", out_path + "medium_" + str(files_run) + ".hdf5", 0)
+        res_medium = PstClassifierSeqan(set_size, path_primary + "/medium", path_secondary + "/medium", out_path + "medium_" + str(files_run) + ".hdf5", 0)
         print(res_medium.stderr)
         print("Large PstClassifierSeqan.")
-        res_large  = PstClassifierSeqan(-1, path_primary + "/large", path_secondary + "/large", out_path + "large_" + str(files_run) + ".hdf5", 0)
+        res_large  = PstClassifierSeqan(set_size, path_primary + "/large", path_secondary + "/large", out_path + "large_" + str(files_run) + ".hdf5", 0)
         print(res_large.stderr)
 
         catch_and_save(res_small, cwd / csv_filename, "small", files_run, th_small, min_small, max_small, "PstClassifierSeqan", 8)
@@ -253,7 +249,7 @@ def Pst_normal_benchmaking(path_primary: str, path_secondary: str, csv_filename:
 # cache-misses on dataset with new   #
 # implementation.                    #
 ######################################
-def normal_benchmarking(path_primary: str, path_secondary: str, implementation: str, csv_filename: str, single_run: bool, cores: int):
+def normal_benchmarking(path_primary: str, path_secondary: str, implementation: str, csv_filename: str, single_run: bool, cores: int, set_size: int):
     dset_p = path_primary.split("/")
     dataset_primary = dset_p[len(dset_p) - 1]
 
@@ -268,9 +264,9 @@ def normal_benchmarking(path_primary: str, path_secondary: str, implementation: 
 
     files_run = 32
 
-    out_path = "hdf5_results/Dvstar/"
+    #out_path = "hdf5_results/Dvstar/"
 
-    os.makedirs(out_path, exist_ok=True)
+    #os.makedirs(out_path, exist_ok=True)
 
     if (os.path.isfile(cwd / "hdf5_results/Dvstar/distances_small.hdf5")):
         os.remove(cwd / "hdf5_results/Dvstar/distances_small.hdf5")
@@ -281,13 +277,13 @@ def normal_benchmarking(path_primary: str, path_secondary: str, implementation: 
 
     if single_run:
         print("Small " + implementation + ".")
-        res_our_small  = calculate_distance(-1, path_primary + "/small", path_secondary + "/small", "hdf5_results/Dvstar/distances_small.hdf5", implementation, cores, 0)
+        res_our_small  = calculate_distance(set_size, path_primary + "/small", path_secondary + "/small", "hdf5_results/Dvstar/distances_small.hdf5", implementation, cores, 0)
         print(res_our_small.stderr)
         print("Medium " + implementation + ".")
-        res_our_medium = calculate_distance(-1, path_primary + "/medium", path_secondary + "/medium", "hdf5_results/Dvstar/distances_medium.hdf5", implementation, cores, 0)
+        res_our_medium = calculate_distance(set_size, path_primary + "/medium", path_secondary + "/medium", "hdf5_results/Dvstar/distances_medium.hdf5", implementation, cores, 0)
         print(res_our_medium.stderr)
         print("Large " + implementation + ".")
-        res_our_large  = calculate_distance(-1, path_primary + "/large", path_secondary + "/large", "hdf5_results/Dvstar/distances_large.hdf5", implementation, cores, 0)
+        res_our_large  = calculate_distance(set_size, path_primary + "/large", path_secondary + "/large", "hdf5_results/Dvstar/distances_large.hdf5", implementation, cores, 0)
         print(res_our_large.stderr)
         
         catch_and_save(res_our_small, cwd / csv_filename, "small", files_run, th_small, min_small, max_small, implementation, cores)
@@ -384,7 +380,7 @@ def compare_hdf5_files(dataset: str, size: str, files_run: str):
         raise Exception("Correctness Check " + dataset + " with " + size + " size and " + files_run + " files : FAILED")
 
 @app.command()
-def benchmark(single_run: bool = True, cores: int = 8):
+def benchmark(single_run: bool = True, cores: int = 8, set_size_virus: int = -1):
     now = datetime.now()
     datasets = [("human", "human"), ("human", "turkey"), ("human", "corn"), ("turkey", "turkey"), ("turkey", "corn"), ("corn", "corn"), ("ecoli", "ecoli")]
     containers = ["sorted-vector", "sorted-search", "hashmap", "veb", "ey", "alt-btree"] # ,"sorted-search-ey"]
@@ -393,9 +389,15 @@ def benchmark(single_run: bool = True, cores: int = 8):
         csv_filename = get_csv_name(primary, secondary, now)
         p = "data/benchmarking/" + primary
         s = "data/benchmarking/" + secondary
-        Pst_normal_benchmaking(p, s, csv_filename, single_run)
+        if primary == "ecoli" or secondary == "ecoli":
+            Pst_normal_benchmaking(p, s, csv_filename, single_run, set_size_virus)
+        else:
+            Pst_normal_benchmaking(p, s, csv_filename, single_run, -1)
         for container in containers:
-            normal_benchmarking(p, s, container, csv_filename, single_run, cores)
+            if primary == "ecoli" or secondary == "ecoli":
+                normal_benchmarking(p, s, container, csv_filename, single_run, cores, set_size_virus)
+            else :
+                normal_benchmarking(p, s, container, csv_filename, single_run, cores, -1)
 
 @app.command()
 def sizebenchmark(single_run: bool = False, cores: int = 8):
@@ -407,9 +409,9 @@ def sizebenchmark(single_run: bool = False, cores: int = 8):
         csv_filename = get_csv_name(primary, secondary, now)
         p = "data/benchmarking/" + primary
         s = "data/benchmarking/" + secondary
-        Pst_normal_benchmaking(p, s, csv_filename, single_run)
+        Pst_normal_benchmaking(p, s, csv_filename, single_run, -1)
         for container in containers:
-            normal_benchmarking(p, s, container, csv_filename, single_run, cores)
+            normal_benchmarking(p, s, container, csv_filename, single_run, cores, -1)
 
 @app.command()
 def parabench(cores: int = 8, species: str = "human", set_size: int = -1):
