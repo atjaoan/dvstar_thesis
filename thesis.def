@@ -72,3 +72,8 @@ From: debian:bullseye
     . /venv/kmers_env/bin/activate
     cd /thesis
     python3 benchmarking.py parabench $*
+
+%apprun sizebenchmark
+    . /venv/kmers_env/bin/activate
+    cd /thesis
+    python3 benchmarking.py sizebenchmark $*

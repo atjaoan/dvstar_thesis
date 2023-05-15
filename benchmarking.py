@@ -103,7 +103,7 @@ def calculate_distance(set_size: int, genome_path_primary: str, genome_path_seco
 # distance calculation between VLMCs #
 # from PstClassifierSeqan submodule. #
 ######################################
-def PstClassifierSeqan(set_size: int, genome_path_primary: str, genome_path_secondary: str, out_path: str, background_order: int) -> subprocess.CompletedProcess:
+def PstClassifierSeqan(set_size: int, genome_path_primary: str, genome_path_secondary: str, out_path: str, background_order: int, nr_cores: int) -> subprocess.CompletedProcess:
     args = (
         "perf", "stat",
         "-r",
@@ -114,7 +114,8 @@ def PstClassifierSeqan(set_size: int, genome_path_primary: str, genome_path_seco
         "-y", cwd / genome_path_secondary,
         "-n", "dvstar",
         "-a", str(set_size),
-        "-b", str(background_order)# ,
+        "-b", str(background_order),
+        "-c", str(nr_cores)
         # "-s", cwd / out_path
     )
     return subprocess.run(args, capture_output=True, text=True)
@@ -196,7 +197,7 @@ def save_to_csv(res: subprocess.CompletedProcess, csv_path: Path, vlmc_size: str
 # cache-misses on dataset with       #
 # Pst... implementation.             #
 ######################################
-def Pst_normal_benchmaking(path_primary: str, path_secondary: str, csv_filename: str, single_run: bool, set_size: int):
+def Pst_normal_benchmaking(path_primary: str, path_secondary: str, csv_filename: str, single_run: bool, set_size: int, cores: int):
     dset_p = path_primary.split("/")
     dataset_primary = dset_p[len(dset_p) - 1]
 
@@ -217,13 +218,13 @@ def Pst_normal_benchmaking(path_primary: str, path_secondary: str, csv_filename:
 
     if single_run:
         print("Small PstClassifierSeqan.")
-        res_small  = PstClassifierSeqan(set_size, path_primary + "/small", path_secondary + "/small", out_path + "small_" + str(files_run) + ".hdf5", 0)
+        res_small  = PstClassifierSeqan(set_size, path_primary + "/small", path_secondary + "/small", out_path + "small_" + str(files_run) + ".hdf5", 0, cores)
         print(res_small.stderr)
         print("Medium PstClassifierSeqan.")
-        res_medium = PstClassifierSeqan(set_size, path_primary + "/medium", path_secondary + "/medium", out_path + "medium_" + str(files_run) + ".hdf5", 0)
+        res_medium = PstClassifierSeqan(set_size, path_primary + "/medium", path_secondary + "/medium", out_path + "medium_" + str(files_run) + ".hdf5", 0, cores)
         print(res_medium.stderr)
         print("Large PstClassifierSeqan.")
-        res_large  = PstClassifierSeqan(set_size, path_primary + "/large", path_secondary + "/large", out_path + "large_" + str(files_run) + ".hdf5", 0)
+        res_large  = PstClassifierSeqan(set_size, path_primary + "/large", path_secondary + "/large", out_path + "large_" + str(files_run) + ".hdf5", 0, cores)
         print(res_large.stderr)
 
         catch_and_save(res_small, cwd / csv_filename, "small", files_run, th_small, min_small, max_small, "PstClassifierSeqan", 8)
@@ -233,11 +234,11 @@ def Pst_normal_benchmaking(path_primary: str, path_secondary: str, csv_filename:
         while((files_run < 10000) & (files_run <= nb_files)):
             print("Benchmarking with " + str(files_run) + " VLMCs...")
             print("Small PstClassifierSeqan.")
-            res_small  = PstClassifierSeqan(files_run, path_primary + "/small", path_secondary + "/small", out_path + "small_" + str(files_run) + ".hdf5", 0)
+            res_small  = PstClassifierSeqan(files_run, path_primary + "/small", path_secondary + "/small", out_path + "small_" + str(files_run) + ".hdf5", 0, cores)
             print("Medium PstClassifierSeqan.")
-            res_medium = PstClassifierSeqan(files_run, path_primary + "/medium", path_secondary + "/medium", out_path + "medium_" + str(files_run) + ".hdf5", 0)
+            res_medium = PstClassifierSeqan(files_run, path_primary + "/medium", path_secondary + "/medium", out_path + "medium_" + str(files_run) + ".hdf5", 0, cores)
             print("Large PstClassifierSeqan.")
-            res_large  = PstClassifierSeqan(files_run, path_primary + "/large", path_secondary + "/large", out_path + "large_" + str(files_run) + ".hdf5", 0)
+            res_large  = PstClassifierSeqan(files_run, path_primary + "/large", path_secondary + "/large", out_path + "large_" + str(files_run) + ".hdf5", 0, cores)
 
             catch_and_save(res_small, cwd / csv_filename, "small", files_run, th_small, min_small, max_small, "PstClassifierSeqan", 8)
             catch_and_save(res_medium, cwd / csv_filename, "medium", files_run, th_medium, min_medium, max_medium, "PstClassifierSeqan", 8)
@@ -390,9 +391,9 @@ def benchmark(single_run: bool = True, cores: int = 8, set_size_virus: int = -1)
         p = "data/benchmarking/" + primary
         s = "data/benchmarking/" + secondary
         if primary == "ecoli" or secondary == "ecoli":
-            Pst_normal_benchmaking(p, s, csv_filename, single_run, set_size_virus)
+            Pst_normal_benchmaking(p, s, csv_filename, single_run, set_size_virus, cores)
         else:
-            Pst_normal_benchmaking(p, s, csv_filename, single_run, -1)
+            Pst_normal_benchmaking(p, s, csv_filename, single_run, -1, cores)
         for container in containers:
             if primary == "ecoli" or secondary == "ecoli":
                 normal_benchmarking(p, s, container, csv_filename, single_run, cores, set_size_virus)
@@ -409,7 +410,7 @@ def sizebenchmark(single_run: bool = False, cores: int = 8):
         csv_filename = get_csv_name(primary, secondary, now)
         p = "data/benchmarking/" + primary
         s = "data/benchmarking/" + secondary
-        Pst_normal_benchmaking(p, s, csv_filename, single_run, -1)
+        Pst_normal_benchmaking(p, s, csv_filename, single_run, -1, cores)
         for container in containers:
             normal_benchmarking(p, s, container, csv_filename, single_run, cores, -1)
 
