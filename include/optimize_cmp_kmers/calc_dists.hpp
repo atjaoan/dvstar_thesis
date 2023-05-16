@@ -53,15 +53,15 @@ void calculate_triangle_slice(int x1, int y1, int x2, int y2, int x3, int y3, ma
 }
 
 template <typename VC>
-void calculate_full_slice(size_t start_index, size_t stop_index, matrix_t &distances,
-                     container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
+void calculate_full_slice(size_t start_index_left, size_t stop_index_left, size_t start_index_right, size_t stop_index_right,
+                     matrix_t &distances, container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
                      const std::function<out_t(VC &, VC &)> &fun) {
 
   auto rec_fun = [&](size_t left, size_t right) {
     distances(left, right) = fun(cluster_left.get(left), cluster_right.get(right)); 
   };
 
-  utils::matrix_recursion(start_index, stop_index, 0, cluster_right.size(), rec_fun); 
+  utils::matrix_recursion(start_index_left, stop_index_left, start_index_right, stop_index_right, rec_fun); 
 }
 
 // Inter-directory distances
@@ -94,12 +94,13 @@ matrix_t calculate_distances(
 
       matrix_t distances{cluster_left.size(), cluster_right.size()};
 
-      auto fun = [&](size_t start_index, size_t stop_index) {
-      calculate_full_slice<VC>(start_index, stop_index, std::ref(distances),
+      auto fun = [&](size_t start_index_left, size_t stop_index_left, size_t start_index_right, size_t stop_index_right) {
+      calculate_full_slice<VC>(start_index_left, stop_index_left, start_index_right, stop_index_right, std::ref(distances),
                            std::ref(cluster_left), std::ref(cluster_right), distance_function);
       };
+      
       parallel::parallelize(cluster_left.size(), cluster_right.size(), fun, requested_cores);
-      // parallel::sequential(cluster_left.size(), cluster_right.size(), fun, requested_cores);
+
       return distances; 
 }
 
