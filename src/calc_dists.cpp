@@ -114,7 +114,7 @@ int main(int argc, char *argv[]){
   }
 
   if (arguments.out_path.empty()) {
-    utils::print_matrix(distance_matrix);
+    //utils::print_matrix(distance_matrix);
   } 
   else if (arguments.out_path.extension() == ".h5" ||
              arguments.out_path.extension() == ".hdf5") {

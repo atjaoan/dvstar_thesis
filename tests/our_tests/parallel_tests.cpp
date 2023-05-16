@@ -41,12 +41,12 @@ TEST_F(ParallelTest, SequentialEqParallel) {
   matrix_t distances_sequantial{cluster.size(), cluster.size()};
 
   auto fun_parallel = [&](size_t start_index, size_t stop_index) {
-    calculate::calculate_full_slice<container::VLMC_vector>(start_index, stop_index, distances_parallel,
+    calculate::calculate_full_slice<container::VLMC_vector>(start_index, stop_index, 0, cluster.size(), distances_parallel,
                            cluster, cluster, distance_function);
   };
 
   auto fun_sequential = [&](size_t start_index, size_t stop_index) {
-    calculate::calculate_full_slice<container::VLMC_vector>(start_index, stop_index, distances_sequantial,
+    calculate::calculate_full_slice<container::VLMC_vector>(start_index, stop_index, 0, cluster.size(), distances_sequantial,
                            cluster, cluster, distance_function);
   };
 
@@ -68,7 +68,7 @@ TEST_F(ParallelTest, ReducedEqFullSlice) {
   };
 
   auto fun_sequential = [&](size_t start_index, size_t stop_index) {
-    calculate::calculate_full_slice<container::VLMC_vector>(start_index, stop_index, distances_sequantial,
+    calculate::calculate_full_slice<container::VLMC_vector>(start_index, stop_index, 0, cluster.size(), distances_sequantial,
                            cluster, cluster, distance_function);
   };
 

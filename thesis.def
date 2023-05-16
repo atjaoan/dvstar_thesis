@@ -12,8 +12,7 @@ From: debian:bullseye
 
     submodules /thesis/submodules
 
-    data/benchmarking/human thesis/data/benchmarking/human
-    data/small_ecoli_sets thesis/data/benchmarking/ecoli
+    data/benchmarking/ thesis/data/
 
     CMakeLists.txt /thesis/CMakeLists.txt
 
@@ -64,7 +63,17 @@ From: debian:bullseye
     #echo "Running tests"
 	#./kmer_tests
 
-%runscript
+%apprun benchmark
     . /venv/kmers_env/bin/activate
     cd /thesis
-    python3 bench.py benchmarkmin
+    python3 benchmarking.py benchmark $*
+
+%apprun parabench
+    . /venv/kmers_env/bin/activate
+    cd /thesis
+    python3 benchmarking.py parabench $*
+
+%apprun sizebenchmark
+    . /venv/kmers_env/bin/activate
+    cd /thesis
+    python3 benchmarking.py sizebenchmark $*

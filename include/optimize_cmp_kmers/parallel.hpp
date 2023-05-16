@@ -134,12 +134,18 @@ void parallelize(size_t size, const std::function<void(size_t, size_t)> &fun, co
   }
 }
 
-void parallelize(size_t size_left, size_t size_right, const std::function<void(size_t, size_t)> &fun, const size_t requested_cores) {
+void parallelize(size_t size_left, size_t size_right, const std::function<void(size_t, size_t, size_t, size_t)> &fun, const size_t requested_cores) {
   std::vector<std::thread> threads{};
-  // TODO only uses one size...
-  auto bounds = get_x_bounds(size_left, requested_cores);
-  for (auto &[start_index, stop_index] : bounds) {
-    threads.emplace_back(fun, start_index, stop_index);
+  if (size_left > size_right){
+    auto bounds = get_x_bounds(size_left, requested_cores);
+    for (auto &[start_index, stop_index] : bounds) {
+      threads.emplace_back(fun, start_index, stop_index, 0, size_right);
+    }
+  } else {
+    auto bounds = get_x_bounds(size_right, requested_cores);
+    for (auto &[start_index, stop_index] : bounds) {
+      threads.emplace_back(fun, 0, size_left, start_index, stop_index);
+    }
   }
 
   for (auto &thread : threads) {

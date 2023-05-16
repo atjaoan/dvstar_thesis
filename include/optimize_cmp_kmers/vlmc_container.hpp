@@ -587,15 +587,18 @@ class VLMC_sorted_search {
         get(i).next_char_prob *= cached_context.row(offset).rsqrt();
       }
       // Build summary
-      skip_size = std::ceil(std::log(container.size())); // std::sqrt(container.size());
-      // std::cout << "Skip size with sqrt = " << skip_size << " with log = " << std::ceil(std::log(container.size())) << std::endl; 
-      summary.reserve(skip_size);
-      //std::cout << "size: " << container.size() << " skip size: " << skip_size << "\n";
-      int i = 0;
-      for(;i < container.size() - skip_size; i += skip_size){
-        summary.push_back(Min_max_node(i, container[i+skip_size - 1].integer_rep));
-      }
-      summary.push_back(Min_max_node(i, container[size() - 1].integer_rep));
+      if (container.size() > 0) {
+        skip_size = std::ceil(std::log2(container.size())); 
+        if (skip_size == 0){
+          skip_size = 1; 
+        }
+        summary.reserve(container.size() / skip_size);
+        int i = 0;
+        for(;i < container.size() - skip_size; i += skip_size){
+          summary.push_back(Min_max_node(i, container[i+skip_size - 1].integer_rep));
+        }
+        summary.push_back(Min_max_node(i, container[size() - 1].integer_rep));
+      } 
     } 
 
     size_t size() const { return container.size(); }

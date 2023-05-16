@@ -835,7 +835,7 @@ void count_kmer_length_percentage(std::vector<std::filesystem::path> list_of_dir
   ofs.close();
 }
 
-void create_vlmc(std::filesystem::path path, std::vector<std::tuple<std::string, std::vector<int>>> &vlmcs, std::string id){
+void create_vlmc(std::filesystem::path path, std::array<std::vector<std::tuple<std::string, std::vector<int>>>,4> &vlmcs, std::string id, int dir_nb){
   std::ifstream ifs(path, std::ios::binary);
   cereal::BinaryInputArchive archive(ifs);
   std::vector<int> vlmc{};
@@ -848,16 +848,10 @@ void create_vlmc(std::filesystem::path path, std::vector<std::tuple<std::string,
   }
   ifs.close();
   std::sort(vlmc.begin(), vlmc.end());
-  vlmcs.push_back(std::make_tuple(id, vlmc));
+  vlmcs[dir_nb].push_back(std::make_tuple(id, vlmc));
 }
 
 void count_matching(std::vector<int> &left_kmers, std::vector<int> &right_kmers, std::string left_id, std::string right_id){
-  std::stringstream ss;
-  ss << "../tmp/integer_rep_distributions/missed-in-a-row/actual-counts/" << left_id << right_id << "distribution.txt";  
-  std::string path = ss.str(); 
-
-  std::filesystem::path output_path{path};
-  std::ofstream ofs(output_path.string());
   auto right_it = right_kmers.begin();
   auto right_end = right_kmers.end();
   auto left_it = left_kmers.begin();
@@ -865,94 +859,91 @@ void count_matching(std::vector<int> &left_kmers, std::vector<int> &right_kmers,
 
   auto left_size = left_kmers.size();
   auto right_size = right_kmers.size(); 
-  auto left_count = 0;
-  auto limit = left_size / 20;
 
-  auto count_hit = 0;
-  auto count_miss = 0;  
+  std::vector<int> misses_in_a_rows{}; 
+  auto miss_in_a_row = 0; 
+  auto left_i = 0;
+  auto right_i = 0;   
+
+  auto slice_count = 0; 
+  auto left_stop = left_size / 100; 
+
+  std::stringstream ss;
+  ss << "../tmp/integer_rep_distributions/missed-in-a-row/new-actual-counts/" << left_id << right_id << ".txt";  
+  std::string path = ss.str(); 
+  std::ofstream ofs(path);
+
   while(left_it != left_end && right_it != right_end){
-    // if (left_count >= limit) {
-    //   ofs << left_id << right_id << left_size << "_" << right_size << "_" << count_hit << "_" << count_miss << "\n";
-    //   count_hit = 0;
-    //   count_miss = 0;
-    //   left_count = 0; 
-    // }
+    if (left_i >= left_stop){
+      auto sum = 0; 
+      auto count = misses_in_a_rows.size();
+      for (int i = 0; i < misses_in_a_rows.size(); i++){
+        sum += misses_in_a_rows[i];
+      } 
+      auto avg = 0;
+      if (count > 0) {
+        avg = sum / count; 
+      }
+      ofs << slice_count << "_" << sum << "_" << count << "_" << avg << "\n"; 
+      misses_in_a_rows.clear(); 
+      slice_count++; 
+      left_i = 0; 
+    }
     auto left_kmer = *left_it;
     auto right_kmer = *right_it;
     if(left_kmer == right_kmer){
-      ofs << 0 << "\n";
-      // ++count_hit; 
       ++left_it; 
-      ++right_it;
-      // ++left_count; 
+      ++right_it; 
+      ++left_i;
+      ++right_i; 
+      misses_in_a_rows.push_back(miss_in_a_row); 
+      miss_in_a_row = 0; 
     } else if(left_kmer < right_kmer) {
-      ofs << 1 << "\n";
       ++left_it;
-      // ++count_miss;
-      // ++left_count;
+      ++left_i; 
+      ++miss_in_a_row;
     }
     else {
-      ofs << 1 << "\n";
       ++right_it;
-      // ++count_miss;
+      ++right_i;
+      ++miss_in_a_row;
     } 
   }
   ofs.close();
 }
 
 void count_size_of_intersect(std::vector<std::filesystem::path> left_list_of_dirs, std::vector<std::filesystem::path> right_list_of_dirs) {
-  auto max_amount_of_vlmcs = 3;
-  std::vector<std::tuple<std::string, std::vector<int>>> left_cluster{};
-  std::vector<std::tuple<std::string, std::vector<int>>> right_cluster{};
+  std::array<std::vector<std::tuple<std::string, std::vector<int>>>,4> left_cluster{};
+  std::array<std::vector<std::tuple<std::string, std::vector<int>>>,4> right_cluster{};
   std::cout << "Starting to build left" << std::endl; 
 
+  std::filesystem::path animal; 
+  auto max_amount_of_vlmcs = 50;
+  auto dir_nb = 0; 
   for (auto dir : left_list_of_dirs){
     int count = 0; 
     auto size = dir.stem(); 
-    auto animal = dir.parent_path().stem();
-    std::cout << "Building " << animal << std::endl; 
-    std::vector<int> length_count(15); 
-    std::stringstream ss;
-    ss << "../tmp/integer_rep_distributions/kmer-length-filled/" << animal << "_" << size << ".txt";  
-    std::string path = ss.str(); 
-    std::filesystem::path output_path{path};
-    std::ofstream ofs(output_path.string());
+    animal = dir.parent_path().stem();
+    std::cout << "Building " << animal << std::endl;
     for (auto dir_entry : std::filesystem::directory_iterator(dir)){
-      count += 1; 
-      std::ifstream ifs(dir_entry.path(), std::ios::binary);
-      cereal::BinaryInputArchive archive(ifs);
-      vlmc::VLMCKmer input_kmer{};
-
-      while (ifs.peek() != EOF){ 
-        archive(input_kmer);
-        auto kmer_length = input_kmer.length; 
-        length_count[kmer_length] += 1; 
-
+      if (count >= max_amount_of_vlmcs){
+        break; 
+      } else {
+        std::stringstream ss;
+        ss << animal.u8string() << "_" << count << "_";  
+        std::string id = ss.str(); 
+        create_vlmc(dir_entry, left_cluster, id, dir_nb); 
+        count++;
       }
-      ifs.close();
-      // if (count >= max_amount_of_vlmcs){
-      //   break; 
-      // } else {
-      //   std::stringstream ss;
-      //   ss << animal.u8string() << "_" << count << "_";  
-      //   std::string id = ss.str(); 
-      //   create_vlmc(dir_entry, left_cluster, id); 
-      //   count++;
-      // } 
     }
-
-    for (int i = 0; i < length_count.size(); i++){
-      ofs << i << "_" << length_count[i] / count << "\n"; 
-    }
-    ofs.close();
+    dir_nb++; 
   }
 
-  return; 
-
+  auto dir_r_nb = 0; 
   std::cout << "Starting to build right" << std::endl; 
-  for (auto dir : right_list_of_dirs){
+  for (auto dir : right_list_of_dirs){ 
     int count = 0; 
-    auto animal = dir.parent_path().stem();
+    animal = dir.parent_path().stem();
     std::cout << "Building " << animal << std::endl; 
     for (auto dir_entry : std::filesystem::directory_iterator(dir)){
       if (count >= max_amount_of_vlmcs){
@@ -961,22 +952,42 @@ void count_size_of_intersect(std::vector<std::filesystem::path> left_list_of_dir
       std::stringstream ss;
       ss << animal.u8string() << "_" << count << "_";  
       std::string id = ss.str(); 
-      create_vlmc(dir_entry, right_cluster, id); 
+      create_vlmc(dir_entry, right_cluster, id, dir_r_nb); 
       count++; 
     }
+    dir_r_nb++; 
   }
 
   std::cout << "Calculating -> cluster size " << left_cluster.size() << " " << right_cluster.size() << std::endl; 
-  for (int left = 0; left < left_cluster.size(); left++){
-    for (int right = 0; right < right_cluster.size(); right++){
-      auto left_kmers = std::get<1>(left_cluster[left]);
-      auto right_kmers = std::get<1>(right_cluster[right]); 
-      auto left_id = std::get<0>(left_cluster[left]);
-      auto right_id = std::get<0>(right_cluster[right]);
-      if (left_kmers.size() < right_kmers.size()) {
-        count_matching(left_kmers, right_kmers, left_id, right_id);
-      } else {
-        count_matching(right_kmers, left_kmers, left_id, right_id);
+  std::stringstream ss;
+  ss << "../tmp/integer_rep_distributions/shared-kmers/distribution_large.txt";  
+  std::string path = ss.str(); 
+  std::ofstream ofs(path);
+
+  for (int left_dir = 0; left_dir < 4; left_dir++){
+    for (int right_dir = 0; right_dir < 4; right_dir++){
+      if (left_dir == 0 && right_dir == 0){
+        for (int left = 0; left < left_cluster[left_dir].size(); left++){
+          for (int right = 0; right < right_cluster[right_dir].size(); right++){
+            auto left_kmers = std::get<1>(left_cluster[left_dir][left]);
+            auto right_kmers = std::get<1>(right_cluster[right_dir][right]); 
+            auto left_id = std::get<0>(left_cluster[left_dir][left]);
+            auto right_id = std::get<0>(right_cluster[right_dir][right]);
+            count_matching(left_kmers, right_kmers, left_id, right_id);
+            // ofs << left_id << right_id << res << "\n"; 
+          }     
+        }
+      } else if (left_dir > 0 && right_dir >= left_dir){
+        for (int left = 0; left < left_cluster[left_dir].size(); left++){
+          for (int right = 0; right < right_cluster[right_dir].size(); right++){
+            auto left_kmers = std::get<1>(left_cluster[left_dir][left]);
+            auto right_kmers = std::get<1>(right_cluster[right_dir][right]); 
+            auto left_id = std::get<0>(left_cluster[left_dir][left]);
+            auto right_id = std::get<0>(right_cluster[right_dir][right]);
+            count_matching(left_kmers, right_kmers, left_id, right_id);
+            // ofs << left_id << right_id << res << "\n"; 
+          }     
+        }
       }
     }
   }
@@ -985,36 +996,19 @@ void count_size_of_intersect(std::vector<std::filesystem::path> left_list_of_dir
 int main(int argc, char *argv[]){
   std::vector<std::filesystem::path> left_list_of_dirs{};
   std::vector<std::filesystem::path> right_list_of_dirs{};
-  left_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/ecoli/small"});
-  left_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/ecoli/medium"});
+
   left_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/ecoli/large"});
-
-  left_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/human/small"});
-  left_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/human/medium"});
   left_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/human/large"});
-
-  left_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/corn/small"});
-  left_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/corn/medium"});
+  left_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/turkey/large"});
   left_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/corn/large"});
 
-  left_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/turkey/small"});
-  left_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/turkey/medium"});
-  left_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/turkey/large"});
-  // left_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/corn/mega"});
-
-  // right_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/human/mega"});
-  // right_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/turkey/mega"});
-  right_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/corn/mega"});
-  // count_kmer_length_percentage(list_of_dirs);
-  
-
+  right_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/ecoli/large"});
+  right_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/human/large"});
+  right_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/turkey/large"});
+  right_list_of_dirs.push_back(std::filesystem::path{"../data/benchmarking/corn/large"});
   count_size_of_intersect(left_list_of_dirs, right_list_of_dirs);
-  // int num_items = 1500;
 
-  // print_kmers_to_file("../data/benchmarking/human/large/", "human");
-  // print_kmers_to_file("../data/benchmarking/turkey/large/", "turkey");
-  // print_kmers_to_file("../data/benchmarking/corn/large/", "corn");
-  // print_kmers_to_file("../data/benchmarking/ecoli/large/", "ecoli");
+  // int num_items = 1500;
 
   // run_timer<container::VLMC_vector>("Vector");
   //run_timer<container::VLMC_sorted_vector>("Sorted Vector");
