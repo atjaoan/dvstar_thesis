@@ -10,14 +10,42 @@
 
 #include "BS_thread_pool.hpp"
 
+matrix_t calculate_kmer_major(parser::cli_arguments arguments, const size_t nr_cores){
+  size_t use_cores = nr_cores; 
+  size_t max_cores = std::thread::hardware_concurrency(); 
+  if (max_cores < nr_cores){
+    use_cores = max_cores;
+  } 
+  BS::thread_pool pool(use_cores); 
+
+  std::cout << "Loading primary cluster...";
+  auto cluster = cluster::get_kmer_cluster(arguments.first_VLMC_path, pool, arguments.background_order, arguments.set_size);
+  std::cout << "finished." << std::endl; 
+  if (arguments.second_VLMC_path.empty()){
+    std::cout << "Calculating distances for single cluster." << std::endl; 
+    return calculate::calculate_distance_major(cluster, cluster, pool);
+  }
+  std::cout << "Loading secondary cluster...";
+  auto cluster_to = cluster::get_kmer_cluster(arguments.second_VLMC_path, pool, arguments.background_order, arguments.set_size);
+  std::cout << "finished." << std::endl; 
+  std::cout << "Calculating distances." << std::endl; 
+  return calculate::calculate_distance_major(cluster, cluster_to, pool);
+}
+
 template <typename VC>
 matrix_t calculate_cluster_distance(parser::cli_arguments arguments, const size_t nr_cores){
   auto distance_function = parser::parse_distance_function<VC>(arguments);
+  std::cout << "Loading primary cluster...";
   auto cluster = cluster::get_cluster<VC>(arguments.first_VLMC_path, nr_cores, arguments.background_order, arguments.set_size);
+  std::cout << "finished." << std::endl; 
   if (arguments.second_VLMC_path.empty()){
+    std::cout << "Calculating distances for single cluster of size " << cluster.size() << std::endl; 
     return calculate::calculate_distances<VC>(cluster, distance_function, nr_cores);
   } else {
+    std::cout << "Loading secondary cluster...";
     auto cluster_to = cluster::get_cluster<VC>(arguments.second_VLMC_path, nr_cores, arguments.background_order, arguments.set_size);
+    std::cout << "finished." << std::endl; 
+    std::cout << "Calculating distances matrix of size " << cluster.size() << "x" << cluster_to.size() << std::endl;
     return calculate::calculate_distances<VC>(cluster, cluster_to, distance_function, nr_cores);
   }
 }
@@ -39,25 +67,10 @@ matrix_t apply_container(parser::cli_arguments arguments, parser::VLMC_Rep vlmc_
     return calculate_cluster_distance<container::VLMC_Alt_Btree>(arguments, nr_cores);
   } else if (vlmc_container==parser::VLMC_Rep::vlmc_sorted_search){
     return calculate_cluster_distance<container::VLMC_sorted_search>(arguments, nr_cores);
-  } else if (vlmc_container==parser::VLMC_Rep::vlmc_sorted_search_ey){
-    return calculate_cluster_distance<container::VLMC_sorted_search_ey>(arguments, nr_cores);
+  } else if (vlmc_container==parser::VLMC_Rep::vlmc_kmer_major){
+    std::cout << "I am here" << std::endl; 
+    return calculate_kmer_major(arguments, nr_cores);
   }
-}
-
-matrix_t calculate_kmer_major(parser::cli_arguments arguments, const size_t nr_cores){
-  size_t use_cores = nr_cores; 
-  size_t max_cores = std::thread::hardware_concurrency(); 
-  if (max_cores < nr_cores){
-    use_cores = max_cores;
-  } 
-  BS::thread_pool pool(use_cores); 
-
-  auto cluster = cluster::get_kmer_cluster(arguments.first_VLMC_path, pool, arguments.background_order, arguments.set_size);
-  if (arguments.second_VLMC_path.empty()){
-    return calculate::calculate_distance_major(cluster, cluster, pool);
-  }
-  auto cluster_to = cluster::get_kmer_cluster(arguments.second_VLMC_path, pool, arguments.background_order, arguments.set_size);
-  return calculate::calculate_distance_major(cluster, cluster_to, pool);
 }
 
 std::map<parser::VLMC_Rep, std::string> VLMC_Rep_map{
@@ -69,21 +82,8 @@ std::map<parser::VLMC_Rep, std::string> VLMC_Rep_map{
       {parser::VLMC_Rep::vlmc_ey, "ey"},
       {parser::VLMC_Rep::vlmc_alt_btree, "alt-btree"},
       {parser::VLMC_Rep::vlmc_sorted_search, "sorted-search"},
-      {parser::VLMC_Rep::vlmc_sorted_search_ey, "sorted-search-ey"}
+      {parser::VLMC_Rep::vlmc_kmer_major, "kmer-major"}
   };
-
-std::string get_group_name(parser::cli_arguments arguments){
-  auto ret_str = "dop-" + std::to_string(arguments.dop); 
-  ret_str += "-set-size-" + std::to_string(arguments.set_size); 
-  ret_str += "-bo-" + std::to_string(arguments.background_order);
-  if (arguments.mode == parser::Mode::compare) {
-    auto in_data = utils::get_filename(arguments.first_VLMC_path);
-    return VLMC_Rep_map[arguments.vlmc] + "-" + in_data + "-" + ret_str; 
-  } else {
-    auto in_data = utils::get_filename(arguments.first_VLMC_path);
-    return "kmer-major-" + in_data + "-" + ret_str;
-  }
-}
 
 int main(int argc, char *argv[]){
   CLI::App app{"Distance comparison of either one directory or between two different directories."};
@@ -105,15 +105,7 @@ int main(int argc, char *argv[]){
 
   size_t nr_cores = parser::parse_dop(arguments.dop);
 
-  matrix_t distance_matrix;
-
-  if(arguments.mode==parser::Mode::compare){
-    std::cout << "Running Normal implementation" << std::endl; 
-    distance_matrix = apply_container(arguments, arguments.vlmc, nr_cores);
-  } else {
-    std::cout << "Running Kmer-Major implementation" << std::endl; 
-    distance_matrix = calculate_kmer_major(arguments, nr_cores);
-  }
+  matrix_t distance_matrix = apply_container(arguments, arguments.vlmc, nr_cores);
 
   if (arguments.out_path.empty()) {
     // utils::print_matrix(distance_matrix);
@@ -121,7 +113,6 @@ int main(int argc, char *argv[]){
   else if (arguments.out_path.extension() == ".h5" ||
              arguments.out_path.extension() == ".hdf5") {
     HighFive::File file{arguments.out_path, HighFive::File::OpenOrCreate};
-    auto group_name = get_group_name(arguments); 
 
     if (!file.exist("distances")) {
       file.createGroup("distances");

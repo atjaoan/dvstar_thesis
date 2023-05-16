@@ -13,11 +13,6 @@
 
 namespace parser {
 
-enum Mode {
-  compare,
-  kmer_major
-};
-
 enum Distance_function {
   d2, 
   d2star, 
@@ -45,11 +40,10 @@ enum VLMC_Rep {
   vlmc_ey,
   vlmc_alt_btree,
   vlmc_sorted_search,
-  vlmc_sorted_search_ey
+  vlmc_kmer_major
 };
 
 struct cli_arguments {
-  Mode mode{Mode::compare};
   Distance_function dist_fn{Distance_function::dvstar};
   std::filesystem::path first_VLMC_path{};
   std::filesystem::path second_VLMC_path{};
@@ -57,7 +51,7 @@ struct cli_arguments {
   size_t dop {1};
   int set_size {-1};
   Cluster_Rep cluster{Cluster_Rep::cluster_vector};
-  VLMC_Rep vlmc{VLMC_Rep::vlmc_vector}; 
+  VLMC_Rep vlmc{VLMC_Rep::vlmc_sorted_search}; 
   size_t background_order {0}; 
 };
 
@@ -81,11 +75,6 @@ size_t parse_dop(size_t requested_cores){
 }
 
 void add_options(CLI::App &app, cli_arguments &arguments) {
-  std::map<std::string, Mode> mode_map{
-      {"compare", Mode::compare},
-      {"kmer-major", Mode::kmer_major},
-  };
-
   std::map<std::string, Distance_function> function_map{
       {"kl", Distance_function::kl},
       {"dvstar", Distance_function::dvstar},
@@ -100,17 +89,12 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
       {"ey", VLMC_Rep::vlmc_ey},
       {"alt-btree", VLMC_Rep::vlmc_alt_btree},
       {"sorted-search", VLMC_Rep::vlmc_sorted_search},
-      {"sorted-search-ey", VLMC_Rep::vlmc_sorted_search_ey}
+      {"kmer-major", VLMC_Rep::vlmc_kmer_major}
   };
 
   std::map<std::string, Cluster_Rep> cluster_rep_map{
       {"vector", Cluster_Rep::cluster_vector}
   };
-
-  app.add_option(
-         "-m,--mode", arguments.mode,
-         "Program mode, 'compare', 'kmer-major'." "Place holder descriptiopn")
-      ->transform(CLI::CheckedTransformer(mode_map, CLI::ignore_case));
 
   app.add_option("--function", arguments.dist_fn,
                  "Distance function to use 'dvstar', or 'kl'.")
