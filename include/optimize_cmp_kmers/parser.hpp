@@ -50,7 +50,6 @@ struct cli_arguments {
   std::filesystem::path out_path{};
   size_t dop {1};
   int set_size {-1};
-  Cluster_Rep cluster{Cluster_Rep::cluster_vector};
   VLMC_Rep vlmc{VLMC_Rep::vlmc_sorted_search}; 
   size_t background_order {0}; 
 };
@@ -92,21 +91,17 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
       {"kmer-major", VLMC_Rep::vlmc_kmer_major}
   };
 
-  std::map<std::string, Cluster_Rep> cluster_rep_map{
-      {"vector", Cluster_Rep::cluster_vector}
-  };
-
   app.add_option("--function", arguments.dist_fn,
                  "Distance function to use 'dvstar', or 'kl'.")
       ->transform(CLI::CheckedTransformer(function_map, CLI::ignore_case));
 
   app.add_option(
       "-p,--VLMC-path", arguments.first_VLMC_path,
-      "Required for distance calcualtion. Path to saved bintree directory. Computes the inter-distance between the trees of the directory.");
+      "Required for distance calculation. Path to saved bintree directory. Computes the inter-distance between the trees of the directory.");
 
   app.add_option(
       "-s,--snd-VLMC-path", arguments.second_VLMC_path,
-      "Optional path to saved bintree directory. Calculates distance between the trees in VLMC-path and snd-VLMC-path.");
+      "Optional path to saved bintree directory. Calculates distance between the trees specified in -p (primary) and -s (secondary).");
 
   app.add_option("-o,--matrix-path", arguments.out_path,
                  "Path to hdf5 file where scores will be stored.");
@@ -117,10 +112,6 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
   app.add_option("-v,--vlmc-rep", arguments.vlmc,
                  "Vlmc container representation to use.")
       ->transform(CLI::CheckedTransformer(VLMC_Rep_map, CLI::ignore_case));
-
-  app.add_option("-c,--cluster-rep", arguments.cluster,
-                 "Cluster container representation to use.")
-      ->transform(CLI::CheckedTransformer(cluster_rep_map, CLI::ignore_case));
 
   app.add_option("-b,--background-order", arguments.background_order,
                  "Background order.");
