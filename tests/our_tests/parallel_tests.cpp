@@ -88,6 +88,7 @@ TEST_F(ParallelTest, ReducedEqFullSlice) {
 
 TEST_F(ParallelTest, FullComparisonCheck) {
   auto nr_cores = 1; 
+  BS::thread_pool pool(nr_cores); 
   while(nr_cores <= 8){
     // Sorted Vector Implementation
     auto left_cluster_s = cluster::get_cluster<container::VLMC_sorted_vector>(first_directory, 1, background_order);
@@ -95,9 +96,9 @@ TEST_F(ParallelTest, FullComparisonCheck) {
     matrix_t distances_sorted_vector = calculate::calculate_distances<container::VLMC_sorted_vector>(left_cluster_s, right_cluster_s, distance_function_sv, nr_cores);
 
     // Kmer major implementation
-    auto left_cluster_k = cluster::get_kmer_cluster(first_directory, background_order);
-    auto right_cluster_k = cluster::get_kmer_cluster(first_directory, background_order);
-    matrix_t distances_k_major = calculate::calculate_distance_major(left_cluster_k, right_cluster_k, nr_cores); 
+    auto left_cluster_k = cluster::get_kmer_cluster(first_directory, pool, background_order);
+    auto right_cluster_k = cluster::get_kmer_cluster(first_directory, pool, background_order);
+    matrix_t distances_k_major = calculate::calculate_distance_major(left_cluster_k, right_cluster_k, pool); 
 
     // Dvstar Original implementation 
     matrix_t distances_org_dvstar{distances_sorted_vector.cols(), distances_sorted_vector.rows()};

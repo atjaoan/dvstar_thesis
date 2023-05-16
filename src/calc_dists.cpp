@@ -52,9 +52,11 @@ matrix_t calculate_kmer_major(parser::cli_arguments arguments, const size_t nr_c
   } 
   BS::thread_pool pool(use_cores); 
 
-  //TODO use cores
-  auto cluster = cluster::get_kmer_cluster(arguments.first_VLMC_path, pool, arguments.background_order);
-  auto cluster_to = cluster::get_kmer_cluster(arguments.second_VLMC_path, pool, arguments.background_order);
+  auto cluster = cluster::get_kmer_cluster(arguments.first_VLMC_path, pool, arguments.background_order, arguments.set_size);
+  if (arguments.second_VLMC_path.empty()){
+    return calculate::calculate_distance_major(cluster, cluster, pool);
+  }
+  auto cluster_to = cluster::get_kmer_cluster(arguments.second_VLMC_path, pool, arguments.background_order, arguments.set_size);
   return calculate::calculate_distance_major(cluster, cluster_to, pool);
 }
 
@@ -114,7 +116,7 @@ int main(int argc, char *argv[]){
   }
 
   if (arguments.out_path.empty()) {
-    //utils::print_matrix(distance_matrix);
+    // utils::print_matrix(distance_matrix);
   } 
   else if (arguments.out_path.extension() == ".h5" ||
              arguments.out_path.extension() == ".hdf5") {

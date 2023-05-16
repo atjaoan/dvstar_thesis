@@ -137,10 +137,11 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
   auto right_cluster_h = cluster::get_cluster<container::VLMC_hashmap>(path_to_bintrees, 1, background_order);
   matrix_t distances_hashmap = calculate::calculate_distances<container::VLMC_hashmap>(left_cluster_h, right_cluster_h, dist_func_h, 1); 
 
+  BS::thread_pool pool(1); 
   // Kmer major implementation
-  auto left_cluster_k = cluster::get_kmer_cluster(path_to_bintrees, background_order);
-  auto right_cluster_k = cluster::get_kmer_cluster(path_to_bintrees, background_order);
-  matrix_t distances_k_major = calculate::calculate_distance_major(left_cluster_k, right_cluster_k, 1); 
+  auto left_cluster_k = cluster::get_kmer_cluster(path_to_bintrees, pool, background_order);
+  auto right_cluster_k = cluster::get_kmer_cluster(path_to_bintrees, pool, background_order);
+  matrix_t distances_k_major = calculate::calculate_distance_major(left_cluster_k, right_cluster_k, pool); 
 
   // Veb Implementation
   auto left_cluster_veb = cluster::get_cluster<container::VLMC_Veb>(path_to_bintrees, 1, background_order);

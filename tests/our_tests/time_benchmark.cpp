@@ -301,13 +301,14 @@ void benchmark_kmer_comparison(){
 }
 
 void benchmark_kmer_major_load_calc(int nr_cores){
+  BS::thread_pool pool(nr_cores); 
   std::cout << "Running test with " << nr_cores << " cores" << std::endl; 
   std::filesystem::path path{"../data/medium_test"};
   auto start_loading = std::chrono::steady_clock::now();
-  auto cluster = cluster::get_kmer_cluster(path, 0);
+  auto cluster = cluster::get_kmer_cluster(path, pool);
   auto end_loading = std::chrono::steady_clock::now();
 
-  matrix_t distance_matrix = calculate::calculate_distance_major(cluster, cluster, nr_cores);
+  matrix_t distance_matrix = calculate::calculate_distance_major(cluster, cluster, pool);
   auto end_calc = std::chrono::steady_clock::now();
 
   auto time_loading = std::chrono::duration_cast<std::chrono::microseconds>(end_loading - start_loading).count();

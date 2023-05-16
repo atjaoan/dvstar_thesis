@@ -52,10 +52,9 @@ container::Cluster_Container<VC> old_get_cluster(const std::filesystem::path &di
   return cluster; 
 }
 
-std::vector<container::Kmer_Cluster> get_kmer_cluster(const std::filesystem::path &directory, BS::thread_pool& pool, const size_t background_order = 0){
+std::vector<container::Kmer_Cluster> get_kmer_cluster(const std::filesystem::path &directory, BS::thread_pool& pool, 
+          const size_t background_order = 0, const int set_size = -1){
   std::vector<std::filesystem::path> paths{};
-
-  auto set_size = -1; 
 
   for (const auto& dir_entry : recursive_directory_iterator(directory)) {
     paths.push_back(dir_entry.path());
