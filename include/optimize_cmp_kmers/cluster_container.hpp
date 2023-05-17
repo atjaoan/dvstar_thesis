@@ -89,8 +89,6 @@ class Kmer_Cluster {
       return container[bucket_num]; 
     }
 
-    int bucket_count() { return container.bucket_count(); }
-
     int experimental_bucket_count() { 
       auto count = 0;
       for (auto it = container.begin(); it != container.end(); it++){
@@ -109,29 +107,6 @@ class Kmer_Cluster {
 
     std::unordered_map<int, std::vector<Kmer_Pair>>::iterator find(int bucket_num){
       return container.find(bucket_num); 
-    }
-
-    int get_bucket(const Kmer_Pair& kmer_pair){
-      return container.bucket(kmer_pair.id);
-    }
-
-    bool is_bucket_empty(int bucket_num){
-      return container.find(bucket_num) != container.end();
-    }
-
-    void prettyPrint(){
-      for (auto it = container.begin(); it != container.end(); it++){
-      // for (int bucket_num = 0; bucket_num < container.max_size(); bucket_num++){
-        std::cout << "Bucket number " << it->first; 
-        if (it->second.size() < 1){
-          std::cout << "()" << std::endl; 
-          continue; 
-        }
-        for (auto it : it->second){ // (auto it = container.begin(bucket_num); it != container.end(bucket_num); ++it){
-          std::cout << "(" << it.id << ", " << it.kmer.integer_rep << ") ";  
-        }
-        std::cout << std::endl;
-      }
     }
 };
 }

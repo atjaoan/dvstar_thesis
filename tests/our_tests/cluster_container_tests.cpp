@@ -39,10 +39,10 @@ TEST_F(ClusterContainerTest, VlmcSizeNonZeroAfterAddToContainer) {
   EXPECT_GT(container.get(0).size(), 0);
 }
 
-TEST_F(ClusterContainerTest, KmerContainerGet){
-  container::Kmer_Cluster container{};
-  container::Kmer_Pair kmer0 = container::Kmer_Pair(container::RI_Kmer(0), 0);
-  container.push(kmer0);
-  std::vector<container::Kmer_Pair> kmer_bucket = container.get(container.get_bucket(kmer0));
-  EXPECT_EQ(kmer0.id, kmer_bucket[0].id);
-}
+// TEST_F(ClusterContainerTest, KmerContainerGet){
+//   container::Kmer_Cluster container{};
+//   container::Kmer_Pair kmer0 = container::Kmer_Pair(container::RI_Kmer(0), 0);
+//   container.push(kmer0);
+//   std::vector<container::Kmer_Pair> kmer_bucket = container.get(container.get_bucket(kmer0));
+//   EXPECT_EQ(kmer0.id, kmer_bucket[0].id);
+// }
