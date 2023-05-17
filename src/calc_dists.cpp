@@ -18,36 +18,26 @@ matrix_t calculate_kmer_major(parser::cli_arguments arguments, const size_t nr_c
   } 
   BS::thread_pool pool(use_cores); 
 
-  std::cout << "Loading primary cluster...";
   auto cluster = cluster::get_kmer_cluster(arguments.first_VLMC_path, pool, arguments.background_order, arguments.set_size);
-  std::cout << "finished." << std::endl; 
   if (arguments.second_VLMC_path.empty()){
     std::cout << "Calculating distances for single cluster." << std::endl; 
     return calculate::calculate_distance_major(cluster, cluster, pool);
   }
-  std::cout << "Loading secondary cluster...";
   auto cluster_to = cluster::get_kmer_cluster(arguments.second_VLMC_path, pool, arguments.background_order, arguments.set_size);
-  std::cout << "finished." << std::endl; 
   std::cout << "Calculating distances." << std::endl; 
   return calculate::calculate_distance_major(cluster, cluster_to, pool);
 }
 
 template <typename VC>
 matrix_t calculate_cluster_distance(parser::cli_arguments arguments, const size_t nr_cores){
-  auto distance_function = parser::parse_distance_function<VC>(arguments);
-  std::cout << "Loading primary cluster...";
   auto cluster = cluster::get_cluster<VC>(arguments.first_VLMC_path, nr_cores, arguments.background_order, arguments.set_size);
-  std::cout << "finished." << std::endl; 
   if (arguments.second_VLMC_path.empty()){
     std::cout << "Calculating distances for single cluster of size " << cluster.size() << std::endl; 
-    return calculate::calculate_distances<VC>(cluster, distance_function, nr_cores);
-  } else {
-    std::cout << "Loading secondary cluster...";
-    auto cluster_to = cluster::get_cluster<VC>(arguments.second_VLMC_path, nr_cores, arguments.background_order, arguments.set_size);
-    std::cout << "finished." << std::endl; 
-    std::cout << "Calculating distances matrix of size " << cluster.size() << "x" << cluster_to.size() << std::endl;
-    return calculate::calculate_distances<VC>(cluster, cluster_to, distance_function, nr_cores);
-  }
+    return calculate::calculate_distances<VC>(cluster, nr_cores);
+  } 
+  auto cluster_to = cluster::get_cluster<VC>(arguments.second_VLMC_path, nr_cores, arguments.background_order, arguments.set_size);
+  std::cout << "Calculating distances matrix of size " << cluster.size() << "x" << cluster_to.size() << std::endl;
+  return calculate::calculate_distances<VC>(cluster, cluster_to, nr_cores);
 }
 
 matrix_t apply_container(parser::cli_arguments arguments, parser::VLMC_Rep vlmc_container, const size_t nr_cores){
@@ -107,7 +97,7 @@ int main(int argc, char *argv[]){
   matrix_t distance_matrix = apply_container(arguments, arguments.vlmc, nr_cores);
 
   if (arguments.out_path.empty()) {
-    // utils::print_matrix(distance_matrix);
+    utils::print_matrix(distance_matrix);
   } 
   else if (arguments.out_path.extension() == ".h5" ||
              arguments.out_path.extension() == ".hdf5") {

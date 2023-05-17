@@ -39,7 +39,7 @@ protected:
   int background_order = 0;
 
   std::function<out_t(VLMC_vector &, VLMC_vector &)> dist_func = [&](auto &left, auto &right) {
-      return distance::dvstar<VLMC_vector>(left, right, background_order);
+      return distance::dvstar<VLMC_vector>(left, right);
   };
 };
 
@@ -88,7 +88,7 @@ TEST_F(DvstarTests, TestBackgroundOrder) {
     container::VLMC_vector first_vlmc_vector{first_bintree, order};
     container::VLMC_vector second_vlmc_vector{second_bintree, order};
 
-    auto dist_vector = distance::dvstar<VLMC_vector>(first_vlmc_vector, second_vlmc_vector, order);
+    auto dist_vector = distance::dvstar<VLMC_vector>(first_vlmc_vector, second_vlmc_vector);
     auto old_dvstar_implementation = vlmc::dvstar(first_bintree, second_bintree, order);
 
     EXPECT_NEAR(old_dvstar_implementation, dist_vector, error_tolerance);

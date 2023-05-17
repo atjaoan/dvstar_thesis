@@ -16,11 +16,10 @@ using kmer_pair = container::Kmer_Pair;
 
 template <typename VC>
 void calculate_reduced_slice(size_t start_index, size_t stop_index, matrix_t &distances,
-                     container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
-                     const std::function<out_t(VC &, VC &)> &fun) {
+                     container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right) {
   
   auto rec_fun = [&](size_t left, size_t right) {
-    distances(left, right) = fun(cluster_left.get(left), cluster_right.get(right)); 
+    distances(left, right) = distance::dvstar<VC>(cluster_left.get(left), cluster_right.get(right)); 
   };
 
   utils::half_matrix_recursion(start_index, stop_index, 0, cluster_right.size(), rec_fun); 
@@ -28,12 +27,11 @@ void calculate_reduced_slice(size_t start_index, size_t stop_index, matrix_t &di
 
 template <typename VC>
 void calculate_triangle_slice(int x1, int y1, int x2, int y2, int x3, int y3, matrix_t &distances, 
-          container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
-                     const std::function<out_t(VC &, VC &)> &fun) {
+          container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right) {
 
   auto rec_fun = [&](int left, int right) {
     if (distances(left, right) == 0){
-      distances(left,right) = fun(cluster_left.get(left), cluster_right.get(right));
+      distances(left, right) = distance::dvstar<VC>(cluster_left.get(left), cluster_right.get(right));
     }  
   };
 
@@ -54,11 +52,10 @@ void calculate_triangle_slice(int x1, int y1, int x2, int y2, int x3, int y3, ma
 
 template <typename VC>
 void calculate_full_slice(size_t start_index_left, size_t stop_index_left, size_t start_index_right, size_t stop_index_right,
-                     matrix_t &distances, container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
-                     const std::function<out_t(VC &, VC &)> &fun) {
+                     matrix_t &distances, container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right) {
 
   auto rec_fun = [&](size_t left, size_t right) {
-    distances(left, right) = fun(cluster_left.get(left), cluster_right.get(right)); 
+    distances(left, right) = distance::dvstar<VC>(cluster_left.get(left), cluster_right.get(right)); 
   };
 
   utils::matrix_recursion(start_index_left, stop_index_left, start_index_right, stop_index_right, rec_fun); 
@@ -66,21 +63,15 @@ void calculate_full_slice(size_t start_index_left, size_t stop_index_left, size_
 
 // Inter-directory distances
 template <typename VC> 
-matrix_t calculate_distances(
-    container::Cluster_Container<VC> &cluster, std::function<out_t(VC &, VC &)> &distance_function,
-    size_t requested_cores){
+matrix_t calculate_distances(container::Cluster_Container<VC> &cluster, size_t requested_cores){
 
   matrix_t distances = matrix_t::Constant(cluster.size(), cluster.size(), 0);
 
-  // auto fun = [&](size_t start_index, size_t stop_index) {
-  //   calculate_reduced_slice<VC>(start_index, stop_index, distances,
-  //                          cluster, cluster, distance_function);
-  // };
-
   auto fun = [&](int x1, int y1, int x2, int y2, int x3, int y3) {  
     calculate_triangle_slice<VC>(x1, y1, x2, y2, x3, y3, distances,
-                           cluster, cluster, distance_function);
+                           cluster, cluster);
   };
+
   parallel::parallelize_triangle(cluster.size(), fun, requested_cores);
   return distances; 
 }
@@ -89,21 +80,22 @@ matrix_t calculate_distances(
 template <typename VC>
 matrix_t calculate_distances(
     container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
-    std::function<out_t(VC &, VC &)> &distance_function,
     size_t requested_cores){
 
       matrix_t distances{cluster_left.size(), cluster_right.size()};
 
       auto fun = [&](size_t start_index_left, size_t stop_index_left, size_t start_index_right, size_t stop_index_right) {
       calculate_full_slice<VC>(start_index_left, stop_index_left, start_index_right, stop_index_right, std::ref(distances),
-                           std::ref(cluster_left), std::ref(cluster_right), distance_function);
+                           std::ref(cluster_left), std::ref(cluster_right));
       };
       
       parallel::parallelize(cluster_left.size(), cluster_right.size(), fun, requested_cores);
-
       return distances; 
 }
 
+//--------------------------//
+// Kmer-major implementation//
+//--------------------------//
 void calculate_kmer_buckets(container::Kmer_Cluster &cluster_left, container::Kmer_Cluster &cluster_right,
     int left_offset, int right_offset, matrix_t &distances) {
   matrix_t dot_prod = matrix_t::Zero(cluster_left.size(), cluster_right.size());

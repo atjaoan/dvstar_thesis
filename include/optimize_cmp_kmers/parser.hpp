@@ -44,7 +44,6 @@ enum VLMC_Rep {
 };
 
 struct cli_arguments {
-  Distance_function dist_fn{Distance_function::dvstar};
   std::filesystem::path first_VLMC_path{};
   std::filesystem::path second_VLMC_path{};
   std::filesystem::path out_path{};
@@ -53,17 +52,6 @@ struct cli_arguments {
   VLMC_Rep vlmc{VLMC_Rep::vlmc_sorted_search}; 
   size_t background_order {0}; 
 };
-
-template <typename VC>
-std::function<out_t(VC &, VC &)> parse_distance_function(cli_arguments arguments) {
-  if (arguments.dist_fn == parser::Distance_function::dvstar) {
-    auto fun = [&](auto &left, auto &right) {
-      return distance::dvstar<VC>(left, right, arguments.background_order);
-    };
-    return fun; 
-  } 
-  throw std::invalid_argument("Invalid distance function name.");
-}
 
 size_t parse_dop(size_t requested_cores){
   if(requested_cores < 1){
@@ -74,11 +62,6 @@ size_t parse_dop(size_t requested_cores){
 }
 
 void add_options(CLI::App &app, cli_arguments &arguments) {
-  std::map<std::string, Distance_function> function_map{
-      {"kl", Distance_function::kl},
-      {"dvstar", Distance_function::dvstar},
-  };
-
   std::map<std::string, VLMC_Rep> VLMC_Rep_map{
       {"vector", VLMC_Rep::vlmc_vector},
       {"sorted-vector", VLMC_Rep::vlmc_sorted_vector},
@@ -90,10 +73,6 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
       {"sorted-search", VLMC_Rep::vlmc_sorted_search},
       {"kmer-major", VLMC_Rep::vlmc_kmer_major}
   };
-
-  app.add_option("--function", arguments.dist_fn,
-                 "Distance function to use 'dvstar', or 'kl'.")
-      ->transform(CLI::CheckedTransformer(function_map, CLI::ignore_case));
 
   app.add_option(
       "-p,--VLMC-path", arguments.first_VLMC_path,

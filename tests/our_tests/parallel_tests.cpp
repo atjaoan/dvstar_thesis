@@ -24,14 +24,6 @@ protected:
   std::filesystem::path second_bintree{"../data/test_VLMCs"};
 
   size_t background_order = 0; 
-
-  std::function<out_t(container::VLMC_vector &, container::VLMC_vector &)> distance_function = [&](auto &left, auto &right) {
-      return distance::dvstar(left, right, background_order);
-  };
-
-  std::function<out_t(container::VLMC_sorted_vector &, container::VLMC_sorted_vector &)> distance_function_sv = [&](auto &left, auto &right) {
-      return distance::dvstar(left, right, background_order);
-  };
 };
 
 TEST_F(ParallelTest, SequentialEqParallel) {
@@ -42,12 +34,12 @@ TEST_F(ParallelTest, SequentialEqParallel) {
 
   auto fun_parallel = [&](size_t start_index, size_t stop_index) {
     calculate::calculate_full_slice<container::VLMC_vector>(start_index, stop_index, 0, cluster.size(), distances_parallel,
-                           cluster, cluster, distance_function);
+                           cluster, cluster);
   };
 
   auto fun_sequential = [&](size_t start_index, size_t stop_index) {
     calculate::calculate_full_slice<container::VLMC_vector>(start_index, stop_index, 0, cluster.size(), distances_sequantial,
-                           cluster, cluster, distance_function);
+                           cluster, cluster);
   };
 
   parallel::parallelize(cluster.size(), fun_parallel, 2);
@@ -64,12 +56,12 @@ TEST_F(ParallelTest, ReducedEqFullSlice) {
 
   auto fun_parallel = [&](size_t start_index, size_t stop_index) {
     calculate::calculate_reduced_slice<container::VLMC_vector>(start_index, stop_index, distances_parallel,
-                           cluster, cluster, distance_function);
+                           cluster, cluster);
   };
 
   auto fun_sequential = [&](size_t start_index, size_t stop_index) {
     calculate::calculate_full_slice<container::VLMC_vector>(start_index, stop_index, 0, cluster.size(), distances_sequantial,
-                           cluster, cluster, distance_function);
+                           cluster, cluster);
   };
 
   parallel::parallelize(cluster.size(), fun_parallel, 2);
@@ -93,7 +85,7 @@ TEST_F(ParallelTest, FullComparisonCheck) {
     // Sorted Vector Implementation
     auto left_cluster_s = cluster::get_cluster<container::VLMC_sorted_vector>(first_directory, 1, background_order);
     auto right_cluster_s = cluster::get_cluster<container::VLMC_sorted_vector>(first_directory, 1, background_order);
-    matrix_t distances_sorted_vector = calculate::calculate_distances<container::VLMC_sorted_vector>(left_cluster_s, right_cluster_s, distance_function_sv, nr_cores);
+    matrix_t distances_sorted_vector = calculate::calculate_distances<container::VLMC_sorted_vector>(left_cluster_s, right_cluster_s, nr_cores);
 
     // Kmer major implementation
     auto left_cluster_k = cluster::get_kmer_cluster(first_directory, pool, background_order);
