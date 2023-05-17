@@ -68,7 +68,6 @@ matrix_t apply_container(parser::cli_arguments arguments, parser::VLMC_Rep vlmc_
   } else if (vlmc_container==parser::VLMC_Rep::vlmc_sorted_search){
     return calculate_cluster_distance<container::VLMC_sorted_search>(arguments, nr_cores);
   } else if (vlmc_container==parser::VLMC_Rep::vlmc_kmer_major){
-    std::cout << "I am here" << std::endl; 
     return calculate_kmer_major(arguments, nr_cores);
   }
 }
