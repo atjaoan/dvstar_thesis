@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <cstdlib>
 #include "vlmc_from_kmers/kmer.hpp"
-#include "b_tree_alt.hpp"
+#include "b_tree_array.hpp"
 
 class BTreeTest : public ::testing::Test {
 protected:

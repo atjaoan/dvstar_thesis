@@ -117,20 +117,10 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
   auto right_cluster_ey = cluster::get_cluster<container::VLMC_Eytzinger>(path_to_bintrees, 1, background_order);
   matrix_t distances_ey = calculate::calculate_distances<container::VLMC_Eytzinger>(left_cluster_ey, right_cluster_ey, 1);
 
-  // Alt Btree Array
-  auto left_cluster_altbtree = cluster::get_cluster<container::VLMC_Alt_Btree>(path_to_bintrees, 1, background_order);
-  auto right_cluster_altbtree = cluster::get_cluster<container::VLMC_Alt_Btree>(path_to_bintrees, 1, background_order);
-  matrix_t distances_altbtree = calculate::calculate_distances<container::VLMC_Alt_Btree>(left_cluster_altbtree, right_cluster_altbtree, 1);
-
   // Sorted Search
   auto left_cluster_sortsearch = cluster::get_cluster<container::VLMC_sorted_search>(path_to_bintrees, 1, background_order);
   auto right_cluster_sortsearch = cluster::get_cluster<container::VLMC_sorted_search>(path_to_bintrees, 1, background_order);
   matrix_t distances_sortsearch = calculate::calculate_distances<container::VLMC_sorted_search>(left_cluster_sortsearch, right_cluster_sortsearch, 1);
-
-  // Sorted Search Ey
-  auto left_cluster_sortsearch_ey = cluster::get_cluster<container::VLMC_sorted_search_ey>(path_to_bintrees, 1, background_order);
-  auto right_cluster_sortsearch_ey = cluster::get_cluster<container::VLMC_sorted_search_ey>(path_to_bintrees, 1, background_order);
-  matrix_t distances_sortsearch_ey = calculate::calculate_distances<container::VLMC_sorted_search_ey>(left_cluster_sortsearch_ey, right_cluster_sortsearch_ey, 1);
 
   // Dvstar Original implementation 
   matrix_t distances_org_dvstar{distances_vector.cols(), distances_vector.rows()};
@@ -156,9 +146,7 @@ TEST_F(CalcDistsTests, ValueCheckTwoDir){
         EXPECT_NEAR(distances_vector(x,y), distances_veb(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_k_major(x,y), error_tolerance); 
         EXPECT_NEAR(distances_vector(x,y), distances_ey(x,y), error_tolerance);
-        EXPECT_NEAR(distances_vector(x,y), distances_altbtree(x,y), error_tolerance);
         EXPECT_NEAR(distances_vector(x,y), distances_sortsearch(x,y), error_tolerance);
-        EXPECT_NEAR(distances_vector(x,y), distances_sortsearch_ey(x,y), error_tolerance);
       }
     }
   }

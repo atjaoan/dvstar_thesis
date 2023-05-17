@@ -13,20 +13,6 @@
 
 namespace parser {
 
-enum Distance_function {
-  d2, 
-  d2star, 
-  dvstar, 
-  nearest_dvstar, 
-  penalized_dvstar, 
-  kl, 
-  kl_both, 
-  nll, 
-  nll_background,
-  cv,
-  cv_estimation
-};
-
 enum Cluster_Rep {
   cluster_vector
 };
@@ -38,7 +24,6 @@ enum VLMC_Rep {
   vlmc_hashmap,
   vlmc_veb,
   vlmc_ey,
-  vlmc_alt_btree,
   vlmc_sorted_search,
   vlmc_kmer_major
 };
@@ -69,7 +54,6 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
       {"hashmap", VLMC_Rep::vlmc_hashmap},
       {"veb", VLMC_Rep::vlmc_veb},
       {"ey", VLMC_Rep::vlmc_ey},
-      {"alt-btree", VLMC_Rep::vlmc_alt_btree},
       {"sorted-search", VLMC_Rep::vlmc_sorted_search},
       {"kmer-major", VLMC_Rep::vlmc_kmer_major}
   };
