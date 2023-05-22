@@ -61,7 +61,7 @@ matrix_t apply_container(parser::cli_arguments arguments, parser::VLMC_Rep vlmc_
 }
 
 int main(int argc, char *argv[]){
-  CLI::App app{"Distance comparison of either one directory or between two different directories."};
+  CLI::App app{"Distance comparison of either one or between two directories of VLMCs."};
 
   parser::cli_arguments arguments{};
   add_options(app, arguments);

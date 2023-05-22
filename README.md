@@ -28,7 +28,7 @@ This provides an executable `dist`, which can be used as follows:
 
 ```shell
 % ./dist --help
-Comparisons of variable-length Markov chains.
+Distance comparison of either one or between two directories of VLMCs.
 Usage: ./dist [OPTIONS]
 
 Options:
