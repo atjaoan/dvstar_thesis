@@ -55,21 +55,4 @@ void dvstar_kmer_major(bucket_t &left_vector, bucket_t &right_vector,
 
   utils::matrix_recursion(0, left_vector.size(), 0, right_vector.size(), rec_fun);
 }
-
-void dvstar_kmer_major_single(bucket_t &left_vector, bucket_t &right_vector, 
-                      matrix_t &dot_prod, matrix_t &left_norm, matrix_t &right_norm){
-                        
-  auto rec_fun = [&](size_t &left, size_t &right) { 
-    if(left_vector[left].id >= right_vector[right].id) return;
-    if (left_vector[left].kmer.integer_rep == right_vector[right].kmer.integer_rep){
-      auto left_id = left_vector[left].id;
-      auto right_id = right_vector[right].id; 
-      dot_prod(left_id, right_id) += (left_vector[left].kmer.next_char_prob * right_vector[right].kmer.next_char_prob).sum();
-      left_norm(left_id, right_id) += left_vector[left].kmer.next_char_prob.square().sum();
-      right_norm(left_id, right_id) += right_vector[right].kmer.next_char_prob.square().sum();
-    }
-  };
-
-  utils::matrix_recursion(0, left_vector.size(), 0, right_vector.size(), rec_fun);
-}
 }

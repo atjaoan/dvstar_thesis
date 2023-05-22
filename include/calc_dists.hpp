@@ -61,7 +61,9 @@ void calculate_full_slice(size_t start_index_left, size_t stop_index_left, size_
   utils::matrix_recursion(start_index_left, stop_index_left, start_index_right, stop_index_right, rec_fun); 
 }
 
-// Inter-directory distances
+//--------------------------------//
+// For inter-directory comparison //
+//--------------------------------//
 template <typename VC> 
 matrix_t calculate_distances(container::Cluster_Container<VC> &cluster, size_t requested_cores){
 
@@ -76,7 +78,9 @@ matrix_t calculate_distances(container::Cluster_Container<VC> &cluster, size_t r
   return distances; 
 }
 
-// For two different dirs
+//-------------------------------//
+// For comparing two directories //
+//-------------------------------//
 template <typename VC>
 matrix_t calculate_distances(
     container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
@@ -93,9 +97,6 @@ matrix_t calculate_distances(
       return distances; 
 }
 
-//--------------------------//
-// Kmer-major implementation//
-//--------------------------//
 void calculate_kmer_buckets(container::Kmer_Cluster &cluster_left, container::Kmer_Cluster &cluster_right,
     int left_offset, int right_offset, matrix_t &distances) {
   matrix_t dot_prod = matrix_t::Zero(cluster_left.size(), cluster_right.size());
@@ -109,14 +110,7 @@ void calculate_kmer_buckets(container::Kmer_Cluster &cluster_left, container::Km
     auto idx = left_it->first;
     auto right_it = cluster_right.find(idx);
     if (right_it != cluster_right.get_end()){
-      auto rec_fun = [&](size_t &left, size_t &right) {
-        auto left_id = left_it->second[left].id;
-        auto right_id = right_it->second[right].id; 
-        dot_prod(left_id, right_id) += (left_it->second[left].kmer.next_char_prob * right_it->second[right].kmer.next_char_prob).sum();
-        left_norm(left_id, right_id) += left_it->second[left].kmer.next_char_prob.square().sum();
-        right_norm(left_id, right_id) += right_it->second[right].kmer.next_char_prob.square().sum();
-      };
-      utils::matrix_recursion(0, left_it->second.size(), 0, right_it->second.size(), rec_fun);
+      distance::dvstar_kmer_major(left_it->second, right_it->second, dot_prod, left_norm, right_norm); 
     }
     left_it++;
   }
@@ -128,6 +122,9 @@ void calculate_kmer_buckets(container::Kmer_Cluster &cluster_left, container::Km
   }
 }
 
+//---------------------------//
+// Kmer-major implementation //
+//---------------------------//
 matrix_t calculate_distance_major(
     std::vector<container::Kmer_Cluster> &cluster_left, std::vector<container::Kmer_Cluster> &cluster_right, BS::thread_pool& pool){
 
