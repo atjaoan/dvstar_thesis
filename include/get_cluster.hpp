@@ -40,18 +40,6 @@ container::Cluster_Container<VC> get_cluster(const std::filesystem::path &direct
   return cluster; 
 }
 
-/*
-  Will keep this non-parallel implementation here for testing purposes
-*/
-template <typename VC>  
-container::Cluster_Container<VC> old_get_cluster(const std::filesystem::path &directory){
-  container::Cluster_Container<VC> cluster{};
-  for (const auto& dir_entry : recursive_directory_iterator(directory)) {
-    cluster.push(VC{dir_entry.path()});
-  }
-  return cluster; 
-}
-
 std::vector<container::Kmer_Cluster> get_kmer_cluster(const std::filesystem::path &directory, BS::thread_pool& pool, 
           const size_t background_order = 0, const int set_size = -1){
   std::vector<std::filesystem::path> paths{};

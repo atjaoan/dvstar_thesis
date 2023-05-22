@@ -13,8 +13,8 @@
 #include "vlmc_from_kmers/kmer.hpp"
 #include "read_in_kmer.hpp"
 #include "global_aliases.hpp"
-#include "robin_hood.h"
 #include "unordered_dense.h"
+
 #include "vlmc_containers/veb_array.hpp"
 #include "vlmc_containers/eytzinger_array.hpp"
 #include "vlmc_containers/b_tree_array.hpp"

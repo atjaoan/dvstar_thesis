@@ -76,41 +76,6 @@ void print_matrix(matrix_t distance_matrix){
   }
 }
 
-std::string get_filename(std::filesystem::path path){
-  if (path.has_filename()){
-    return path.parent_path().filename().u8string() + "_" + path.filename().u8string();
-  } else {
-    return path.parent_path().parent_path().filename().u8string() + "_" + path.parent_path().filename().u8string();
-  }
-}
-
-void output_kmer_reps_to_file(const std::filesystem::path &path_to_dir, const std::filesystem::path &path_to_output) {
-  std::ofstream ofs(path_to_output.string());
-  //int nr_vlmc = 0;
-  //int nr_kmers = 0;
-  auto it = std::filesystem::directory_iterator{path_to_dir};
-  int vlmc = 0;
-  for (auto const& dir_entry : it) {
-    std::ifstream ifs(dir_entry.path(), std::ios::binary);
-    cereal::BinaryInputArchive archive(ifs);
-    Kmer input_kmer{};
-    while (ifs.peek() != EOF){
-      archive(input_kmer);
-      //nr_kmers++;
-      RI_Kmer ri_kmer{input_kmer};
-      ofs << vlmc << "_" << ri_kmer.integer_rep << "\n";
-    }
-    vlmc++;
-    //nr_vlmc++;
-    ifs.close();
-  }
-  //int avg_length = nr_kmers / (float)nr_vlmc;
-  //std::cout << "Avg length: " << avg_length << "\n";
-  //std::cout << "total kmers: " << nr_kmers << "\n";
-  //std::cout << "nr vlmcs: " << nr_vlmc << "\n";
-  ofs.close();
-}
-
 int sign (int p1x, int p1y, int p2x, int p2y, int p3x, int p3y)
 {
     return (p1x - p3x) * (p2y - p3y) - (p2x - p3x) * (p1y - p3y);
