@@ -10,8 +10,8 @@
 #include "vlmc_container.hpp"
 #include "distances/dvstar.hpp"
 #include "vlmc_from_kmers/dvstar.hpp"
-#include "optimize_cmp_kmers/get_cluster.hpp"
-#include "optimize_cmp_kmers/calc_dists.hpp"
+#include "get_cluster.hpp"
+#include "calc_dists.hpp"
 #include "global_aliases.hpp"
 
 extern const out_t error_tolerance;

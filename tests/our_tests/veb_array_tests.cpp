@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <cstdlib>
 #include "vlmc_from_kmers/kmer.hpp"
-#include "veb_array.hpp"
+#include "vlmc_containers/veb_array.hpp"
 
 class VebArrayTest : public ::testing::Test {
 protected:

@@ -11,13 +11,13 @@
 #include <Eigen/Core> 
 
 #include "vlmc_from_kmers/kmer.hpp"
-#include "optimize_cmp_kmers/read_in_kmer.hpp"
+#include "read_in_kmer.hpp"
 #include "global_aliases.hpp"
 #include "robin_hood.h"
 #include "unordered_dense.h"
-#include "veb_array.hpp"
-#include "eytzinger_array.hpp"
-#include "b_tree_array.hpp"
+#include "vlmc_containers/veb_array.hpp"
+#include "vlmc_containers/eytzinger_array.hpp"
+#include "vlmc_containers/b_tree_array.hpp"
 
 /*
   Stores VLMC (multiple k-mers) in a container. 

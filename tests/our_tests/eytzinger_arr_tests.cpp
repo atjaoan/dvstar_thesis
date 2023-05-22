@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <cstdlib>
 #include "vlmc_from_kmers/kmer.hpp"
-#include "eytzinger_array.hpp"
+#include "vlmc_containers/eytzinger_array.hpp"
 
 class EytzArrayTest : public ::testing::Test {
 protected:

@@ -9,7 +9,7 @@
 #include <chrono>
 
 #include "vlmc_from_kmers/kmer.hpp"
-#include "veb_tree.hpp"
+#include "vlmc_containers/veb_tree.hpp"
 #include "vlmc_container.hpp"
 #include "cluster_container.hpp"
 #include "../read_helper.hpp"
