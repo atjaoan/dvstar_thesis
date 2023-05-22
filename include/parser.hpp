@@ -60,11 +60,11 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
 
   app.add_option(
       "-p,--VLMC-path", arguments.first_VLMC_path,
-      "Required for distance calculation. Path to saved bintree directory. Computes the inter-distance between the trees of the directory.");
+      "Required for distance calculation. 'Primary' path to saved bintree directory. If '-s' is empty it will compute the inter-distance between the trees of the directory.");
 
   app.add_option(
       "-s,--snd-VLMC-path", arguments.second_VLMC_path,
-      "Optional path to saved bintree directory. Calculates distance between the trees specified in -p (primary) and -s (secondary).");
+      "Optional 'Secondary' path to saved bintree directory. Calculates distance between the trees specified in -p (primary) and -s (secondary).");
 
   app.add_option("-o,--matrix-path", arguments.out_path,
                  "Path to hdf5 file where scores will be stored.");

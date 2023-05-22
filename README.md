@@ -1,13 +1,5 @@
-# Building and comparing a variable-length Markov chain from k-mers
-
-This repository contains the code for constructing a variable-length Markov chain (VLMC) from a lexicographically
-sorted list of _k_-mers. This enables VLMCs to be constructed on even very large genomes, as well as collections
-of sequences.
-
-This repository deals mainly with the task of constructing the VLMC, for scoring of sequences, or most dissimilarities
-between
-two VLMCs, please see the [pst-classifier-seqan repository](https://github.com/Schlieplab/PstClassifierSeqan), which
-accepts the output form this progam.
+# Comparing variable-length Markov chains
+This repository contains the code for comparing a directory/directories of VLMCs. It builds upon the existing repositories [dvstar](https://github.com/Schlieplab/dvstar) and [pst-classifier-seqan repository](https://github.com/Schlieplab/PstClassifierSeqan) by Joel Gustafsson. The VLMCs comparisons are speedup by a factor of 2-25 compared to the pst-classifier-seqan repository. The current implementation requires that the VLMCs are built using Joels implementation since the VLMCs are expected to be of binary format and with a certain structure. 
 
 ## Publication
 
@@ -20,6 +12,49 @@ To compile the program, please first download all submodules:
 ```shell script
 git submodule update --init --recursive
 ```
+
+Create a build directory, configure with cmake and build:
+
+```shell script
+mkdir build
+cd build
+cmake -D CMAKE_BUILD_TYPE=Release ..
+make
+```
+
+## Execution
+
+This provides an executable `dist`, which can be used as follows:
+
+```shell
+% ./dist --help
+Comparisons of variable-length Markov chains.
+Usage: ./dist [OPTIONS]
+
+Options:
+  -h,--help                   Print this help message and exit
+  -p,--VLMC-path TEXT         Required for distance calculation. 'Primary' path to saved bintree directory. If '-s' is empty it will compute the inter-distance between the trees of the directory.
+  -s,--snd-VLMC-path TEXT     Optional 'Secondary' path to saved bintree directory. Calculates distance between the trees specified in -p (primary) and -s (secondary).
+  -o,--matrix-path TEXT       Path to hdf5 file where scores will be stored. If left empty, distances will be printed to shell.
+  -n,--max-dop UINT           Degree of parallelism. Default 1 (sequential).
+  -v,--vlmc-rep               VLMC container to use for comparison, see paper for more details. If unsure use standard (sorted-search). Available options: 'sorted-search', 'sorted-vector', 'b-tree', 'ey', 'hashmap', 'kmer-major', 'veb', 'vector'
+                              Vlmc container representation to use.
+  -b,--background-order UINT  Background order.
+  -a,--set-size INT           Number of VLMCs to compute distance function on. If left empty will load all VLMCs in the 'primary' and 'secondary' directories. Otherwise, loads the specified amount from the given directories. 
+```
+
+For example, to compare two directories of VLMCs using 8 cores, run (from build/):
+
+```shell
+./dist --VLMC-path ../tests/dir_p --snd-VLMC-path ../tests/dir_s --max-dop 8
+```
+
+## Headers
+
+If, for some reason, you wanted to include the code in some other project, this directory can be included with CMAKE as
+`add_subdirectory(/path/to/dvstar_thesis)`, or alternatively, include the headers
+in `/path/to/dvstar_thesis/include`.
+Note that with the second option, the submodules need to be included manually.
 
 ### Container solution / apptainer (previously singularity)
 
@@ -47,104 +82,3 @@ Benchmarking then is done with
 ```shell script
 apptainer run --bind ./csv_results:/thesis/csv_results/,./hdf5_results:/thesis/hdf5_results thesis.sif
 ```
-
-### Manually
-
-Create a build directory, configure with cmake and build:
-
-```shell script
-mkdir build
-cd build
-cmake -D CMAKE_BUILD_TYPE=Release ..
-make
-```
-
-__Note that kmc3 needs to be installed separately, and be in the current working directory, or in your path.__
-Both `kmc` and `kmc_tools` are required.
-
-This provides an executable `dvstar`, which can be used as follows:
-
-```shell
-% ./dvstar --help
-Construction and comparisons of variable-length Markov chains with the aid of a k-mer counter.
-Usage: ./dvstar [OPTIONS]
-
-Options:
-  -h,--help                   Print this help message and exit
-  -m,--mode ENUM:value in {bic->3,build->0,build-from-kmc-db->4,dissimilarity->5,dump->2,reprune->6,score->1} OR {3,0,4,5,2,6,1}
-                              Program mode, 'build', 'build-from-kmc-db', 'dump', 'score', 'reprune', or 'dissimilarity'.  For build-from-kmc-db, the kmc db needs to include all k-mers (not in canonical form), with no minimum count cutoff.  The length of the k-mers needs to be set to 1 more than the maximum depth of the VLMC.  The kmc db also has to be sorted.
-  --dissimilarity ENUM:value in {dvstar->0,penalized-dvstar->1} OR {0,1}
-                              Dissimilarity type, either 'dvstar',  or 'penalized-dvstar'.
-  --estimator ENUM:value in {kullback-leibler->0,peres-shields->1} OR {0,1}
-                              Estimator for the pruning of the VLMC, either 'kullback-leibler',  or 'peres-shields'.
-  -p,--fasta-path TEXT        Path to fasta file.  Required for 'build' and 'score' modes.
-  --in-path TEXT              Path to saved tree file or kmc db file.  Required for 'build-from-kmc-db', 'dump', 'score', and 'dissimilarity' modes.  For 'build-from-kmc-db', the kmc db file needs to be supplied without the file extension.
-  --to-path TEXT              Path to saved tree file.  Required for 'dissimilarity' mode.
-  -o,--out-path TEXT          Path to output file.  The VLMCs are stored as binary, and can be read by the 'dump' or 'score' modes.  Required for 'build' and 'dump' modes.
-  -t,--temp-path TEXT         Path to temporary folder for the external memory algorithms.  For good performance, this needs to be on a local machine.  For sorting, at least 2GB will be allocated to this path.  Defaults to ./tmp
-  -c,--min-count INT          Minimum count required for every k-mer in the tree.
-  -k,--threshold FLOAT        Kullback-Leibler threshold.
-  -d,--max-depth INT          Maximum depth/length for included k-mers.
-  -a,--pseudo-count-amount FLOAT
-                              Size of pseudo count for probability estimation. See e.g. https://en.wikipedia.org/wiki/Additive_smoothing .
-  -i,--in-or-out-of-core ENUM:value in {external->0,internal->1,hash->2} OR {0,1,2}
-                              Specify 'internal' for in-core or 'external' for out-of-core memory model.  Out of core is slower, but is not memory bound.
-  --adjust-for-sequencing-errors
-                              Give this flag to adjust the estimator parameters and min counts for the sequencing depth and error rates of a sequencing dataset. See --sequencing-depth and --sequencing-error-rate for parameters.
-  --sequencing-depth FLOAT    If --adjust-for-sequencing-errors is given, this parameter is used to alter the estimator parameters to reflect that many k-mers will be --sequencing-depth times more frequent.
-  --sequencing-error-rate FLOAT
-                              If --adjust-for-sequencing-errors is given, this parameter is used to alter to estimate the number of k-mers that will be missing due to sequencing errors.
-```
-
-For example, to construct a VLMC, run (from build/):
-
-```shell
-./dvstar --fasta-path ../tests/NC_045512.2.fa --threshold 3.9075 --max-depth 4 --min-count 100 --out-path NC_022098.1.bintree --temp-path tmp
-```
-
-To view the contents of the VLMC, run:
-
-```shell
-./dvstar --mode dump --in-path NC_022098.1.bintree
-```
-
-To compute the dvstar similarity between two VLMCs:
-
-```shell
-./dvstar --mode dvstar --in-path NC_022098.1.bintree --to-path NC_022098.1.bintree
-```
-
-To build a VLMC directly from a KMC db, ensure that the kmc parameters `-ci1` and `-cs4294967295`(or other large number)
-are used. Also ensure that the `-k` parameter is set to 1 larger than the max depth parameter given to `dvstar`.
-
-```shell
-./dvstar --mode build-from-kmc-db --in-path kmc_db --out-path kmc_db.bintree --max-depth 4 --min-count 100
-```
-
-This approach also allows you to add new sequences/reads to an existing kmc db and then rerun the vlmc construction.
-This can save computation time, especially when dealing with large sequence collections. The kmc command to run to add
-the result of two kmc dbs would be:
-
-```shell
-./kmc_tools simple kmc_db1 kmc_db2 union new_db_path -ocsum
-```
-
-## Visualisation
-
-To produce a graphical representation of the VLMCs, see the [`visualiser.py`](visualiser.py) script.
-It needs the `plotly` and `typer` python packages to run, which can be installed e.g.
-through `pip install --user plotly typer`.
-
-```shell
-python visualiser.py NC_022098.1.bintree
-```
-
-Produces an interactive visualisation (should open in your browser) as well as a pdf and png file in the `images`
-directory.
-
-## Headers
-
-If, for some reason, you wanted to include the code in some other project, this directory can be included with CMAKE as
-`add_subdirectory(/path/to/vlmc-from-kmers)`, or alternatively, include the headers
-in `/path/to/vlmc-from-kmers/include`.
-Note that with the second option, the submodules need to be included manually.
