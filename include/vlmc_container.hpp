@@ -5,12 +5,11 @@
 #include <limits.h>
 #include <exception>
 #include <algorithm>
-#include <set>
 #include <execution>
 #include <math.h>
 #include <Eigen/Core> 
 
-#include "vlmc_from_kmers/kmer.hpp"
+#include "kmer.hpp"
 #include "read_in_kmer.hpp"
 #include "global_aliases.hpp"
 #include "unordered_dense.h"

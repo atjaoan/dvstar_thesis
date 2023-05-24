@@ -1,7 +1,7 @@
 #pragma once 
 
 #include <Eigen/Core>
-#include "vlmc_from_kmers/kmer.hpp"
+#include "kmer.hpp"
 
 // OUTPUT TYPE
 using out_t = double;

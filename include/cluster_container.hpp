@@ -4,7 +4,7 @@
 #include <filesystem>
 #include <unordered_map>
  
-#include "vlmc_from_kmers/kmer.hpp"
+#include "kmer.hpp"
 #include "vlmc_container.hpp"
 
 

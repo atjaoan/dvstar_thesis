@@ -6,7 +6,7 @@
 #include <filesystem>
 #include <numeric>
 
-#include "vlmc_from_kmers/kmer.hpp"
+#include "kmer.hpp"
 #include "global_aliases.hpp"
 
 /*
