@@ -1,5 +1,5 @@
 # Comparing variable-length Markov chains
-This repository contains the code for comparing a directory/directories of VLMCs. It builds upon the existing repositories [dvstar](https://github.com/Schlieplab/dvstar) and [pst-classifier-seqan repository](https://github.com/Schlieplab/PstClassifierSeqan) by Joel Gustafsson. The VLMCs comparisons are speedup by a factor of 2-25 compared to the pst-classifier-seqan repository. The current implementation requires that the VLMCs are built using Joels implementation since the VLMCs are expected to be of binary format and with a certain structure. 
+This repository contains the code for comparing a directory/directories of VLMCs. It builds upon the existing repositories [dvstar](https://github.com/Schlieplab/dvstar) and [pst-classifier-seqan repository](https://github.com/Schlieplab/PstClassifierSeqan) by Joel Gustafsson. The VLMCs comparisons are speedup by a factor of 2-25 compared to the pst-classifier-seqan repository. The current implementation requires that the VLMCs are built using Joel Gustafssons' implementation of binary format and with a certain structure (.bintree file format).
 
 ## Publication
 
@@ -56,12 +56,9 @@ If, for some reason, you wanted to include the code in some other project, this 
 in `/path/to/dvstar_thesis/include`.
 Note that with the second option, the submodules need to be included manually.
 
-### Container solution / apptainer (previously singularity)
+### Container solution / Apptainer (previously singularity)
 
-We provide an [apptainer container](https://apptainer.org/). The definition file needs to be modified to
-include the path to kmc, see the fifth and sixth line. 
-
-The submodule CLI11 needs to be adjusted as well, specifically the folder `tests/mesonTest/subprojects/CLI11` should be removed. 
+We provide an [apptainer container](https://apptainer.org/).
 
 The container is built by running:
 
@@ -69,16 +66,16 @@ The container is built by running:
 apptainer build --fakeroot thesis.sif thesis.def
 ```
 
-Using the created image, programs can be run by either using the ```apptainer exec ./program``` or ```apptainer run``` to run the programs in ```%runscripts``` of the .def file. It is also possible to spawn a shell in the container with 
+Using the created image, programs can be run by either using the ```apptainer exec ./dist``` or ```apptainer run``` to run the programs in ```%runscripts``` of the .def file. It is also possible to spawn a shell in the container with 
 ```shell script
 apptainer shell thesis.sif
 ```
 
-To output benchmarking results, the ```--bind``` option must be specified such that the container has the output directory mounted (the containers own file system is read-only). First, create two empty directory named ```csv_results``` and ```hdf5_results``` in the same directory as the .sif file is located. 
+To output results, the ```--bind``` option must be specified such that the container has the output directory mounted (the containers own file system is read-only). First, create the directories in the same directory as the .sif file is located. 
 ```shell script
-mkdir csv_results hdf5_results
+mkdir my_output_dir
 ```
-Benchmarking then is done with
+Execute the container with
 ```shell script
-apptainer run --bind ./csv_results:/thesis/csv_results/,./hdf5_results:/thesis/hdf5_results thesis.sif
+apptainer run --bind ./my_output_dir:/thesis/my_output_dir/[, ...] thesis.sif
 ```
