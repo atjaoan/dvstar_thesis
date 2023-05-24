@@ -38,7 +38,7 @@ set(SKIP_PERFORMANCE_COMPARISON ON)
 
 # Add include paths
 set(INCLUDE_DIRS ${STXXL_INCLUDE_DIRS} "${PROJECT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/submodules/cereal/include" "${CMAKE_CURRENT_SOURCE_DIR}/submodules/eigen" 
-                                        "${PROJECT_SOURCE_DIR}/submodules/unordered_dense/include/ankerl" "${CMAKE_CURRENT_SOURCE_DIR}/submodules/thread-pool")
+                                        "${PROJECT_SOURCE_DIR}/submodules/unordered_dense/include/ankerl")
 
 include_directories("${INCLUDE_DIRS}")
 

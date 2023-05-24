@@ -8,24 +8,21 @@
 #include "global_aliases.hpp"
 #include "utils.hpp"
 
-#include "BS_thread_pool.hpp"
-
 matrix_t calculate_kmer_major(parser::cli_arguments arguments, const size_t nr_cores){
   size_t use_cores = nr_cores; 
   size_t max_cores = std::thread::hardware_concurrency(); 
   if (max_cores < nr_cores){
     use_cores = max_cores;
   } 
-  BS::thread_pool pool(use_cores); 
 
-  auto cluster = get_cluster::get_kmer_cluster(arguments.first_VLMC_path, pool, arguments.background_order, arguments.set_size);
+  auto cluster = get_cluster::get_kmer_cluster(arguments.first_VLMC_path, use_cores, arguments.background_order, arguments.set_size);
   if (arguments.second_VLMC_path.empty()){
     std::cout << "Calculating distances for single cluster." << std::endl; 
-    return calc_dist::calculate_distance_major(cluster, cluster, pool);
+    return calc_dist::calculate_distance_major(cluster, cluster, use_cores);
   }
-  auto cluster_to = get_cluster::get_kmer_cluster(arguments.second_VLMC_path, pool, arguments.background_order, arguments.set_size);
+  auto cluster_to = get_cluster::get_kmer_cluster(arguments.second_VLMC_path, use_cores, arguments.background_order, arguments.set_size);
   std::cout << "Calculating distances." << std::endl; 
-  return calc_dist::calculate_distance_major(cluster, cluster_to, pool);
+  return calc_dist::calculate_distance_major(cluster, cluster_to, use_cores);
 }
 
 template <typename VC>

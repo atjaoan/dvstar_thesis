@@ -75,15 +75,15 @@ matrix_t calculate_distances(
     cluster_container::Cluster_Container<VC> &cluster_left, cluster_container::Cluster_Container<VC> &cluster_right,
     size_t requested_cores){
 
-      matrix_t distances{cluster_left.size(), cluster_right.size()};
+  matrix_t distances{cluster_left.size(), cluster_right.size()};
 
-      auto fun = [&](size_t start_index_left, size_t stop_index_left, size_t start_index_right, size_t stop_index_right) {
-      calculate_full_slice<VC>(start_index_left, stop_index_left, start_index_right, stop_index_right, std::ref(distances),
-                           std::ref(cluster_left), std::ref(cluster_right));
-      };
+  auto fun = [&](size_t start_index_left, size_t stop_index_left, size_t start_index_right, size_t stop_index_right) {
+  calculate_full_slice<VC>(start_index_left, stop_index_left, start_index_right, stop_index_right, std::ref(distances),
+                       std::ref(cluster_left), std::ref(cluster_right));
+  };
       
-      parallel::parallelize(cluster_left.size(), cluster_right.size(), fun, requested_cores);
-      return distances; 
+  parallel::parallelize(cluster_left.size(), cluster_right.size(), fun, requested_cores);
+  return distances; 
 }
 
 void calculate_kmer_buckets(cluster_container::Kmer_Cluster &cluster_left, cluster_container::Kmer_Cluster &cluster_right,
@@ -115,7 +115,7 @@ void calculate_kmer_buckets(cluster_container::Kmer_Cluster &cluster_left, clust
 // Kmer-major implementation //
 //---------------------------//
 matrix_t calculate_distance_major(
-    std::vector<cluster_container::Kmer_Cluster> &cluster_left, std::vector<cluster_container::Kmer_Cluster> &cluster_right, BS::thread_pool& pool){
+    std::vector<cluster_container::Kmer_Cluster> &cluster_left, std::vector<cluster_container::Kmer_Cluster> &cluster_right, size_t nr_cores_to_use){
 
   auto cluster_left_size = 0;
   std::vector<int> cluster_left_offsets{};
@@ -133,13 +133,15 @@ matrix_t calculate_distance_major(
 
   matrix_t distances = matrix_t::Zero(cluster_left_size, cluster_right_size);
 
-  auto fun = [&](size_t left_i) {
-    for (auto right_i = 0; right_i < cluster_right.size(); right_i++){
-      calculate_kmer_buckets(cluster_left[left_i], cluster_right[right_i], cluster_left_offsets[left_i], cluster_right_offsets[right_i], distances);
+  auto fun = [&](size_t start_index_left, size_t stop_index_left, size_t start_index_right, size_t stop_index_right) {
+    for (auto left_i = start_index_left; left_i < stop_index_left; left_i++){
+      for (auto right_i = start_index_right; right_i < stop_index_right; right_i++){
+        calculate_kmer_buckets(cluster_left[left_i], cluster_right[right_i], cluster_left_offsets[left_i], cluster_right_offsets[right_i], distances);
+      }
     }
   };
   
-  parallel::pool_parallel(cluster_left.size(), fun, pool);
+  parallel::parallelize(cluster_left.size(), cluster_right.size(), fun, nr_cores_to_use);
 
   return distances; 
 }

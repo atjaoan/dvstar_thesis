@@ -15,7 +15,6 @@ cluster_container::Cluster_Container<VC> get_cluster(const std::filesystem::path
       const size_t background_order, const int set_size = -1){
   std::vector<std::filesystem::path> paths{};
 
-  if(nr_cores_to_use > 4) nr_cores_to_use = 4;
   for (const auto& dir_entry : recursive_directory_iterator(directory)) {
     paths.push_back(dir_entry.path());
   }
@@ -24,6 +23,9 @@ cluster_container::Cluster_Container<VC> get_cluster(const std::filesystem::path
   if ((set_size != -1) && (set_size < paths_size)){
     paths_size = set_size; 
   }
+
+  if (nr_cores_to_use > paths_size) nr_cores_to_use = paths_size;
+  if(nr_cores_to_use > 4) nr_cores_to_use = 4;
 
   cluster_container::Cluster_Container<VC> cluster{paths_size};
 
@@ -38,7 +40,7 @@ cluster_container::Cluster_Container<VC> get_cluster(const std::filesystem::path
   return cluster; 
 }
 
-std::vector<cluster_container::Kmer_Cluster> get_kmer_cluster(const std::filesystem::path &directory, BS::thread_pool& pool, 
+std::vector<cluster_container::Kmer_Cluster> get_kmer_cluster(const std::filesystem::path &directory, size_t nr_cores_to_use, 
           const size_t background_order = 0, const int set_size = -1){
   std::vector<std::filesystem::path> paths{};
 
@@ -51,7 +53,9 @@ std::vector<cluster_container::Kmer_Cluster> get_kmer_cluster(const std::filesys
     paths_size = set_size; 
   }
 
-  std::vector<cluster_container::Kmer_Cluster> clusters(std::ceil(paths_size / std::floor(std::sqrt(paths_size)))); 
+  if (nr_cores_to_use > paths_size) nr_cores_to_use = paths_size;
+
+  std::vector<cluster_container::Kmer_Cluster> clusters(nr_cores_to_use); 
 
   auto fun = [&](size_t start_index, size_t stop_index, size_t idx) {
     for (int index = start_index; index < stop_index; index++){
@@ -72,7 +76,7 @@ std::vector<cluster_container::Kmer_Cluster> get_kmer_cluster(const std::filesys
     clusters[idx].set_size(stop_index - start_index);
   };
 
-  parallel::parallelize_kmer_major(paths_size, fun, pool);
+  parallel::parallelize_kmer_major(paths_size, fun, nr_cores_to_use);
 
   return clusters; 
 }
