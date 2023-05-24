@@ -9,7 +9,10 @@
 #include <cereal/types/array.hpp>
 
 namespace vlmc {
-  
+
+using uint64 = unsigned long;
+using uint32 = unsigned int;
+
 struct VLMCKmer {
   VLMCKmer() = default;
   VLMCKmer(uint32 length_, uint64 count_,
@@ -34,4 +37,11 @@ struct VLMCKmer {
   bool is_terminal;
   bool has_children;
   bool to_be_removed;
-} // namespace std
+
+  // This method lets cereal know which data members to serialize
+  template <class Archive> void serialize(Archive &archive) {
+    archive(kmer_data, length, n_rows, count, next_symbol_counts, divergence,
+            is_terminal);
+  }
+}; // namespace std
+}

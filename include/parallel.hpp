@@ -193,6 +193,23 @@ void sequential(size_t size_left, size_t size_right, const std::function<void(si
   t.join();
 }
 
+
+void pool_parallelize(size_t size, const std::function<void(size_t, size_t)> &fun, const size_t requested_cores, BS::thread_pool& pool) {
+  auto bounds = get_x_bounds(size, requested_cores);
+  for (auto &[start_index, stop_index] : bounds) {
+    std::future<void> fut = pool.submit(fun, start_index, stop_index);
+  }
+  pool.wait_for_tasks();
+}
+
+void pool_parallel(size_t size_left, const std::function<void(size_t)> &fun, BS::thread_pool& pool) {
+  for (auto left = 0; left < size_left; left++) {
+    std::future<void> fut = pool.submit(fun, left);
+  }
+
+  pool.wait_for_tasks();
+}
+
 void parallelize_kmer_major(size_t size, const std::function<void(size_t, size_t, size_t)> &fun, BS::thread_pool& pool) {
   std::vector<std::tuple<size_t, size_t>> bounds{};
   float values_per_thread = std::floor(std::sqrt(size));

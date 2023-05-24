@@ -35,19 +35,6 @@ struct RI_Kmer{
         this->is_null = false;
     }
 
-    // Used in testing
-    RI_Kmer(const std::array<out_t, 4>& next_counts){
-        int pseudo_count_amount = 1;
-        float child_count = std::accumulate(next_counts.begin(), next_counts.end(), pseudo_count_amount * 4);
-        this->next_char_prob = {(out_t(next_counts[0]) + pseudo_count_amount) / child_count,
-               (out_t(next_counts[1]) + pseudo_count_amount) / child_count,
-               (out_t(next_counts[2]) + pseudo_count_amount) / child_count,
-               (out_t(next_counts[3]) + pseudo_count_amount) / child_count};
-        this->integer_rep = -1;
-        this->is_null = false;
-    }
-    
-    
     RI_Kmer(const int temp) : integer_rep{temp}, is_null{false} {}
     ~RI_Kmer() = default;
 
@@ -62,10 +49,10 @@ struct RI_Kmer{
       return integer_value;
     }
 
-    inline uchar extract2bits(const Kmer &kmer, uint32 pos) const {
-      uchar row = pos >> 5;
-      uchar pos_in_row = pos & 31;
-      uchar n_shift_pos_to_end = (62 - pos_in_row * 2);
+    inline char extract2bits(const Kmer &kmer, unsigned int pos) const {
+      char row = pos >> 5;
+      char pos_in_row = pos & 31;
+      char n_shift_pos_to_end = (62 - pos_in_row * 2);
       return (kmer.kmer_data[row] >> n_shift_pos_to_end) & 3;
     }
 
