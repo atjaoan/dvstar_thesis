@@ -41,9 +41,7 @@ matrix_t calculate_cluster_distance(parser::cli_arguments arguments, const size_
 }
 
 matrix_t apply_container(parser::cli_arguments arguments, parser::VLMC_Rep vlmc_container, const size_t nr_cores){
-  if (vlmc_container==parser::VLMC_Rep::vlmc_vector){
-    return calculate_cluster_distance<container::VLMC_vector>(arguments, nr_cores);
-  } else if (vlmc_container==parser::VLMC_Rep::vlmc_sorted_vector){
+  if (vlmc_container==parser::VLMC_Rep::vlmc_sorted_vector){
     return calculate_cluster_distance<container::VLMC_sorted_vector>(arguments, nr_cores);
   } else if (vlmc_container==parser::VLMC_Rep::vlmc_b_tree){
     return calculate_cluster_distance<container::VLMC_B_tree>(arguments, nr_cores);

@@ -6,26 +6,19 @@
 #include "CLI/Config.hpp"
 #include "CLI/Formatter.hpp"
 
-#include "cluster_container.hpp"
 #include "vlmc_container.hpp"
-#include "distances/dvstar.hpp"
 #include "global_aliases.hpp"
 
 namespace parser {
 
-enum Cluster_Rep {
-  cluster_vector
-};
-
 enum VLMC_Rep {
-  vlmc_vector, 
+  vlmc_sorted_search,
   vlmc_sorted_vector,
   vlmc_b_tree,
-  vlmc_hashmap,
-  vlmc_veb,
   vlmc_ey,
-  vlmc_sorted_search,
-  vlmc_kmer_major
+  vlmc_hashmap,
+  vlmc_kmer_major,
+  vlmc_veb
 };
 
 struct cli_arguments {
@@ -48,14 +41,13 @@ size_t parse_dop(size_t requested_cores){
 
 void add_options(CLI::App &app, cli_arguments &arguments) {
   std::map<std::string, VLMC_Rep> VLMC_Rep_map{
-      {"vector", VLMC_Rep::vlmc_vector},
+      {"sbs", VLMC_Rep::vlmc_sorted_search},
       {"sorted-vector", VLMC_Rep::vlmc_sorted_vector},
       {"b-tree", VLMC_Rep::vlmc_b_tree},
-      {"hashmap", VLMC_Rep::vlmc_hashmap},
-      {"veb", VLMC_Rep::vlmc_veb},
       {"eytzinger", VLMC_Rep::vlmc_ey},
-      {"sbs", VLMC_Rep::vlmc_sorted_search},
-      {"kmer-major", VLMC_Rep::vlmc_kmer_major}
+      {"hashmap", VLMC_Rep::vlmc_hashmap},
+      {"kmer-major", VLMC_Rep::vlmc_kmer_major},
+      {"veb", VLMC_Rep::vlmc_veb}
   };
 
   app.add_option(
