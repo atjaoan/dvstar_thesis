@@ -37,7 +37,7 @@ Options:
   -s,--snd-VLMC-path TEXT     Optional 'Secondary' path to saved bintree directory. Calculates distance between the trees specified in -p (primary) and -s (secondary).
   -o,--matrix-path TEXT       Path to hdf5 file where scores will be stored. If left empty, distances will be printed to shell.
   -n,--max-dop UINT           Degree of parallelism. Default 1 (sequential).
-  -v,--vlmc-rep               VLMC container to use for comparison, see paper for more details. If unsure use standard (sbs). Available options: 'sbs', 'sorted-vector', 'b-tree', 'eytzinger', 'hashmap', 'kmer-major', 'veb', 'vector'
+  -v,--vlmc-rep               VLMC container to use for comparison, see paper for more details. If unsure use standard (sbs). Available options: 'sbs', 'sorted-vector', 'b-tree', 'eytzinger', 'hashmap', 'kmer-major', 'veb'
                               Vlmc container representation to use.
   -b,--background-order UINT  Background order.
   -a,--set-size INT           Number of VLMCs to compute distance function on. If left empty will load all VLMCs in the 'primary' and 'secondary' directories. Otherwise, loads the specified amount from the given directories. 

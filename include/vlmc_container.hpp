@@ -76,87 +76,9 @@ out_t normalise_dvstar(out_t dot_product, out_t left_norm,
 }
 
 /*
-  Storing Kmers in a unsorted vector.
-*/
-class VLMC_vector {
-
-  private: 
-    std::vector<RI_Kmer> container{}; 
-    RI_Kmer null_kmer{};
-
-  public: 
-    VLMC_vector() = default;
-    ~VLMC_vector() = default; 
-
-    VLMC_vector(const std::filesystem::path &path_to_bintree, const size_t background_order = 0) {
-      eigenx_t cached_context((int)std::pow(4, background_order), 4);
-
-      auto fun = [&](const RI_Kmer &kmer) { push(kmer); }; 
-
-      int offset_to_remove = load_VLMCs_from_file(path_to_bintree, cached_context, fun, background_order);
-
-      for (size_t i = 0; i <= get_max_kmer_index(); i++){
-        RI_Kmer kmer = get(i);
-        int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
-        int offset = background_idx - offset_to_remove;
-        get(i).next_char_prob *= cached_context.row(offset).rsqrt();
-      }
-    } 
-
-    RI_Kmer* begin(){
-      return &container[0];
-    }
-
-    RI_Kmer* end(){
-      return begin() + container.size();
-    }
-
-    size_t size() const { return container.size(); }
-
-    void push(const RI_Kmer &kmer) { container.push_back(kmer); }
-
-    RI_Kmer &get(const int i) { return container[i]; }
-
-    int get_max_kmer_index() const { return container.size() - 1; }
-    int get_min_kmer_index() const { return 0; }
-
-    RI_Kmer find(const int i_rep) {
-      for (size_t i = 0; i < container.size(); i++){
-        if (container[i].integer_rep==i_rep) {
-          return container[i]; 
-        }
-      }
-      return null_kmer; 
-    }
-};
-
-out_t iterate_kmers(VLMC_vector &left_kmers, VLMC_vector &right_kmers) {
-  out_t dot_product = 0.0;
-  out_t left_norm = 0.0;
-  out_t right_norm = 0.0;
-
-  for (size_t i = left_kmers.get_min_kmer_index() ; i <= left_kmers.get_max_kmer_index(); i++) {
-    const RI_Kmer &left_kmer = left_kmers.get(i);
-    if (left_kmer.is_null){
-      continue; 
-    }
-    auto right_kmer = right_kmers.find(left_kmer.integer_rep);
-    if (!right_kmer.is_null){
-      dot_product += (left_kmer.next_char_prob * right_kmer.next_char_prob).sum();
-      left_norm += left_kmer.next_char_prob.square().sum();
-      right_norm += right_kmer.next_char_prob.square().sum();
-    } 
-  }
-  return normalise_dvstar(dot_product, left_norm, right_norm);
-}
-
-/*
   Storing Kmers in a sorted vector.
 */
 class VLMC_sorted_vector {
-
-  private: 
-    RI_Kmer null_kmer{};
 
   public: 
     std::vector<RI_Kmer> container{};
@@ -177,12 +99,6 @@ class VLMC_sorted_vector {
         int offset = background_idx - offset_to_remove;
         get(i).next_char_prob *= cached_context.row(offset).rsqrt();
       }
-      //int k = 0;
-      //for(auto kmer : tmp_container){
-      //  std::cout << kmer.next_char_prob
-      //  k++;
-      //  if(k > 50) break;
-      //}
     } 
 
     size_t size() const { return container.size(); }
@@ -193,35 +109,13 @@ class VLMC_sorted_vector {
     std::vector<RI_Kmer>::iterator end() { return container.end(); };
 
     RI_Kmer &get(const int i) { return container[i]; }
-
-    int get_max_kmer_index() const { return container.size() - 1; }
-    int get_min_kmer_index() const { return 0; }
-
-    RI_Kmer find(const int i_rep) {
-      int L = 0;
-      int R = size() - 1;
-      if (i_rep < R){
-        R = i_rep;
-      }
-      while (L <= R) {
-          int m = (L + R) / 2;
-          if (container[m].integer_rep < i_rep) {
-            L = m + 1;
-          } else if (container[m].integer_rep > i_rep) {
-            R = m - 1;
-          } else {
-            return container[m];
-          }
-      }
-      return null_kmer;
-    }
 };
 
 out_t iterate_kmers(VLMC_sorted_vector &left_kmers, VLMC_sorted_vector &right_kmers) {
   out_t dot_product = 0.0;
   out_t left_norm = 0.0;
   out_t right_norm = 0.0;
-  // int f_applied = 0;
+
   auto right_it = right_kmers.begin();
   auto right_end = right_kmers.end();
   auto left_it = left_kmers.begin();
@@ -236,13 +130,11 @@ out_t iterate_kmers(VLMC_sorted_vector &left_kmers, VLMC_sorted_vector &right_km
       right_norm += right_kmer.next_char_prob.square().sum();
       ++left_it;
       ++right_it;
-      // f_applied++;
     } else if(left_kmer < right_kmer) {
       ++left_it;
     }
     else ++right_it;
   }
-  // std::cout << "f_applied = " << f_applied << std::endl;
   return normalise_dvstar(dot_product, left_norm, right_norm); 
 }
 
@@ -250,9 +142,6 @@ out_t iterate_kmers(VLMC_sorted_vector &left_kmers, VLMC_sorted_vector &right_km
   Storing Kmers in a unordered map (HashMap).
 */
 class VLMC_hashmap {
-
-  private: 
-    RI_Kmer null_kmer{};
 
   public: 
     ankerl::unordered_dense::map<int, RI_Kmer> container{};
@@ -279,17 +168,6 @@ class VLMC_hashmap {
     void push(const RI_Kmer &kmer) { container[kmer.integer_rep] = kmer; }
 
     RI_Kmer &get(const int i) { return container[i]; }
-
-    int get_max_kmer_index() const { return container.size() - 1; }
-    int get_min_kmer_index() const { return 0; }
-
-    RI_Kmer find(const int i_rep) {
-      auto res = container.find(i_rep);
-      if (res != container.end()){
-        return res->second; 
-      }
-      return null_kmer; 
-    }
 };
 
 out_t iterate_kmers(VLMC_hashmap &left_kmers, VLMC_hashmap &right_kmers) {
@@ -298,8 +176,9 @@ out_t iterate_kmers(VLMC_hashmap &left_kmers, VLMC_hashmap &right_kmers) {
   out_t right_norm = 0.0;
 
   for (auto &[i_rep, left_kmer] : left_kmers.container) {
-    auto right_kmer = right_kmers.find(i_rep); 
-    if (!right_kmer.is_null) {
+    auto res = right_kmers.container.find(i_rep); 
+    if (res != right_kmers.container.end()) {
+      auto right_kmer = res->second; 
       dot_product += (left_kmer.next_char_prob * right_kmer.next_char_prob).sum();
       left_norm += left_kmer.next_char_prob.square().sum();
       right_norm += right_kmer.next_char_prob.square().sum();
@@ -310,11 +189,6 @@ out_t iterate_kmers(VLMC_hashmap &left_kmers, VLMC_hashmap &right_kmers) {
 }
 
 class VLMC_Veb {
-
-  private: 
-    int min_index = INT_MAX;
-    int max_index = -1;
-    RI_Kmer null_kmer{};
 
   public:
     veb::Veb_array *veb;
@@ -344,11 +218,6 @@ class VLMC_Veb {
     RI_Kmer &get(const int i) {
       return veb->get_from_array(i);
     }
-
-    int get_max_kmer_index() const { return max_index; }
-    int get_min_kmer_index() const { return min_index; }
-
-    RI_Kmer find(const int i_rep) { return null_kmer; }
 };
 
 out_t iterate_kmers(VLMC_Veb &left_kmers, VLMC_Veb &right_kmers) {
@@ -370,10 +239,6 @@ out_t iterate_kmers(VLMC_Veb &left_kmers, VLMC_Veb &right_kmers) {
 }
 
 class VLMC_Eytzinger {
-
-  private: 
-    int min_index = INT_MAX;
-    int max_index = -1;
 
   public: 
     array::Ey_array *arr;
@@ -403,9 +268,6 @@ class VLMC_Eytzinger {
     RI_Kmer &get(const int i) { ;
       return arr->get_from_array(i);
     }
-
-    int get_max_kmer_index() const { return max_index; }
-    int get_min_kmer_index() const { return min_index; }
 };
 
 out_t iterate_kmers(VLMC_Eytzinger &left_kmers, VLMC_Eytzinger &right_kmers) {
@@ -427,11 +289,6 @@ out_t iterate_kmers(VLMC_Eytzinger &left_kmers, VLMC_Eytzinger &right_kmers) {
 }
 
 class VLMC_B_tree {
-
-  private: 
-    int min_index = INT_MAX;
-    int max_index = -1;
-
   public: 
     array::B_Tree *arr;
     VLMC_B_tree() = default;
@@ -460,9 +317,6 @@ class VLMC_B_tree {
     RI_Kmer &get(const int i) { ;
       return arr->get_from_array(i);
     }
-
-    int get_max_kmer_index() const { return max_index; }
-    int get_min_kmer_index() const { return min_index; }
 }; 
 
 out_t iterate_kmers(VLMC_B_tree &left_kmers, VLMC_B_tree &right_kmers) {
@@ -550,28 +404,6 @@ class VLMC_sorted_search {
     std::vector<RI_Kmer>::iterator end() { return container.end(); };
 
     RI_Kmer &get(const int i) { return container[i]; }
-
-    int get_max_kmer_index() const { return container.size() - 1; }
-    int get_min_kmer_index() const { return 0; }
-
-    RI_Kmer find(const int i_rep) {
-      int L = 0;
-      int R = size() - 1;
-      if (i_rep < R){
-        R = i_rep;
-      }
-      while (L <= R) {
-          int m = (L + R) / 2;
-          if (container[m].integer_rep < i_rep) {
-            L = m + 1;
-          } else if (container[m].integer_rep > i_rep) {
-            R = m - 1;
-          } else {
-            return container[m];
-          }
-      }
-      return null_kmer;
-    }
 
     int find_block_start(int i_rep){
       for(int i = place_in_summary; i < summary.size(); i++){
