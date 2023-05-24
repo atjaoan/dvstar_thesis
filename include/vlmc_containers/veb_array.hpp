@@ -7,14 +7,11 @@
 
 #include "read_in_kmer.hpp"
 
-/*
-  Stores VLMC (multiple k-mers) in a van Emde Boas layout. 
-*/
+namespace array {
 
-namespace veb {
 struct Veb_array {
-  alignas(64) std::vector<container::RI_Kmer> a;
-	container::RI_Kmer null_kmer = container::RI_Kmer(-1);
+  alignas(64) std::vector<kmers::RI_Kmer> a;
+	kmers::RI_Kmer null_kmer = kmers::RI_Kmer(-1);
   static const unsigned MAX_H = 32;
   int height;
   int n;
@@ -43,7 +40,7 @@ struct Veb_array {
 	  sequencer(h1, s, d+h0+1);
   }
 
-  container::RI_Kmer* construct(container::RI_Kmer* a0, int* rtl, int path, unsigned d) {
+  kmers::RI_Kmer* construct(kmers::RI_Kmer* a0, int* rtl, int path, unsigned d) {
     if (d > height || rtl[d] >= n) return a0;
 
 	  // visit left child
@@ -61,7 +58,7 @@ struct Veb_array {
 	  return a0;
   }
 
-	Veb_array(std::vector<container::RI_Kmer>& from_container){
+	Veb_array(std::vector<kmers::RI_Kmer>& from_container){
     n = from_container.size();
     // find smallest h such that sum_i=0^h 2^h >= n
 	  int m = 1;
@@ -97,7 +94,7 @@ struct Veb_array {
 	  return j;
   }
 
-  container::RI_Kmer& get_from_array(const int i_rep){
+  kmers::RI_Kmer& get_from_array(const int i_rep){
 	  return a[search(i_rep)];
   }
   };

@@ -4,14 +4,9 @@
 #include <filesystem>
 #include <unordered_map>
  
-#include "kmer.hpp"
 #include "vlmc_container.hpp"
 
-
-/*
-  Stores multiple VLMCs in a container. 
-*/
-namespace container {
+namespace cluster_container {
 
 template <typename VC> 
 class Cluster_Container {
@@ -38,10 +33,10 @@ class Cluster_Container {
 };
 
 struct Kmer_Pair {
-  RI_Kmer kmer;
+  kmers::RI_Kmer kmer;
   size_t id; 
 
-  Kmer_Pair(RI_Kmer kmer, size_t id){
+  Kmer_Pair(kmers::RI_Kmer kmer, size_t id){
     this->kmer = kmer; 
     this->id = id; 
   }

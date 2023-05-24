@@ -10,13 +10,13 @@
 #include "global_aliases.hpp"
 #include "utils.hpp"
 
-namespace calculate {
+namespace calc_dist {
 
-using kmer_pair = container::Kmer_Pair;
+using kmer_pair = cluster_container::Kmer_Pair;
 
 template <typename VC>
 void calculate_triangle_slice(int x1, int y1, int x2, int y2, int x3, int y3, matrix_t &distances, 
-          container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right) {
+          cluster_container::Cluster_Container<VC> &cluster_left, cluster_container::Cluster_Container<VC> &cluster_right) {
 
   auto rec_fun = [&](int left, int right) {
     if (distances(left, right) == 0){
@@ -41,7 +41,7 @@ void calculate_triangle_slice(int x1, int y1, int x2, int y2, int x3, int y3, ma
 
 template <typename VC>
 void calculate_full_slice(size_t start_index_left, size_t stop_index_left, size_t start_index_right, size_t stop_index_right,
-                     matrix_t &distances, container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right) {
+                     matrix_t &distances, cluster_container::Cluster_Container<VC> &cluster_left, cluster_container::Cluster_Container<VC> &cluster_right) {
 
   auto rec_fun = [&](size_t left, size_t right) {
     distances(left, right) = distance::dvstar<VC>(cluster_left.get(left), cluster_right.get(right)); 
@@ -54,7 +54,7 @@ void calculate_full_slice(size_t start_index_left, size_t stop_index_left, size_
 // For inter-directory comparison //
 //--------------------------------//
 template <typename VC> 
-matrix_t calculate_distances(container::Cluster_Container<VC> &cluster, size_t requested_cores){
+matrix_t calculate_distances(cluster_container::Cluster_Container<VC> &cluster, size_t requested_cores){
 
   matrix_t distances = matrix_t::Constant(cluster.size(), cluster.size(), 0);
 
@@ -72,7 +72,7 @@ matrix_t calculate_distances(container::Cluster_Container<VC> &cluster, size_t r
 //-------------------------------//
 template <typename VC>
 matrix_t calculate_distances(
-    container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right,
+    cluster_container::Cluster_Container<VC> &cluster_left, cluster_container::Cluster_Container<VC> &cluster_right,
     size_t requested_cores){
 
       matrix_t distances{cluster_left.size(), cluster_right.size()};
@@ -86,7 +86,7 @@ matrix_t calculate_distances(
       return distances; 
 }
 
-void calculate_kmer_buckets(container::Kmer_Cluster &cluster_left, container::Kmer_Cluster &cluster_right,
+void calculate_kmer_buckets(cluster_container::Kmer_Cluster &cluster_left, cluster_container::Kmer_Cluster &cluster_right,
     int left_offset, int right_offset, matrix_t &distances) {
   matrix_t dot_prod = matrix_t::Zero(cluster_left.size(), cluster_right.size());
   matrix_t left_norm = matrix_t::Zero(cluster_left.size(), cluster_right.size());
@@ -115,7 +115,7 @@ void calculate_kmer_buckets(container::Kmer_Cluster &cluster_left, container::Km
 // Kmer-major implementation //
 //---------------------------//
 matrix_t calculate_distance_major(
-    std::vector<container::Kmer_Cluster> &cluster_left, std::vector<container::Kmer_Cluster> &cluster_right, BS::thread_pool& pool){
+    std::vector<cluster_container::Kmer_Cluster> &cluster_left, std::vector<cluster_container::Kmer_Cluster> &cluster_right, BS::thread_pool& pool){
 
   auto cluster_left_size = 0;
   std::vector<int> cluster_left_offsets{};

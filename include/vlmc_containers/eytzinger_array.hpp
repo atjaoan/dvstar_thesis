@@ -8,14 +8,14 @@
 namespace array {
 
 struct Ey_array {
-	container::RI_Kmer null_kmer = container::RI_Kmer(-1);
+	kmers::RI_Kmer null_kmer = kmers::RI_Kmer(-1);
   int size;
 	static const int block_size = 2; // = 64 / sizeof(RI_Kmer)
-  container::RI_Kmer *kmer_from;
-  alignas(64) std::vector<container::RI_Kmer> ey_sorted_kmers;
+  kmers::RI_Kmer *kmer_from;
+  alignas(64) std::vector<kmers::RI_Kmer> ey_sorted_kmers;
 
   Ey_array() = default;
-  Ey_array(std::vector<container::RI_Kmer>& from_container){
+  Ey_array(std::vector<kmers::RI_Kmer>& from_container){
     size = from_container.size();
     kmer_from = from_container.data();
     ey_sorted_kmers.reserve(size + 1);
@@ -43,7 +43,7 @@ int search(int x) {
     return k;
 }
 
-container::RI_Kmer& get_from_array(const int i_rep){
+kmers::RI_Kmer& get_from_array(const int i_rep){
   return ey_sorted_kmers[search(i_rep)];
 }
 };
@@ -70,11 +70,11 @@ struct Ey_integer_array {
   int size;
   int skip_size;
 	static const int block_size = 8; // = 64 / sizeof(RI_Kmer)
-  container::RI_Kmer *kmer_from;
+  kmers::RI_Kmer *kmer_from;
   alignas(64) std::vector<Min_max_node> ey_sorted_int;
 
   Ey_integer_array() = default;
-  Ey_integer_array(std::vector<container::RI_Kmer>& from_container){
+  Ey_integer_array(std::vector<kmers::RI_Kmer>& from_container){
     skip_size = std::ceil(std::log(from_container.size()));
     size = from_container.size() / skip_size;
     null_node = Min_max_node(from_container.size(), -1); 

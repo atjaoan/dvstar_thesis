@@ -18,19 +18,15 @@
 #include "vlmc_containers/eytzinger_array.hpp"
 #include "vlmc_containers/b_tree_array.hpp"
 
-/*
-  Stores VLMC (multiple k-mers) in a container. 
-*/
+namespace vlmc_container {
 
-using Kmer = vlmc::VLMCKmer; 
-
-namespace container{
+using RI_Kmer = kmers::RI_Kmer;
 
 int load_VLMCs_from_file(const std::filesystem::path &path_to_bintree, eigenx_t &cached_context, 
         const std::function<void(const RI_Kmer &kmer)> f, const size_t background_order = 0) {
   std::ifstream ifs(path_to_bintree, std::ios::binary);
   cereal::BinaryInputArchive archive(ifs);
-  Kmer input_kmer{};
+  kmers::VLMCKmer input_kmer{};
 
   int offset_to_remove = 0;
   for (int i = 0; i < background_order; i++){
@@ -191,7 +187,7 @@ out_t iterate_kmers(VLMC_hashmap &left_kmers, VLMC_hashmap &right_kmers) {
 class VLMC_Veb {
 
   public:
-    veb::Veb_array *veb;
+    array::Veb_array *veb;
     VLMC_Veb() = default;
     ~VLMC_Veb() = default; 
 
@@ -210,7 +206,7 @@ class VLMC_Veb {
         int offset = background_idx - offset_to_remove;
         kmer.next_char_prob *= cached_context.row(offset).rsqrt();
       }
-      veb = new veb::Veb_array(tmp_container);
+      veb = new array::Veb_array(tmp_container);
     }
 
     size_t size() const { return veb->n + 1; }

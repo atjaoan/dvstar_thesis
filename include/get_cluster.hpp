@@ -8,12 +8,10 @@
 #include "global_aliases.hpp"
 #include "parallel.hpp"
 
-namespace cluster{
+namespace get_cluster {
 
-using RI_Kmer = container::RI_Kmer;
-  
 template <typename VC>  
-container::Cluster_Container<VC> get_cluster(const std::filesystem::path &directory, size_t nr_cores_to_use, 
+cluster_container::Cluster_Container<VC> get_cluster(const std::filesystem::path &directory, size_t nr_cores_to_use, 
       const size_t background_order, const int set_size = -1){
   std::vector<std::filesystem::path> paths{};
 
@@ -27,7 +25,7 @@ container::Cluster_Container<VC> get_cluster(const std::filesystem::path &direct
     paths_size = set_size; 
   }
 
-  container::Cluster_Container<VC> cluster{paths_size};
+  cluster_container::Cluster_Container<VC> cluster{paths_size};
 
   auto fun = [&](size_t start_index, size_t stop_index) {
     for (int index = start_index; index < stop_index; index++){
@@ -40,7 +38,7 @@ container::Cluster_Container<VC> get_cluster(const std::filesystem::path &direct
   return cluster; 
 }
 
-std::vector<container::Kmer_Cluster> get_kmer_cluster(const std::filesystem::path &directory, BS::thread_pool& pool, 
+std::vector<cluster_container::Kmer_Cluster> get_kmer_cluster(const std::filesystem::path &directory, BS::thread_pool& pool, 
           const size_t background_order = 0, const int set_size = -1){
   std::vector<std::filesystem::path> paths{};
 
@@ -53,22 +51,22 @@ std::vector<container::Kmer_Cluster> get_kmer_cluster(const std::filesystem::pat
     paths_size = set_size; 
   }
 
-  std::vector<container::Kmer_Cluster> clusters(std::ceil(paths_size / std::floor(std::sqrt(paths_size)))); 
+  std::vector<cluster_container::Kmer_Cluster> clusters(std::ceil(paths_size / std::floor(std::sqrt(paths_size)))); 
 
   auto fun = [&](size_t start_index, size_t stop_index, size_t idx) {
     for (int index = start_index; index < stop_index; index++){
-      std::vector<container::RI_Kmer> input_vector{};  
+      std::vector<kmers::RI_Kmer> input_vector{};  
       eigenx_t cached_context((int)std::pow(4, background_order), 4);
 
-      auto fun = [&](const RI_Kmer &kmer) { input_vector.push_back(kmer); }; 
+      auto fun = [&](const kmers::RI_Kmer &kmer) { input_vector.push_back(kmer); }; 
 
-      int offset_to_remove = container::load_VLMCs_from_file(paths[index], cached_context, fun, background_order); 
+      int offset_to_remove = vlmc_container::load_VLMCs_from_file(paths[index], cached_context, fun, background_order); 
 
-      for (RI_Kmer kmer : input_vector){
+      for (auto kmer : input_vector){
         int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
         int offset = background_idx - offset_to_remove;
         kmer.next_char_prob *= cached_context.row(offset).rsqrt();
-        clusters[idx].push(container::Kmer_Pair{kmer, index - start_index}); 
+        clusters[idx].push(cluster_container::Kmer_Pair{kmer, index - start_index}); 
       }
     } 
     clusters[idx].set_size(stop_index - start_index);

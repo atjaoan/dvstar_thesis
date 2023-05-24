@@ -9,13 +9,9 @@
 #include "kmer.hpp"
 #include "global_aliases.hpp"
 
-/*
-  Stores VLMC (multiple k-mers) in a container. 
-*/
-
 constexpr out_t pseudo_count_amount = 1.0; 
 
-namespace container{
+namespace kmers {
  
 struct RI_Kmer{
     eigen_t next_char_prob;
@@ -24,7 +20,7 @@ struct RI_Kmer{
 
     RI_Kmer() = default;
 
-    RI_Kmer(const Kmer &old_kmer){
+    RI_Kmer(const kmers::VLMCKmer &old_kmer){
         eigen_t tmp = {old_kmer.next_symbol_counts[0], 
                               old_kmer.next_symbol_counts[1],
                               old_kmer.next_symbol_counts[2],
@@ -38,7 +34,7 @@ struct RI_Kmer{
     RI_Kmer(const int temp) : integer_rep{temp}, is_null{false} {}
     ~RI_Kmer() = default;
 
-    int get_index_rep(const Kmer &kmer) {
+    int get_index_rep(const kmers::VLMCKmer &kmer) {
       int integer_value = 0;
       int offset = 1;
       for (int i = kmer.length - 1; i >= 0; i--) {
@@ -49,7 +45,7 @@ struct RI_Kmer{
       return integer_value;
     }
 
-    inline char extract2bits(const Kmer &kmer, unsigned int pos) const {
+    inline char extract2bits(const kmers::VLMCKmer &kmer, unsigned int pos) const {
       char row = pos >> 5;
       char pos_in_row = pos & 31;
       char n_shift_pos_to_end = (62 - pos_in_row * 2);

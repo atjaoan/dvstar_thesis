@@ -10,8 +10,7 @@
 
 namespace distance {
 
-using RI_Kmer = container::RI_Kmer;
-using bucket_t = std::vector<container::Kmer_Pair>;
+using bucket_t = std::vector<cluster_container::Kmer_Pair>;
 
 out_t normalise_dvstar(out_t dot_product, out_t left_norm,
                         out_t right_norm) {
@@ -37,9 +36,9 @@ out_t normalise_dvstar(out_t dot_product, out_t left_norm,
 template <typename VC>
 out_t dvstar(VC &left, VC &right){
   if (left.size() < right.size()){
-    return container::iterate_kmers(left, right);
+    return vlmc_container::iterate_kmers(left, right);
   } else {
-    return container::iterate_kmers(right, left);
+    return vlmc_container::iterate_kmers(right, left);
   }
 }
 

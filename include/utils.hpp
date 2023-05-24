@@ -10,8 +10,6 @@
 #include "read_in_kmer.hpp"
 #include "global_aliases.hpp"
 
-using RI_Kmer = container::RI_Kmer;
-
 namespace utils {
   
 void matrix_recursion(size_t start_index_left, size_t stop_index_left, size_t start_index_right, size_t stop_index_right, 

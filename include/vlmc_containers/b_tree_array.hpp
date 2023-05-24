@@ -11,13 +11,13 @@ struct B_Tree {
   int size;
   const int block_size = 2; // 64 / sizeof(RI_Kmer)
   static const int B = 2;
-	container::RI_Kmer null_kmer = container::RI_Kmer(-1);
-  alignas(64) std::vector<container::RI_Kmer> a;
+	kmers::RI_Kmer null_kmer = kmers::RI_Kmer(-1);
+  alignas(64) std::vector<kmers::RI_Kmer> a;
 
   B_Tree() = default;
   ~B_Tree() = default;
 
-  B_Tree(std::vector<container::RI_Kmer>& from_container){
+  B_Tree(std::vector<kmers::RI_Kmer>& from_container){
     size = from_container.size();
     a.reserve(size + 1);
 	  construct(from_container.begin(), 0);
@@ -26,22 +26,22 @@ struct B_Tree {
 		return (B+1)*i + (c+1)*B;
 	}
   template<unsigned int C>
-	static const container::RI_Kmer* branchfree_inner_search(const container::RI_Kmer *base, const container::RI_Kmer x) {
+	static const kmers::RI_Kmer* branchfree_inner_search(const kmers::RI_Kmer *base, const kmers::RI_Kmer x) {
 		if (C <= 1) return base;
 		const unsigned int half = C / 2;
-		const container::RI_Kmer *current = &base[half];
+		const kmers::RI_Kmer *current = &base[half];
 		return branchfree_inner_search<C - half>((*current < x) ? current : base, x);
 	}
 
 	template<unsigned C>
-	static int branchy_inner_search(const container::RI_Kmer *a, int i, container::RI_Kmer x) {
+	static int branchy_inner_search(const kmers::RI_Kmer *a, int i, kmers::RI_Kmer x) {
 		if (C==0) return i;
 		if (x <= a[i+C/2].integer_rep)
 			return branchy_inner_search<C/2>(a, i, x);
 		return branchy_inner_search<C-C/2-1>(a, i+C/2+1, x);
 	}
 
-  std::vector<container::RI_Kmer>::iterator construct(std::vector<container::RI_Kmer>::iterator a0, int i) {
+  std::vector<kmers::RI_Kmer>::iterator construct(std::vector<kmers::RI_Kmer>::iterator a0, int i) {
 	  if (i >= size) return a0;
 
 	  for (unsigned c = 0; c <= B; c++) {
@@ -110,12 +110,12 @@ struct B_Tree {
   	int i = 0;
   	while (i + B <= size) {
   		__builtin_prefetch(a.data()+child(i, B/2), 0, 0);
-  		const container::RI_Kmer *base = &a[i];
-  		const container::RI_Kmer *pred = branchfree_inner_search<B>(base, x);
+  		const kmers::RI_Kmer *base = &a[i];
+  		const kmers::RI_Kmer *pred = branchfree_inner_search<B>(base, x);
   		unsigned int nth = (*pred < x) + pred - base;
   		{
   			/* nth == B iff x > all values in block. */
-  			const container::RI_Kmer current = base[nth % B];
+  			const kmers::RI_Kmer current = base[nth % B];
   			int next = i + nth;
   			j = (current >= x) ? next : j;
   		}
@@ -123,11 +123,11 @@ struct B_Tree {
   	}
   	if (__builtin_expect(i < size, 0)) {
   		// last (partial) block
-  		const container::RI_Kmer *base = &a[i];
+  		const kmers::RI_Kmer *base = &a[i];
   		int m = size - i;
   		while (m > 1) {
   			int half = m / 2;
-  			const container::RI_Kmer *current = &base[half];
+  			const kmers::RI_Kmer *current = &base[half];
 
   			base = (*current < x) ? current : base;
   			m -= half;
@@ -139,7 +139,7 @@ struct B_Tree {
   	return j;
   }
 
-  container::RI_Kmer& get_from_array(const int i_rep){
+  kmers::RI_Kmer& get_from_array(const int i_rep){
     return a[unrolled_branchfree_search(i_rep)];
   }
 };

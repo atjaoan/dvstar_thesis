@@ -8,7 +8,7 @@
 #include <cereal/cereal.hpp>
 #include <cereal/types/array.hpp>
 
-namespace vlmc {
+namespace kmers {
 
 using uint64 = unsigned long;
 using uint32 = unsigned int;
@@ -43,5 +43,5 @@ struct VLMCKmer {
     archive(kmer_data, length, n_rows, count, next_symbol_counts, divergence,
             is_terminal);
   }
-}; // namespace std
+}; 
 }
