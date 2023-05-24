@@ -15,17 +15,6 @@ namespace calculate {
 using kmer_pair = container::Kmer_Pair;
 
 template <typename VC>
-void calculate_reduced_slice(size_t start_index, size_t stop_index, matrix_t &distances,
-                     container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right) {
-  
-  auto rec_fun = [&](size_t left, size_t right) {
-    distances(left, right) = distance::dvstar<VC>(cluster_left.get(left), cluster_right.get(right)); 
-  };
-
-  utils::half_matrix_recursion(start_index, stop_index, 0, cluster_right.size(), rec_fun); 
-}
-
-template <typename VC>
 void calculate_triangle_slice(int x1, int y1, int x2, int y2, int x3, int y3, matrix_t &distances, 
           container::Cluster_Container<VC> &cluster_left, container::Cluster_Container<VC> &cluster_right) {
 

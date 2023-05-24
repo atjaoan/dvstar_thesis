@@ -53,8 +53,8 @@ void add_options(CLI::App &app, cli_arguments &arguments) {
       {"b-tree", VLMC_Rep::vlmc_b_tree},
       {"hashmap", VLMC_Rep::vlmc_hashmap},
       {"veb", VLMC_Rep::vlmc_veb},
-      {"ey", VLMC_Rep::vlmc_ey},
-      {"sorted-search", VLMC_Rep::vlmc_sorted_search},
+      {"eytzinger", VLMC_Rep::vlmc_ey},
+      {"sbs", VLMC_Rep::vlmc_sorted_search},
       {"kmer-major", VLMC_Rep::vlmc_kmer_major}
   };
 

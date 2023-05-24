@@ -29,12 +29,6 @@ class Cluster_Container {
 
     void push(const VC vlmc) { container.push_back(vlmc); }
 
-    void for_each(const std::function<void(VC vlmc)> &f) {
-      for (auto vlmc : container){
-        f(vlmc);
-      }
-    }
-
     VC &get(const int i) { return container[i]; }
 
     VC &operator[](size_t index){ return container[index]; }
@@ -53,7 +47,6 @@ struct Kmer_Pair {
   }
 
   Kmer_Pair() = default;
-
   ~Kmer_Pair() = default; 
 };
 
