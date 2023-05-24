@@ -10,9 +10,6 @@
 [submodule "submodules/unordered_dense"]
 	path = submodules/unordered_dense
 	url = https://github.com/martinus/unordered_dense.git
-[submodule "submodules/thread-pool"]
-	path = submodules/thread-pool
-	url = https://github.com/bshoshany/thread-pool.git
 [submodule "submodules/HighFive"]
 	path = submodules/HighFive
 	url = https://github.com/BlueBrain/HighFive.git

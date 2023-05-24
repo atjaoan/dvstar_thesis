@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "utils.hpp"
-#include "BS_thread_pool.hpp"
 
 namespace parallel {
 
@@ -129,25 +128,10 @@ void parallelize(size_t size_left, size_t size_right, const std::function<void(s
   }
 }
 
-void pool_parallelize(size_t size, const std::function<void(size_t, size_t)> &fun, const size_t requested_cores, BS::thread_pool& pool) {
-  auto bounds = get_x_bounds(size, requested_cores);
-  for (auto &[start_index, stop_index] : bounds) {
-    std::future<void> fut = pool.submit(fun, start_index, stop_index);
-  }
-  pool.wait_for_tasks();
-}
-
-void pool_parallel(size_t size_left, const std::function<void(size_t)> &fun, BS::thread_pool& pool) {
-  for (auto left = 0; left < size_left; left++) {
-    std::future<void> fut = pool.submit(fun, left);
-  }
-
-  pool.wait_for_tasks();
-}
-
-void parallelize_kmer_major(size_t size, const std::function<void(size_t, size_t, size_t)> &fun, BS::thread_pool& pool) {
+void parallelize_kmer_major(size_t size, const std::function<void(size_t, size_t, size_t)> &fun, size_t nr_cores_to_use) {
+  std::vector<std::thread> threads{};
   std::vector<std::tuple<size_t, size_t>> bounds{};
-  float values_per_thread = std::floor(std::sqrt(size));
+  float values_per_thread = (size + nr_cores_to_use - 1) / nr_cores_to_use;
 
   auto start_index = 0; 
   while (start_index < size) {
@@ -161,9 +145,14 @@ void parallelize_kmer_major(size_t size, const std::function<void(size_t, size_t
 
   int idx = 0; 
   for (auto &[start_index, stop_index] : bounds) {
-    std::future<void> fut = pool.submit(fun, start_index, stop_index, idx);
+    threads.emplace_back(fun, start_index, stop_index, idx);
     idx++; 
   }
-  pool.wait_for_tasks();
+
+  for (auto &thread : threads) {
+    if (thread.joinable()) {
+      thread.join();
+    }
+  }
 }
 }
