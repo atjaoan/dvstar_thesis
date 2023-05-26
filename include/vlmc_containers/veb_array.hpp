@@ -11,7 +11,6 @@ namespace array {
 
 struct Veb_array {
   alignas(64) std::vector<kmers::RI_Kmer> a;
-	kmers::RI_Kmer null_kmer = kmers::RI_Kmer(-1);
   static const unsigned MAX_H = 32;
   int height;
   int n;

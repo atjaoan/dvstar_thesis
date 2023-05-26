@@ -8,24 +8,24 @@
 namespace array {
 
 struct B_Tree {
-  int size;
-  const int block_size = 2; // 64 / sizeof(RI_Kmer)
-  static const int B = 2;
-	kmers::RI_Kmer null_kmer = kmers::RI_Kmer(-1);
-  alignas(64) std::vector<kmers::RI_Kmer> a;
+  	int size;
+  	const int block_size = 2; // 64 / sizeof(RI_Kmer)
+  	static const int B = 2;
+  	alignas(64) std::vector<kmers::RI_Kmer> a;
 
-  B_Tree() = default;
-  ~B_Tree() = default;
+  	B_Tree() = default;
+  	~B_Tree() = default;
 
-  B_Tree(std::vector<kmers::RI_Kmer>& from_container){
-    size = from_container.size();
-    a.reserve(size + 1);
-	  construct(from_container.begin(), 0);
-  }
-  static int child(unsigned c, int i) {
+  	B_Tree(std::vector<kmers::RI_Kmer>& from_container){
+  	  	size = from_container.size();
+  	  	a.reserve(size + 1);
+		construct(from_container.begin(), 0);
+  	}
+  	static int child(unsigned c, int i) {
 		return (B+1)*i + (c+1)*B;
-	}
-  template<unsigned int C>
+  	}
+
+  	template<unsigned int C>
 	static const kmers::RI_Kmer* branchfree_inner_search(const kmers::RI_Kmer *base, const kmers::RI_Kmer x) {
 		if (C <= 1) return base;
 		const unsigned int half = C / 2;

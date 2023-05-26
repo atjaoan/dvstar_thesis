@@ -16,9 +16,9 @@ namespace kmers {
 struct RI_Kmer{
     eigen_t next_char_prob;
     int integer_rep;
-    bool is_null = true;
 
     RI_Kmer() = default;
+    ~RI_Kmer() = default;
 
     RI_Kmer(const kmers::VLMCKmer &old_kmer){
         eigen_t tmp = {old_kmer.next_symbol_counts[0], 
@@ -28,14 +28,14 @@ struct RI_Kmer{
         float child_count = tmp.sum() + 4;
         this->next_char_prob = (tmp + pseudo_count_amount) / child_count;
         this->integer_rep = get_index_rep(old_kmer);
-        this->is_null = false;
     }
 
-    RI_Kmer(const int temp) : integer_rep{temp}, is_null{false} {}
-    ~RI_Kmer() = default;
+    RI_Kmer(const int vlmc_rep){
+        this->integer_rep = vlmc_rep;
+    }
 
     int get_index_rep(const kmers::VLMCKmer &kmer) {
-      int integer_value = 0;
+      int integer_value = 0; 
       int offset = 1;
       for (int i = kmer.length - 1; i >= 0; i--) {
         auto kmer_2_bits = extract2bits(kmer, i) + 1;
