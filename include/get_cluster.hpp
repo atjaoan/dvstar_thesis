@@ -84,7 +84,9 @@ namespace get_cluster
         {
           int background_idx = kmer.background_order_index(kmer.integer_rep, background_order);
           int offset = background_idx - offset_to_remove;
-          kmer.next_char_prob *= cached_context.row(offset).rsqrt();
+          for (int x = 0; x < 4; x++){
+            kmer.next_char_prob[x] *= 1.0 / std::sqrt(cached_context(offset, x));
+          }
           clusters[idx].push(cluster_container::Kmer_Pair{kmer, index - start_index});
         }
       }
