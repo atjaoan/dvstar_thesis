@@ -7,17 +7,14 @@
 
 #include "read_in_kmer.hpp"
 
-namespace array
-{
-	struct Veb_array
-	{
+namespace array {
+	struct Veb_array {
 		alignas(64) std::vector<kmers::RI_Kmer> a;
 		static const unsigned MAX_H = 32;
 		int height;
 		int n;
 		typedef unsigned char h_type;
-		struct dumdum
-		{
+		struct dumdum {
 			h_type h0;
 			h_type h1;
 			h_type dummy[2];
@@ -29,8 +26,7 @@ namespace array
 		Veb_array() = default;
 		~Veb_array() = default;
 
-		void sequencer(int h, dumdum *s, unsigned d)
-		{
+		void sequencer(int h, dumdum* s, unsigned d) {
 			if (h == 0)
 				return;
 			int h0 = h / 2;
@@ -43,8 +39,7 @@ namespace array
 			sequencer(h1, s, d + h0 + 1);
 		}
 
-		kmers::RI_Kmer *construct(kmers::RI_Kmer *a0, int *rtl, int path, unsigned d)
-		{
+		kmers::RI_Kmer* construct(kmers::RI_Kmer* a0, int* rtl, int path, unsigned d) {
 			if (d > height || rtl[d] >= n)
 				return a0;
 
@@ -63,15 +58,14 @@ namespace array
 			return a0;
 		}
 
-		Veb_array(std::vector<kmers::RI_Kmer> &from_container)
-		{
+		Veb_array(std::vector<kmers::RI_Kmer>& from_container) {
 			n = from_container.size();
 			// find smallest h such that sum_i=0^h 2^h >= n
 			int m = 1;
 			for (height = 0; m < n; height++, m += 1 << height)
 				;
 
-			dumdum q = {(h_type)height, 0, {0, 0}, (2 << height) - 1, 1};
+			dumdum q = { (h_type)height, 0, {0, 0}, (2 << height) - 1, 1 };
 			std::fill_n(s, MAX_H + 1, q);
 			sequencer(height, s, 0);
 
@@ -81,26 +75,21 @@ namespace array
 			construct(from_container.data(), rtl, 0, 0);
 		}
 
-		int search(int x)
-		{
+		int search(int x) {
 			int rtl[MAX_H + 1];
 			int j = n;
 			int i = 0;
 			int p = 0;
-			for (int d = 0; i < n; d++)
-			{
+			for (int d = 0; i < n; d++) {
 				rtl[d] = i;
-				if (x < a[i].integer_rep)
-				{
+				if (x < a[i].integer_rep) {
 					p <<= 1;
 					j = i;
 				}
-				else if (x > a[i].integer_rep)
-				{
+				else if (x > a[i].integer_rep) {
 					p = (p << 1) + 1;
 				}
-				else
-				{
+				else {
 					return i;
 				}
 				i = rtl[d - s[d].h0] + s[d].m0 + (p & s[d].m0) * (s[d].m1);
@@ -108,8 +97,7 @@ namespace array
 			return j;
 		}
 
-		kmers::RI_Kmer &get_from_array(const int i_rep)
-		{
+		kmers::RI_Kmer& get_from_array(const int i_rep) {
 			return a[search(i_rep)];
 		}
 	};
