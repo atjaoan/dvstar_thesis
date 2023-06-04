@@ -2,32 +2,22 @@ Bootstrap: docker
 From: debian:bullseye
 
 %files
-    /usr/bin/kmc /kmc/kmc
-    /usr/bin/kmc_tools /kmc/kmc_tools
-
-    #visualiser.py /thesis/visualiser.py
     src /thesis/src
-    tests /thesis/tests
     include /thesis/include
 
     submodules /thesis/submodules
 
+    # Folder ./data should contain all directories with VLMCs
     data/benchmarking/ thesis/data/
 
     CMakeLists.txt /thesis/CMakeLists.txt
 
-    requirements_apptainer.txt /thesis/requirements.txt
-    bench.py /thesis/bench.py
-    benchmarking.py /thesis/benchmarking.py
-    ./data/small_test /thesis/data/small_test
-    ./tmp /thesis/tmp
-    .git/refs/heads/main /thesis/current_commit.txt
+    #requirements_apptainer.txt /thesis/requirements.txt
 
 %post -c /bin/bash
-    apt-get update -y && apt-get install -y cmake build-essential g++ git gcc libtbb-dev libgomp1 libboost-all-dev libhdf5-serial-dev libeigen3-dev
+    apt-get update -y && apt-get install -y cmake build-essential g++ git gcc libtbb-dev libgomp1 libboost-all-dev libhdf5-serial-dev libeigen3-dev libssl-dev libcurl3-dev
     echo 'deb http://deb.debian.org/debian testing main' >> /etc/apt/sources.list
     apt-get update -y && apt-get upgrade -y
-    apt-get install -y linux-perf python3-pip
 
     cd thesis/submodules/unordered_dense/build
     cmake ..
@@ -38,42 +28,26 @@ From: debian:bullseye
 
     mkdir -p /thesis/build/fasta /thesis/build/tmp /thesis/build/results
 
-    cmake -DCMAKE_BUILD_TYPE=Release -DCountVLMC_COMPILE_TESTS=OFF ..
+    cmake -DCMAKE_BUILD_TYPE=Release ..
     make -j 8
 
-    #cp ../visualiser.py .
-
-    cp /kmc/kmc .
-    cp /kmc/kmc_tools .
-
     cd ..
     cd ..
-    pip install virtualenv
-    mkdir /venv
-    virtualenv /venv/kmers_env
-    source /venv/kmers_env/bin/activate
-    pip install -r /thesis/requirements.txt
-    #export PATH=/root/.local/bin:$PATH
+    # If you want to include python scripts (and linux perf) for benchmarking or whatever:
+    ## apt-get install -y linux-perf python3-pip
+    ## pip install virtualenv
+    ## mkdir /venv
+    ## virtualenv /venv/kmers_env
+    ## source /venv/kmers_env/bin/activate
+    ## pip install -r /thesis/requirements.txt
 
 %environment
     export PATH="/thesis/build/:$PATH"
 
-%test
-    #cd /thesis/build/tests
-    #echo "Running tests"
-	#./kmer_tests
+%runscript
 
-%apprun benchmark
-    . /venv/kmers_env/bin/activate
-    cd /thesis
-    python3 benchmarking.py benchmark $*
-
-%apprun parabench
-    . /venv/kmers_env/bin/activate
-    cd /thesis
-    python3 benchmarking.py parabench $*
-
-%apprun sizebenchmark
-    . /venv/kmers_env/bin/activate
-    cd /thesis
-    python3 benchmarking.py sizebenchmark $*
+# Custom app command, works as apptainer run, $* passes all extra arguments given to Apptainer to the script
+## %apprun benchmark
+##     . /venv/kmers_env/bin/activate
+##     cd /thesis
+##     python3 benchmarking.py benchmark $*

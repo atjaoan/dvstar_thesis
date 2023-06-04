@@ -213,8 +213,6 @@ def Pst_normal_benchmaking(path_primary: str, path_secondary: str, csv_filename:
     th_large, min_large, max_large = get_parameter_from_bintree("large")
 
     out_path = "hdf5_results/PstClassifierSeqan/" + dataset_primary + "_to_" + dataset_secondary + "/"
-    
-    #os.makedirs(out_path, exist_ok=True)
 
     if single_run:
         print("Small PstClassifierSeqan.")
@@ -265,10 +263,6 @@ def normal_benchmarking(path_primary: str, path_secondary: str, implementation: 
 
     files_run = 32
 
-    #out_path = "hdf5_results/Dvstar/"
-
-    #os.makedirs(out_path, exist_ok=True)
-
     if (os.path.isfile(cwd / "hdf5_results/Dvstar/distances_small.hdf5")):
         os.remove(cwd / "hdf5_results/Dvstar/distances_small.hdf5")
     if (os.path.isfile(cwd / "hdf5_results/Dvstar/distances_medium.hdf5")):
@@ -301,18 +295,11 @@ def normal_benchmarking(path_primary: str, path_secondary: str, implementation: 
             print("Large " + implementation + ".")
             res_our_large  = calculate_distance(files_run, path_primary + "/large", path_secondary + "/large", "hdf5_results/Dvstar/distances_large.hdf5", implementation, cores, 0)
 
-            #compare_hdf5_files(dataset_primary + "_to_" + dataset_secondary, "small", str(files_run))
-            #compare_hdf5_files(dataset_primary + "_to_" + dataset_secondary, "medium", str(files_run))
-            #compare_hdf5_files(dataset_primary + "_to_" + dataset_secondary, "large", str(files_run))
-
             catch_and_save(res_our_small, cwd / csv_filename, "small", files_run, th_small, min_small, max_small, implementation, cores)
             catch_and_save(res_our_medium, cwd / csv_filename, "medium", files_run, th_medium, min_medium, max_medium, implementation, cores)
             catch_and_save(res_our_large, cwd / csv_filename, "large", files_run, th_large, min_large, max_large, implementation, cores)
 
             files_run = files_run * 2 
-            #os.remove(cwd / "hdf5_results/Dvstar/distances_small.hdf5")
-            #os.remove(cwd / "hdf5_results/Dvstar/distances_medium.hdf5")
-            #os.remove(cwd / "hdf5_results/Dvstar/distances_large.hdf5")
 
 #####################################
 # Function for benchmarking degree  #
@@ -342,10 +329,6 @@ def parallelization_benchmark(dataset: str, implementation: str, max_cores: int,
         print("Benchmarking large with " + str(nr_cores) + " cores.")
         res_our_large  = calculate_distance(set_size, dataset + "/large", dataset + "/large", "hdf5_results/Dvstar/distances_large.hdf5", implementation, nr_cores, 0)
 
-        #compare_hdf5_files(dataset, "small", str(files_run))
-        #compare_hdf5_files(dataset, "medium", str(files_run))
-        #compare_hdf5_files(dataset, "large", str(files_run))
-
         catch_and_save(res_our_small, cwd / csv_filename, "small", nb_files, th_small, min_small, max_small, implementation, nr_cores)
         catch_and_save(res_our_medium, cwd / csv_filename, "medium", nb_files, th_medium, min_medium, max_medium, implementation, nr_cores)
         catch_and_save(res_our_large, cwd / csv_filename, "large", nb_files, th_large, min_large, max_large, implementation, nr_cores)
@@ -354,9 +337,6 @@ def parallelization_benchmark(dataset: str, implementation: str, max_cores: int,
             nr_cores = 2
         else:
             nr_cores += 2
-        #os.remove(cwd / "hdf5_results/Dvstar/distances_small.hdf5")
-        #os.remove(cwd / "hdf5_results/Dvstar/distances_medium.hdf5")
-        #os.remove(cwd / "hdf5_results/Dvstar/distances_large.hdf5")
 
 def compare_hdf5_files(dataset: str, size: str, files_run: str):
     vlmc_file = h5py.File(cwd / "hdf5_results" / "Dvstar" / ("distances_" + size + ".hdf5"), 'r')
@@ -384,7 +364,7 @@ def compare_hdf5_files(dataset: str, size: str, files_run: str):
 def benchmark(single_run: bool = True, cores: int = 8, set_size_virus: int = -1):
     now = datetime.now()
     datasets = [("human", "human"), ("human", "turkey"), ("human", "corn"), ("turkey", "turkey"), ("turkey", "corn"), ("corn", "corn"), ("ecoli", "ecoli")]
-    containers = ["sorted-vector", "sorted-search", "hashmap", "veb", "ey", "alt-btree"] # ,"sorted-search-ey"]
+    containers = ["sorted-vector", "sbs", "hashmap", "veb", "eytzinger", "b-tree"]
     for primary, secondary in datasets:
         print("Benchmarking " + primary + " to " + secondary)
         csv_filename = get_csv_name(primary, secondary, now)
@@ -404,7 +384,7 @@ def benchmark(single_run: bool = True, cores: int = 8, set_size_virus: int = -1)
 def sizebenchmark(single_run: bool = False, cores: int = 8):
     now = datetime.now()
     datasets = [("ecoli", "ecoli")]
-    containers = ["sorted-vector", "sorted-search", "hashmap", "veb", "ey", "alt-btree"] # ,"sorted-search-ey"]
+    containers = ["sorted-vector", "sbs", "hashmap", "veb", "eytzinger", "b-tree"]
     for primary, secondary in datasets:
         print("Benchmarking " + primary + " to " + secondary)
         csv_filename = get_csv_name(primary, secondary, now)
@@ -416,7 +396,7 @@ def sizebenchmark(single_run: bool = False, cores: int = 8):
 
 @app.command()
 def parabench(cores: int = 8, species: str = "human", set_size: int = -1):
-    containers = ["sorted-vector", "sorted-search", "hashmap", "veb", "ey", "alt-btree"]
+    containers = ["sorted-vector", "sbs", "hashmap", "veb", "eytzinger", "b-tree"]
     now = datetime.now()
     dataset = "data/benchmarking/" + species + "/"
     csv_filename = get_csv_name(dataset.split("/")[-2], "parallelization", now)

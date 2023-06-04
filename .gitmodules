@@ -1,33 +1,18 @@
-[submodule "KMC"]
-	path = submodules/KMC
-	url = https://github.com/refresh-bio/KMC.git
-[submodule "stxxl"]
-	path = submodules/stxxl
-	url = https://github.com/stxxl/stxxl.git
 [submodule "CLI11"]
 	path = submodules/CLI11
 	url = https://github.com/CLIUtils/CLI11.git
 [submodule "cereal"]
 	path = submodules/cereal
 	url = https://github.com/USCiLab/cereal.git
-[submodule "robin-hood-hashing"]
-	path = submodules/robin-hood-hashing
-	url = https://github.com/martinus/robin-hood-hashing.git
-[submodule "submodules/FlameGraph"]
-	path = submodules/FlameGraph
-	url = https://github.com/brendangregg/FlameGraph.git
-[submodule "submodules/PstClassifierSeqan"]
-	path = submodules/PstClassifierSeqan
-	url = https://github.com/JohanAtterforsStudent/PstClassifierSeqan.git
 [submodule "submodules/eigen"]
 	path = submodules/eigen
 	url = git@gitlab.com:libeigen/eigen.git
 [submodule "submodules/unordered_dense"]
 	path = submodules/unordered_dense
 	url = https://github.com/martinus/unordered_dense.git
-[submodule "submodules/thread-pool"]
-	path = submodules/thread-pool
-	url = https://github.com/bshoshany/thread-pool.git
 [submodule "submodules/HighFive"]
 	path = submodules/HighFive
 	url = https://github.com/BlueBrain/HighFive.git
+[submodule "submodules/PstClassifierSeqan"]
+	path = submodules/PstClassifierSeqan
+	url = https://github.com/JohanAtterforsStudent/PstClassifierSeqan.git
