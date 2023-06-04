@@ -13,6 +13,3 @@
 [submodule "submodules/HighFive"]
 	path = submodules/HighFive
 	url = https://github.com/BlueBrain/HighFive.git
-[submodule "submodules/PstClassifierSeqan"]
-	path = submodules/PstClassifierSeqan
-	url = https://github.com/JohanAtterforsStudent/PstClassifierSeqan.git
